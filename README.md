@@ -526,7 +526,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
   
   | Member | GitHub Profile |
   |--------|---------------|
-  | **Rijul** (Team Leader) | [@Rijuls-code](https://github.com/Rijuls-code) |
+  | **Rijul** | [@Rijuls-code](https://github.com/Rijuls-code) |
   | **Shreyas** | [@Shreyas-patil07](https://github.com/Shreyas-patil07) |
   | **Atharva** | [@Atharva6153-git](https://github.com/Atharva6153-git) |
   | **Himanshu** | [@Himanshu052007](https://github.com/Himanshu052007) |
