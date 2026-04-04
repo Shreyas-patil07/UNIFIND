@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -12,19 +12,40 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [userNotFound, setUserNotFound] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    setUserNotFound(false);
+    
+    // Validate email domain
+    if (!email.endsWith('@sigce.edu.in')) {
+      setError('Only SIGCE email addresses (@sigce.edu.in) are allowed.');
+      return;
+    }
+    
     setLoading(true);
     try {
       await login(email, password);
-      navigate('/dashboard');
+      navigate('/home');
     } catch (err) {
-      setError(getErrorMessage(err.code));
+      // For invalid credentials, show option to create account (without error message)
+      if (err.code === 'auth/user-not-found' || 
+          err.code === 'auth/invalid-credential' || 
+          err.code === 'auth/wrong-password') {
+        setUserNotFound(true);
+      } else {
+        setError(getErrorMessage(err.code));
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoToSignup = () => {
+    navigate('/signup', { state: { email, password } });
   };
 
   const handleForgotPassword = async () => {
@@ -47,12 +68,16 @@ const LoginPage = () => {
       <div className="flex items-center justify-center p-6 sm:p-8 md:p-12 lg:p-24 bg-slate-50">
         <div className="w-full max-w-md">
           <div className="mb-10">
-            <Link to="/" className="flex items-center" data-testid="login-logo">
+            <Link to="/" className="flex items-center gap-3" data-testid="login-logo">
               <img 
                 src="/UNIFIND.png" 
                 alt="UNIFIND Logo" 
-                className="h-10 w-auto"
+                className="h-16 w-auto"
               />
+              <span className="font-['Outfit'] font-black text-3xl tracking-tight">
+                <span className="text-blue-600">UNI</span>
+                <span className="text-purple-600">FIND</span>
+              </span>
             </Link>
           </div>
 
@@ -69,6 +94,20 @@ const LoginPage = () => {
               {error}
             </div>
           )}
+          {userNotFound && (
+            <div className="mb-4 px-4 py-3 rounded-xl bg-orange-50 border border-orange-200" data-testid="user-not-found">
+              <p className="text-sm text-orange-900 mb-3">
+                Don't have an account? Create one now with this email.
+              </p>
+              <Button
+                onClick={handleGoToSignup}
+                className="w-full bg-blue-600 text-white hover:bg-blue-700 rounded-xl"
+                data-testid="go-to-signup-btn"
+              >
+                Create New Account
+              </Button>
+            </div>
+          )}
           {resetSent && (
             <div className="mb-4 px-4 py-3 rounded-xl bg-green-50 border border-green-200 text-sm text-green-600" data-testid="reset-sent">
               Password reset email sent. Check your inbox.
@@ -78,7 +117,7 @@ const LoginPage = () => {
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2" htmlFor="email">
-                Email
+                SIGCE Email
               </label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
@@ -87,12 +126,13 @@ const LoginPage = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your.email@college.edu"
+                  placeholder="your.name@sigce.edu.in"
                   className="w-full rounded-xl border border-slate-200 pl-12 pr-4 py-3 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
                   required
                   data-testid="login-email-input"
                 />
               </div>
+              <p className="mt-1 text-xs text-slate-500">Must be a valid @sigce.edu.in email address</p>
             </div>
 
             <div>
@@ -103,14 +143,26 @@ const LoginPage = () => {
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                 <input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-xl border border-slate-200 pl-12 pr-4 py-3 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                  className="w-full rounded-xl border border-slate-200 pl-12 pr-12 py-3 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
                   required
                   data-testid="login-password-input"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  data-testid="toggle-password-visibility"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
               </div>
             </div>
 
@@ -166,6 +218,7 @@ const LoginPage = () => {
 function getErrorMessage(code) {
   switch (code) {
     case 'auth/user-not-found':
+      return 'No account found with this email.';
     case 'auth/wrong-password':
     case 'auth/invalid-credential':
       return 'Invalid email or password.';

@@ -1,5 +1,8 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
+import ProtectedRoute from './components/ProtectedRoute'
+import PublicRoute from './components/PublicRoute'
+import { useAuth } from './contexts/AuthContext'
 
 // Pages
 import LandingPage from './pages/LandingPage'
@@ -16,24 +19,34 @@ import ChatPage from './pages/ChatPage'
 import AnalyticsPage from './pages/AnalyticsPage'
 import ProfilePage from './pages/ProfilePage'
 
+// Profile redirect component
+function ProfileRedirect() {
+  const { currentUser } = useAuth();
+  if (currentUser?.uid) {
+    return <Navigate to={`/profile/${currentUser.uid}`} replace />;
+  }
+  return <Navigate to="/login" replace />;
+}
+
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+          <Route path="/signup" element={<PublicRoute><SignupPage /></PublicRoute>} />
           <Route path="/otp-verification" element={<OTPVerificationPage />} />
-          <Route path="/dashboard" element={<DashboardHome />} />
-          <Route path="/buyer" element={<BuyerPage />} />
-          <Route path="/listing/:id" element={<ListingDetailPage />} />
-          <Route path="/seller" element={<SellerPage />} />
-          <Route path="/post-listing" element={<PostListingPage />} />
-          <Route path="/need-board" element={<NeedBoardPage />} />
-          <Route path="/chat" element={<ChatPage />} />
-          <Route path="/analytics" element={<AnalyticsPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/home" element={<ProtectedRoute><DashboardHome /></ProtectedRoute>} />
+          <Route path="/buyer" element={<ProtectedRoute><BuyerPage /></ProtectedRoute>} />
+          <Route path="/listing/:id" element={<ProtectedRoute><ListingDetailPage /></ProtectedRoute>} />
+          <Route path="/seller" element={<ProtectedRoute><SellerPage /></ProtectedRoute>} />
+          <Route path="/post-listing" element={<ProtectedRoute><PostListingPage /></ProtectedRoute>} />
+          <Route path="/need-board" element={<ProtectedRoute><NeedBoardPage /></ProtectedRoute>} />
+          <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+          <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><ProfileRedirect /></ProtectedRoute>} />
+          <Route path="/profile/:userId" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

@@ -2,10 +2,21 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Search, ShoppingBag, MessageCircle, User, Menu } from 'lucide-react'
 import { Button } from './ui/Button'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function Header({ hideSearch = false }) {
   const navigate = useNavigate()
+  const { currentUser } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  const handleProfileClick = () => {
+    // Navigate to user's unique profile URL
+    if (currentUser?.uid) {
+      navigate(`/profile/${currentUser.uid}`)
+    } else {
+      navigate('/profile')
+    }
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200">
@@ -13,14 +24,18 @@ export default function Header({ hideSearch = false }) {
         <div className="flex items-center justify-between gap-4">
           <Link 
             to="/" 
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
             data-testid="header-logo"
           >
             <img 
               src="/UNIFIND.png" 
               alt="UNIFIND Logo" 
-              className="h-8 w-auto"
+              className="h-12 w-auto"
             />
+            <span className="font-['Outfit'] font-black text-2xl tracking-tight">
+              <span className="text-blue-600">UNI</span>
+              <span className="text-purple-600">FIND</span>
+            </span>
           </Link>
 
           {!hideSearch && (
@@ -60,6 +75,15 @@ export default function Header({ hideSearch = false }) {
             <Button
               variant="ghost"
               size="sm"
+              onClick={() => navigate('/need-board')}
+              className="text-slate-700 hover:text-blue-600 transition-colors"
+              data-testid="nav-needboard-btn"
+            >
+              NeedBoard AI
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => navigate('/chat')}
               className="text-slate-700 hover:text-blue-600 transition-colors relative"
               data-testid="nav-chat-btn"
@@ -69,21 +93,12 @@ export default function Header({ hideSearch = false }) {
               <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center" data-testid="chat-notification-badge">2</span>
             </Button>
             <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/profile')}
-              className="text-slate-700 hover:text-blue-600 transition-colors"
-              data-testid="nav-profile-btn"
+              onClick={handleProfileClick}
+              className="bg-blue-600 text-white font-medium px-6 py-3 rounded-xl hover:bg-blue-700 shadow-[0_0_0_1px_rgba(37,99,235,1)_inset] transition-all duration-200 active:scale-95 ml-2"
+              data-testid="header-profile-btn"
             >
               <User className="h-4 w-4 mr-2" />
               Profile
-            </Button>
-            <Button
-              onClick={() => navigate('/post-listing')}
-              className="bg-blue-600 text-white font-medium px-6 py-3 rounded-xl hover:bg-blue-700 shadow-[0_0_0_1px_rgba(37,99,235,1)_inset] transition-all duration-200 active:scale-95 ml-2"
-              data-testid="header-post-listing-btn"
-            >
-              Post Listing
             </Button>
           </nav>
 
@@ -118,6 +133,14 @@ export default function Header({ hideSearch = false }) {
               </Button>
               <Button
                 variant="ghost"
+                onClick={() => { navigate('/need-board'); setMobileMenuOpen(false) }}
+                className="justify-start text-slate-700"
+                data-testid="mobile-nav-needboard-btn"
+              >
+                NeedBoard AI
+              </Button>
+              <Button
+                variant="ghost"
                 onClick={() => { navigate('/chat'); setMobileMenuOpen(false) }}
                 className="justify-start text-slate-700"
                 data-testid="mobile-nav-chat-btn"
@@ -126,20 +149,12 @@ export default function Header({ hideSearch = false }) {
                 Chats
               </Button>
               <Button
-                variant="ghost"
-                onClick={() => { navigate('/profile'); setMobileMenuOpen(false) }}
-                className="justify-start text-slate-700"
-                data-testid="mobile-nav-profile-btn"
+                onClick={() => { handleProfileClick(); setMobileMenuOpen(false) }}
+                className="bg-blue-600 text-white mt-2"
+                data-testid="mobile-profile-btn"
               >
                 <User className="h-4 w-4 mr-2" />
                 Profile
-              </Button>
-              <Button
-                onClick={() => { navigate('/post-listing'); setMobileMenuOpen(false) }}
-                className="bg-blue-600 text-white mt-2"
-                data-testid="mobile-post-listing-btn"
-              >
-                Post Listing
               </Button>
             </nav>
           </div>

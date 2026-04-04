@@ -1,12 +1,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Shield, Award, TrendingUp, Users, Package, ArrowRight } from 'lucide-react';
+import { Sparkles, Shield, Award, TrendingUp, Users, Package, ArrowRight, User } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import Footer from '../components/Footer';
 import FloatingBadge from '../components/FloatingBadge';
+import { useAuth } from '../contexts/AuthContext';
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
 
   return (
     <div className="min-h-screen bg-white">
@@ -16,35 +18,80 @@ const LandingPage = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200">
         <div className="px-6 sm:px-8 md:px-12 lg:px-24 py-4 flex items-center justify-between">
-          <div className="flex items-center" data-testid="landing-logo">
+          <div className="flex items-center gap-3" data-testid="landing-logo">
             <img 
               src="/UNIFIND.png" 
               alt="UNIFIND Logo" 
-              className="h-8 w-auto"
+              className="h-12 w-auto"
             />
+            <span className="font-['Outfit'] font-black text-2xl tracking-tight">
+              <span className="text-blue-600">UNI</span>
+              <span className="text-purple-600">FIND</span>
+            </span>
           </div>
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/login')}
-              className="text-slate-700 hover:text-blue-600"
-              data-testid="landing-login-btn"
-            >
-              Login
-            </Button>
-            <Button
-              onClick={() => navigate('/signup')}
-              className="bg-blue-600 text-white font-medium px-6 py-3 rounded-xl hover:bg-blue-700 shadow-[0_0_0_1px_rgba(37,99,235,1)_inset] transition-all duration-200 active:scale-95"
-              data-testid="landing-signup-btn"
-            >
-              Get Started
-            </Button>
+            {currentUser ? (
+              // Show profile button when logged in
+              <Button
+                onClick={() => navigate('/profile')}
+                className="bg-blue-600 text-white font-medium px-6 py-3 rounded-xl hover:bg-blue-700 shadow-[0_0_0_1px_rgba(37,99,235,1)_inset] transition-all duration-200 active:scale-95 flex items-center gap-2"
+                data-testid="landing-profile-btn"
+              >
+                <User className="h-4 w-4" />
+                Profile
+              </Button>
+            ) : (
+              // Show login and signup when not logged in
+              <>
+                <Button
+                  variant="ghost"
+                  onClick={() => navigate('/login')}
+                  className="text-slate-700 hover:text-blue-600"
+                  data-testid="landing-login-btn"
+                >
+                  Login
+                </Button>
+                <Button
+                  onClick={() => navigate('/signup')}
+                  className="bg-blue-600 text-white font-medium px-6 py-3 rounded-xl hover:bg-blue-700 shadow-[0_0_0_1px_rgba(37,99,235,1)_inset] transition-all duration-200 active:scale-95"
+                  data-testid="landing-signup-btn"
+                >
+                  Get Started
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
       <section className="relative overflow-hidden py-24 md:py-32 px-6 sm:px-8 md:px-12 lg:px-24">
+        {/* SIGCE Only Banner - Floating on top */}
+        <div className="absolute top-6 left-6 right-6 sm:left-8 sm:right-8 md:left-12 md:right-12 lg:left-24 lg:right-24 z-20">
+          <div className="max-w-5xl mx-auto bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl border border-blue-700 p-4 text-white shadow-2xl">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <h3 className="text-lg font-bold mb-1">🎓 Currently Open to SIGCE Only</h3>
+                <p className="text-sm text-blue-100">
+                  Exclusively available for Smt. Indira Gandhi College of Engineering students.
+                </p>
+              </div>
+              <a
+                href="https://sigce.edu.in/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white text-blue-600 font-medium px-5 py-2.5 rounded-lg hover:bg-blue-50 transition-all duration-200 active:scale-95 inline-flex items-center gap-2 text-sm whitespace-nowrap"
+                data-testid="sigce-link"
+              >
+                Visit SIGCE
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+
         {/* Background Image with Overlay */}
         <div className="absolute inset-0 z-0">
           <img

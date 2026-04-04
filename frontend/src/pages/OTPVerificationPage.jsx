@@ -16,6 +16,30 @@ const OTPVerificationPage = () => {
   const [resendSuccess, setResendSuccess] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
+  // Auto-check verification status every 5 seconds
+  useEffect(() => {
+    const checkVerificationStatus = async () => {
+      if (!auth.currentUser) return;
+      
+      try {
+        await reload(auth.currentUser);
+        if (auth.currentUser.emailVerified) {
+          navigate('/home');
+        }
+      } catch (err) {
+        console.error('Auto-check failed:', err);
+      }
+    };
+
+    // Check immediately on mount
+    checkVerificationStatus();
+
+    // Then check every 5 seconds
+    const interval = setInterval(checkVerificationStatus, 5000);
+
+    return () => clearInterval(interval);
+  }, [navigate]);
+
   // Countdown timer for resend button
   useEffect(() => {
     if (countdown <= 0) return;
@@ -35,7 +59,7 @@ const OTPVerificationPage = () => {
       // Reload user to get latest emailVerified status from Firebase
       await reload(auth.currentUser);
       if (auth.currentUser.emailVerified) {
-        navigate('/dashboard');
+        navigate('/home');
       } else {
         setError("Email not verified yet. Check your inbox and click the link, then try again.");
       }
@@ -100,6 +124,13 @@ const OTPVerificationPage = () => {
             <p className="text-sm text-slate-500 mt-3">
               Click the link in the email, then press the button below.
             </p>
+            <p className="text-xs text-blue-600 mt-2 flex items-center justify-center gap-1">
+              <RefreshCw className="h-3 w-3 animate-spin" />
+              Auto-checking verification status...
+            </p>
+            <p className="text-sm text-amber-600 font-medium mt-2">
+              ⚠️ Check in spam folder if you don't see the email
+            </p>
           </div>
 
           {error && (
@@ -109,7 +140,7 @@ const OTPVerificationPage = () => {
           )}
           {resendSuccess && (
             <div className="mb-4 px-4 py-3 rounded-xl bg-green-50 border border-green-200 text-sm text-green-600" data-testid="resend-success">
-              Verification email resent successfully.
+              Verification email resent successfully. Check in spam folder if you don't see it.
             </div>
           )}
 

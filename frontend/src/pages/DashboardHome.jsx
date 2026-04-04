@@ -3,9 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import { ShoppingBag, Package, MessageCircle, BarChart3, Sparkles, List, TrendingUp, Clock } from 'lucide-react';
 import { recentActivity, userStats } from '../data/mockData';
+import { useAuth } from '../contexts/AuthContext';
 
 const DashboardHome = () => {
   const navigate = useNavigate();
+  const { currentUser, userProfile } = useAuth();
+
+  // Use real user data if available, fallback to defaults
+  const displayName = currentUser?.displayName || userProfile?.name || 'User';
+  const trustScore = userProfile?.trust_score || 0;
+  const itemsBought = userProfile?.items_bought || 0;
+  const itemsSold = userProfile?.items_sold || 0;
+  const rating = userProfile?.rating || 0.0;
 
   const navCards = [
     { icon: ShoppingBag, title: 'Browse & Buy', description: 'Explore listings', path: '/buyer', color: 'bg-blue-50', iconColor: 'text-blue-600', testId: 'nav-card-buyer' },
@@ -24,16 +33,18 @@ const DashboardHome = () => {
         {/* Welcome Section */}
         <div className="mb-12">
           <h1 className="font-['Outfit'] text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 mb-2" data-testid="dashboard-welcome-title">
-            Welcome back, Arjun! 👋
+            Welcome back, {displayName}! 👋
           </h1>
           <p className="text-base text-slate-600">Your marketplace dashboard</p>
           
-          {/* Trust Score */}
-          <div className="mt-6 inline-flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl px-6 py-3">
-            <div className="text-sm font-medium text-green-900">Trust Score</div>
-            <div className="text-3xl font-black text-green-600" data-testid="dashboard-trust-score">{userStats.trustScore}%</div>
-            <TrendingUp className="h-5 w-5 text-green-600" />
-          </div>
+          {/* Trust Score - Only show if verified */}
+          {currentUser?.emailVerified && (
+            <div className="mt-6 inline-flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl px-6 py-3">
+              <div className="text-sm font-medium text-green-900">Trust Score</div>
+              <div className="text-3xl font-black text-green-600" data-testid="dashboard-trust-score">{trustScore}%</div>
+              <TrendingUp className="h-5 w-5 text-green-600" />
+            </div>
+          )}
         </div>
 
         {/* Navigation Grid */}
@@ -66,15 +77,15 @@ const DashboardHome = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white rounded-2xl border border-slate-200 p-6" data-testid="stat-bought">
               <div className="text-sm text-slate-600 mb-1">Items Bought</div>
-              <div className="text-3xl font-black text-slate-900">{userStats.bought}</div>
+              <div className="text-3xl font-black text-slate-900">{itemsBought}</div>
             </div>
             <div className="bg-white rounded-2xl border border-slate-200 p-6" data-testid="stat-sold">
               <div className="text-sm text-slate-600 mb-1">Items Sold</div>
-              <div className="text-3xl font-black text-slate-900">{userStats.sold}</div>
+              <div className="text-3xl font-black text-slate-900">{itemsSold}</div>
             </div>
             <div className="bg-white rounded-2xl border border-slate-200 p-6" data-testid="stat-rating">
               <div className="text-sm text-slate-600 mb-1">Your Rating</div>
-              <div className="text-3xl font-black text-slate-900">{userStats.rating} ⭐</div>
+              <div className="text-3xl font-black text-slate-900">{rating.toFixed(1)} ⭐</div>
             </div>
           </div>
         </div>
