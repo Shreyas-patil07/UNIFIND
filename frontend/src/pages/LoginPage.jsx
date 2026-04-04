@@ -47,8 +47,12 @@ const LoginPage = () => {
       <div className="flex items-center justify-center p-6 sm:p-8 md:p-12 lg:p-24 bg-slate-50">
         <div className="w-full max-w-md">
           <div className="mb-10">
-            <Link to="/" className="font-['Outfit'] font-black text-3xl text-blue-600 tracking-tight" data-testid="login-logo">
-              UNIFIND
+            <Link to="/" className="flex items-center" data-testid="login-logo">
+              <img 
+                src="/UNIFIND.png" 
+                alt="UNIFIND Logo" 
+                className="h-10 w-auto"
+              />
             </Link>
           </div>
 

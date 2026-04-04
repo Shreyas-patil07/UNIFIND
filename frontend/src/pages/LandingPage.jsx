@@ -16,8 +16,12 @@ const LandingPage = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200">
         <div className="px-6 sm:px-8 md:px-12 lg:px-24 py-4 flex items-center justify-between">
-          <div className="font-['Outfit'] font-black text-2xl text-blue-600 tracking-tight" data-testid="landing-logo">
-            UNIFIND
+          <div className="flex items-center" data-testid="landing-logo">
+            <img 
+              src="/UNIFIND.png" 
+              alt="UNIFIND Logo" 
+              className="h-8 w-auto"
+            />
           </div>
           <div className="flex items-center gap-3">
             <Button

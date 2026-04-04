@@ -13,10 +13,14 @@ export default function Header({ hideSearch = false }) {
         <div className="flex items-center justify-between gap-4">
           <Link 
             to="/" 
-            className="font-outfit font-black text-2xl text-blue-600 tracking-tight hover:text-blue-700 transition-colors"
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             data-testid="header-logo"
           >
-            UNIFIND
+            <img 
+              src="/UNIFIND.png" 
+              alt="UNIFIND Logo" 
+              className="h-8 w-auto"
+            />
           </Link>
 
           {!hideSearch && (
