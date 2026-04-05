@@ -697,7 +697,6 @@ console.log('Debug info:', data)
 
 ## Additional Resources
 
-- [Complete Project Documentation](Doc.md)
 - [README](README.md)
 - [GitHub Repository](https://github.com/Shreyas-patil07/UNIFIND)
 - [API Documentation](http://localhost:8000/docs)
