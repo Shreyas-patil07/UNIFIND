@@ -14,7 +14,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110.1-009688.svg)](https://fastapi.tiangolo.com/)
 [![Firebase](https://img.shields.io/badge/Firebase-10.7.1-FFCA28.svg)](https://firebase.google.com/)
 
-[🚀 Live Demo](#) • [📖 Documentation](Megalog.md) • [🐛 Report Bug](https://github.com/Shreyas-patil07/UNIFIND/issues) • [✨ Request Feature](https://github.com/Shreyas-patil07/UNIFIND/issues) • [📧 Contact](mailto:systemrecord07@gmail.com)
+[🚀 Live Demo](#) • [📖 Documentation](Doc.md) • [🐛 Report Bug](https://github.com/Shreyas-patil07/UNIFIND/issues) • [✨ Request Feature](https://github.com/Shreyas-patil07/UNIFIND/issues) • [📧 Contact](mailto:systemrecord07@gmail.com)
 
 </div>
 
@@ -342,7 +342,7 @@ unifind/
 │
 ├── .gitignore
 ├── INSTALL.md                      # Installation guide
-├── Megalog.md                      # Complete documentation
+├── Doc.md                          # Complete documentation
 └── README.md                       # This file
 ```
 
@@ -575,7 +575,7 @@ See [FOOTER_USAGE.md](frontend/FOOTER_USAGE.md) for implementation details and c
 
 ## 📚 Documentation
 
-For detailed documentation, see [Megalog.md](Megalog.md)
+For detailed documentation, see [Doc.md](Doc.md)
 
 ---
 
@@ -656,7 +656,7 @@ For detailed documentation, see [Megalog.md](Megalog.md)
   
   ⭐ **Star us on GitHub** — it motivates us a lot!
   
-  [Documentation](Megalog.md) • [Report Bug](https://github.com/Shreyas-patil07/UNIFIND/issues) • [Request Feature](https://github.com/Shreyas-patil07/UNIFIND/issues) • [Contact](mailto:systemrecord07@gmail.com)
+  [Documentation](Doc.md) • [Report Bug](https://github.com/Shreyas-patil07/UNIFIND/issues) • [Request Feature](https://github.com/Shreyas-patil07/UNIFIND/issues) • [Contact](mailto:systemrecord07@gmail.com)
   
   ---
   

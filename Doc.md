@@ -218,7 +218,6 @@ UNIFIND/
 │
 ├── .gitignore
 ├── Doc.md                          # This file
-├── Megalog.md                      # Complete project log
 └── README.md                       # Project README
 ```
 
@@ -698,7 +697,7 @@ console.log('Debug info:', data)
 
 ## Additional Resources
 
-- [Complete Project Log](Megalog.md)
+- [Complete Project Documentation](Doc.md)
 - [README](README.md)
 - [GitHub Repository](https://github.com/Shreyas-patil07/UNIFIND)
 - [API Documentation](http://localhost:8000/docs)
