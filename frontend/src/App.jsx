@@ -18,6 +18,7 @@ import NeedBoardPage from './pages/NeedBoardPage'
 import ChatPage from './pages/ChatPage'
 import AnalyticsPage from './pages/AnalyticsPage'
 import ProfilePage from './pages/ProfilePage'
+import EditProfilePage from './pages/EditProfilePage'
 
 // Profile redirect component
 function ProfileRedirect() {
@@ -47,6 +48,7 @@ function App() {
           <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><ProfileRedirect /></ProtectedRoute>} />
           <Route path="/profile/:userId" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="/profile/:userId/edit" element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

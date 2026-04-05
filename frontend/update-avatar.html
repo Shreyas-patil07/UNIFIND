@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Update Avatar in Firestore</title>
+    <script type="module">
+        // Import Firebase
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        // Your Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDf0S3wwoPt7oSJo5xiNuWavAwhoHt3P-8",
+            authDomain: "unifind-07.firebaseapp.com",
+            projectId: "unifind-07",
+            storageBucket: "unifind-07.firebasestorage.app",
+            messagingSenderId: "768336970608",
+            appId: "1:768336970608:web:f03562cd3ed108ea9705b5"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Wait for auth to load
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                document.getElementById('status').innerHTML = `
+                    <p>✅ Logged in as: ${user.email}</p>
+                    <p>User ID: ${user.uid}</p>
+                `;
+                
+                // Update avatar
+                const avatarUrl = 'https://wywzfxapfcymqffxmswu.supabase.co/storage/v1/object/public/profile-photos/wVf6ULJg8XVoGOkHdjNVUjNTJTw1/1775397955294.jpg';
+                
+                try {
+                    await updateDoc(doc(db, 'users', user.uid), {
+                        avatar: avatarUrl
+                    });
+                    document.getElementById('result').innerHTML = `
+                        <div style="color: green; padding: 20px; background: #d4edda; border-radius: 8px; margin-top: 20px;">
+                            <h3>✅ Success!</h3>
+                            <p>Avatar URL updated in Firestore!</p>
+                            <p><strong>URL:</strong> ${avatarUrl}</p>
+                            <p style="margin-top: 20px;">
+                                <a href="http://localhost:3000/profile" style="color: #0066cc;">Go to Profile →</a>
+                            </p>
+                        </div>
+                    `;
+                } catch (error) {
+                    document.getElementById('result').innerHTML = `
+                        <div style="color: red; padding: 20px; background: #f8d7da; border-radius: 8px; margin-top: 20px;">
+                            <h3>❌ Error</h3>
+                            <p>${error.message}</p>
+                        </div>
+                    `;
+                }
+            } else {
+                document.getElementById('status').innerHTML = `
+                    <p style="color: red;">❌ Not logged in. Please log in to your app first!</p>
+                `;
+            }
+        });
+    </script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        #status {
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Update Avatar in Firestore</h1>
+        <div id="status">Loading...</div>
+        <div id="result"></div>
+    </div>
+</body>
+</html>

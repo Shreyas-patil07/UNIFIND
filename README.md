@@ -140,7 +140,7 @@
 
 ---
 
-## �🏗️ Architecture
+## 🏗️ Architecture
 
 ```
 ┌─────────────────┐         ┌─────────────────┐         ┌─────────────────┐
@@ -150,6 +150,22 @@
 │   Vite Build    │         │                 │         │                 │
 └─────────────────┘         └─────────────────┘         └─────────────────┘
 ```
+
+### Database Structure
+
+The application uses Firebase Firestore with a three-collection architecture:
+
+1. **users** - Core authentication data
+   - id, name, email, college, firebase_uid, email_verified, created_at
+
+2. **user_profiles** - Extended user information
+   - Public: branch, avatar, bio, trust_score, rating, review_count
+   - Private: phone, hostel_room, histories
+
+3. **transaction_history** - Buy/sell transaction records
+   - user_id, product_id, transaction_type, amount, status, timestamps
+
+This structure provides better privacy control, improved performance, and scalability.
 
 ---
 
@@ -357,12 +373,24 @@ unifind/
 - `PUT /api/products/{id}` - Update product
 - `DELETE /api/products/{id}` - Delete product
 
-### Users
+### Users (Core Data)
 - `GET /api/users` - Get all users
-- `POST /api/users` - Create new user
-- `GET /api/users/{id}` - Get user details
+- `POST /api/users` - Create new user (also creates profile)
+- `GET /api/users/{id}` - Get user core data
 - `GET /api/users/firebase/{uid}` - Get user by Firebase UID
-- `PUT /api/users/{id}` - Update user
+- `PUT /api/users/{id}` - Update user core data
+
+### User Profiles
+- `GET /api/users/{id}/profile` - Get user profile (public)
+- `GET /api/users/{id}/profile?include_private=true` - Get profile with private data
+- `PUT /api/users/{id}/profile` - Update user profile
+
+### Transaction History
+- `GET /api/users/{id}/transactions` - Get all transactions
+- `GET /api/users/{id}/transactions?transaction_type=buy` - Get buy history
+- `GET /api/users/{id}/transactions?transaction_type=sell` - Get sell history
+- `POST /api/users/{id}/transactions` - Create transaction record
+- `PUT /api/transactions/{id}` - Update transaction status
 
 ### Chats
 - `POST /api/chats/messages` - Send message
@@ -575,7 +603,17 @@ See [FOOTER_USAGE.md](frontend/FOOTER_USAGE.md) for implementation details and c
 
 ## 📚 Documentation
 
-For detailed documentation, see [Doc.md](Doc.md)
+### Available Documentation Files
+
+1. **README.md** (this file) - Project overview, setup, and quick reference
+2. **QUICKSTART.md** - Quick start guide for getting up and running fast
+3. **Doc.md** - Detailed technical documentation
+4. **Megalog.md** - Complete project documentation with full history
+5. **DATABASE_RESTRUCTURE.md** - Database restructure guide and architecture
+6. **API_MIGRATION_GUIDE.md** - Quick API reference for the new structure
+7. **DATABASE_MIGRATION_SUMMARY.md** - Summary of database migration changes
+
+For detailed documentation, see the files above or visit the `/docs` endpoint when running the backend.
 
 ---
 
@@ -611,8 +649,18 @@ For detailed documentation, see [Doc.md](Doc.md)
 
 ## 📝 Recent Updates
 
-### April 5, 2026
-- Cleaned up redundant documentation files (FOOTER_USAGE.md, BADGE_EXAMPLES.md)
+### April 5, 2026 - Database Restructure
+- **Major Update**: Restructured database from single `users` collection to three collections
+  - Separated core authentication data from extended profile information
+  - Added dedicated `transaction_history` collection for buy/sell records
+  - Improved privacy controls with public/private profile fields
+- **New API Endpoints**: Added profile management and transaction history endpoints
+- **Migration Tool**: Created `migrate_database.py` for seamless data migration
+- **Documentation**: Added comprehensive guides (`DATABASE_RESTRUCTURE.md`, `API_MIGRATION_GUIDE.md`)
+- **Benefits**: Better performance, scalability, and privacy control
+
+### April 5, 2026 - Documentation Cleanup
+- Cleaned up redundant documentation files
 - Enhanced .gitignore with comprehensive Python cache patterns
 - Improved repository structure and maintenance
 

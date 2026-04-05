@@ -270,16 +270,16 @@ Currently using Firebase Authentication. Backend validates Firebase tokens.
 #### Users API
 
 **GET /api/users**
-- Description: Get all users
+- Description: Get all users (core data only)
 - Response: Array of User objects
 
 **POST /api/users**
-- Description: Create new user
+- Description: Create new user (also creates profile automatically)
 - Request Body: UserCreate object
-- Response: User object with generated ID
+- Response: Object with user and profile data
 
 **GET /api/users/{user_id}**
-- Description: Get user by ID
+- Description: Get user core data by ID
 - Response: User object
 
 **GET /api/users/firebase/{firebase_uid}**
@@ -287,9 +287,40 @@ Currently using Firebase Authentication. Backend validates Firebase tokens.
 - Response: User object
 
 **PUT /api/users/{user_id}**
-- Description: Update user
-- Request Body: UserCreate object
+- Description: Update user core data (name, email, college)
+- Request Body: Updates object
 - Response: Updated User object
+
+#### User Profiles API
+
+**GET /api/users/{user_id}/profile**
+- Description: Get user profile (public data by default)
+- Query Parameters:
+  - `include_private` (optional): Include private fields (default: false)
+- Response: UserProfile object
+
+**PUT /api/users/{user_id}/profile**
+- Description: Update user profile
+- Request Body: Profile updates object
+- Response: Updated UserProfile object
+
+#### Transaction History API
+
+**GET /api/users/{user_id}/transactions**
+- Description: Get user's transaction history
+- Query Parameters:
+  - `transaction_type` (optional): Filter by "buy" or "sell"
+- Response: Array of Transaction objects (newest first)
+
+**POST /api/users/{user_id}/transactions**
+- Description: Create new transaction record
+- Request Body: TransactionCreate object
+- Response: Transaction object
+
+**PUT /api/transactions/{transaction_id}**
+- Description: Update transaction status
+- Request Body: Updates object
+- Response: Updated Transaction object
 
 #### Chats API
 
@@ -392,19 +423,47 @@ Visit `http://localhost:8000/docs` for Swagger UI with interactive API testing.
 
 Pydantic models for data validation:
 
-- **User**: UserBase, UserCreate, User
-- **Product**: ProductBase, ProductCreate, Product
-- **Message**: MessageBase, MessageCreate, Message
+- **User Models (Core Authentication)**:
+  - UserBase: name, email, college
+  - UserCreate: UserBase + firebase_uid
+  - User: UserBase + id, firebase_uid, email_verified, created_at
+
+- **User Profile Models (Extended Information)**:
+  - UserProfileBase: branch, avatar, bio, ratings, phone, hostel_room, histories
+  - UserProfileCreate: UserProfileBase + user_id
+  - UserProfile: UserProfileBase + id, user_id, updated_at
+
+- **Transaction Models**:
+  - TransactionBase: user_id, product_id, transaction_type, amount, status, other_party_id
+  - TransactionCreate: TransactionBase
+  - Transaction: TransactionBase + id, created_at, completed_at
+
+- **Product Models**:
+  - ProductBase, ProductCreate, Product
+
+- **Message Models**:
+  - MessageBase, MessageCreate, Message
+
 - **ChatRoom**: Complete chat room model
-- **Review**: ReviewBase, ReviewCreate, Review
+
+- **Review Models**:
+  - ReviewBase, ReviewCreate, Review
 
 ---
 
 ## Database Schema
 
+### Database Architecture
+
+UNIFIND uses a three-collection architecture for better organization, privacy control, and scalability:
+
+1. **users** - Core authentication data
+2. **user_profiles** - Extended user information (public/private)
+3. **transaction_history** - Buy/sell transaction records
+
 ### Firestore Collections
 
-#### users
+#### users (Core Authentication)
 ```javascript
 {
   id: string,
@@ -412,12 +471,49 @@ Pydantic models for data validation:
   name: string,
   email: string,
   college: string,
+  email_verified: boolean,
+  created_at: timestamp
+}
+```
+
+#### user_profiles (Extended Information)
+```javascript
+{
+  id: string,
+  user_id: string,  // Reference to users collection
+  
+  // Public fields (visible to all)
+  branch: string,
   avatar: string,
-  trust_score: number (0-200),
+  cover_gradient: string,
+  bio: string,
+  trust_score: number (0-100),
   rating: number (0-5),
   review_count: number,
   member_since: string,
-  created_at: timestamp
+  
+  // Private fields (visible only to owner)
+  phone: string,
+  hostel_room: string,
+  branch_change_history: array,
+  photo_change_history: array,
+  
+  updated_at: timestamp
+}
+```
+
+#### transaction_history (Buy/Sell Records)
+```javascript
+{
+  id: string,
+  user_id: string,  // Reference to users collection
+  product_id: string,  // Reference to products collection
+  transaction_type: string,  // "buy" or "sell"
+  amount: number,
+  status: string,  // "pending", "completed", "cancelled"
+  other_party_id: string,  // buyer_id if selling, seller_id if buying
+  created_at: timestamp,
+  completed_at: timestamp  // nullable
 }
 ```
 
@@ -711,12 +807,38 @@ This project is licensed under the MIT License.
 
 ## Recent Updates
 
-### April 5, 2026
-- **Documentation Cleanup**: Removed redundant `FOOTER_USAGE.md` and `BADGE_EXAMPLES.md` files
+### April 5, 2026 - Database Restructure
+
+**Major Update**: Restructured database from single `users` collection to three collections:
+
+1. **users** - Core authentication data
+   - id, name, email, college, firebase_uid, email_verified, created_at
+
+2. **user_profiles** - Extended user information
+   - Public: branch, avatar, bio, trust_score, rating, review_count
+   - Private: phone, hostel_room, histories
+
+3. **transaction_history** - Buy/sell transaction records
+   - user_id, product_id, transaction_type, amount, status, timestamps
+
+**Benefits**:
+- ✅ Better privacy control (public/private field separation)
+- ✅ Improved performance (smaller core documents)
+- ✅ Enhanced scalability (dedicated transaction history)
+- ✅ Flexibility (easy to extend profile fields)
+
+**New Features**:
+- Profile management endpoints
+- Transaction history tracking
+- Public/private profile views
+- Migration script with rollback support
+
+**Migration**: Use `backend/migrate_database.py` to migrate existing data
+
+### April 5, 2026 - Documentation Cleanup
+- **Documentation Cleanup**: Removed 16 redundant documentation files
 - **Git Ignore Enhancement**: Updated `.gitignore` with comprehensive Python cache patterns
-  - Recursive `__pycache__` matching with `**/__pycache__/`
-  - Added test coverage, build artifacts, and package distribution patterns
-- **Repository Maintenance**: Committed all changes to version control
+- **Repository Maintenance**: Improved project structure and organization
 
 ---
 
@@ -732,4 +854,4 @@ For questions or support:
 
 © 2026 UNIFIND - All Rights Reserved
 
-**Last Updated**: April 5, 2026 | **Version**: 2.0.1
+**Last Updated**: April 5, 2026 | **Version**: 2.1.0

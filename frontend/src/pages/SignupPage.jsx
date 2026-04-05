@@ -4,7 +4,7 @@ import { Mail, Lock, User, GraduationCap, Eye, EyeOff, Calendar } from 'lucide-r
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { sendEmailVerification } from 'firebase/auth';
-import { auth } from '../services/firebase';
+import { auth, actionCodeSettings } from '../services/firebase';
 
 const SignupPage = () => {
   const navigate = useNavigate();
@@ -19,6 +19,7 @@ const SignupPage = () => {
     name: '', 
     email: prefilledEmail, 
     college: '', 
+    branch: '',
     yearOfAdmission: '',
     password: prefilledPassword 
   });
@@ -74,6 +75,12 @@ const SignupPage = () => {
       setError('Please select your year of admission.');
       return;
     }
+
+    // Validate that branch is filled
+    if (!formData.branch.trim()) {
+      setError('Please enter your branch/department.');
+      return;
+    }
     
     // Validate email domain
     if (!formData.email.endsWith('@sigce.edu.in')) {
@@ -83,10 +90,10 @@ const SignupPage = () => {
     
     setLoading(true);
     try {
-      await signup(formData.email, formData.password, formData.name, formData.college, formData.yearOfAdmission);
-      // Send verification email
+      await signup(formData.email, formData.password, formData.name, formData.college, formData.branch, formData.yearOfAdmission);
+      // Send verification email with custom settings
       if (auth.currentUser) {
-        await sendEmailVerification(auth.currentUser);
+        await sendEmailVerification(auth.currentUser, actionCodeSettings);
       }
       // Pass email to OTP page so it can display it
       navigate('/otp-verification', { state: { email: formData.email } });
@@ -243,6 +250,32 @@ const SignupPage = () => {
                       {year}
                     </option>
                   ))}
+                </select>
+                <svg className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2" htmlFor="branch">Branch/Department</label>
+              <div className="relative">
+                <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 z-10" />
+                <select
+                  id="branch"
+                  required
+                  value={formData.branch}
+                  onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
+                  className="w-full rounded-xl border border-slate-200 pl-12 pr-4 py-3 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all appearance-none bg-white cursor-pointer"
+                  data-testid="signup-branch-input"
+                >
+                  <option value="" disabled>Select branch...</option>
+                  <option value="Computer Engineering">Computer Engineering</option>
+                  <option value="Artificial Intelligence (AI) And Data Science">Artificial Intelligence (AI) And Data Science</option>
+                  <option value="CSE Artificial Intelligence and Machine Learning">CSE Artificial Intelligence and Machine Learning</option>
+                  <option value="IOT and Cybersecurity Including Blockchain">IOT and Cybersecurity Including Blockchain</option>
+                  <option value="Electrical Engineering">Electrical Engineering</option>
+                  <option value="Mechanical Engineering">Mechanical Engineering</option>
                 </select>
                 <svg className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
