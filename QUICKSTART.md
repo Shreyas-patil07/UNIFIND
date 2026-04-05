@@ -348,7 +348,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 
 ## 📚 Next Steps
 
-- 📖 Read the [Complete Documentation](Doc.md)
+- 📖 Read the [Complete Documentation](DOCUMENTATION.md)
 - 🔍 Explore the [API Documentation](http://localhost:8000/docs)
 - 🎨 Check out the [Project Structure](README.md#-project-structure)
 - 🤝 Learn about [Contributing](README.md#-contributing)
@@ -369,7 +369,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 
 - 📧 Email: systemrecord07@gmail.com
 - 🐛 GitHub Issues: [Report a bug](https://github.com/Shreyas-patil07/UNIFIND/issues)
-- 📖 Full Documentation: [Doc.md](Doc.md)
+- 📖 Full Documentation: [DOCUMENTATION.md](DOCUMENTATION.md)
 
 ---
 

@@ -1,87 +1,123 @@
+"""
+Optimized semantic ranking service for matching products to user intent.
+"""
 import json
 import re
+import logging
+from typing import List, Dict
+from services.gemini_client import generate_content, GeminiAPIError
 
-from services.gemini_client import generate_content
+logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """You are a product matching AI for a student marketplace. Your job is to rank products by how well they match what the user wants.
+SYSTEM_PROMPT = """You are a product matching AI for a student marketplace.
+Rank products by match quality (0-100 scale).
 
-CRITICAL RULES:
-1. You MUST return ONLY a valid JSON array, nothing else
-2. Do NOT include any explanatory text before or after the JSON
-3. Do NOT use markdown code blocks
-4. Rank ALL products provided, even if they don't match well
-5. Higher match_score means better match (0-100 scale)"""
+RULES:
+1. Return ONLY a JSON array
+2. No markdown, no explanations
+3. Rank ALL products provided
+4. Higher score = better match"""
 
 
-async def rank_listings(query: str, intent: dict, listings: list[dict]) -> list[dict]:
+async def rank_listings(query: str, intent: Dict, listings: List[Dict]) -> List[Dict]:
     """
-    Rank listings against the user query and extracted intent using Gemini.
-
-    Returns a list of RankedResult dicts sorted descending by match_score.
-    Each dict is guaranteed to have: id, match_score (int 0-100), reason (str).
-
+    Rank product listings against user query and intent.
+    
+    Args:
+        query: Original user query
+        intent: Extracted intent dictionary
+        listings: List of product listings to rank
+        
+    Returns:
+        List[Dict]: Ranked results with id, match_score, reason
+        Sorted by match_score descending
+        
     Raises:
-        ValueError: if the Gemini response cannot be parsed as a JSON array.
+        ValueError: If ranking fails
+        GeminiAPIError: If AI API fails
     """
-    # Optimize: Send only essential fields to reduce token usage
-    simplified_listings = [
-        {
-            "id": l["id"],
-            "title": l["title"],
-            "category": l.get("category", ""),
-            "price": l.get("price", 0),
-            "condition": l.get("condition", ""),
-            "description": l.get("description", "")[:100]  # Limit description to 100 chars
+    if not listings:
+        return []
+    
+    try:
+        # Optimize: Send only essential fields to reduce tokens
+        simplified_listings = [
+            {
+                "id": listing["id"],
+                "title": listing["title"],
+                "category": listing.get("category", ""),
+                "price": listing.get("price", 0),
+                "condition": listing.get("condition", ""),
+                "description": listing.get("description", "")[:80]  # Limit to 80 chars
+            }
+            for listing in listings[:20]  # Limit to top 20 to save tokens
+        ]
+        
+        # Optimize: Simplify intent
+        simplified_intent = {
+            "category": intent.get("category", ""),
+            "subject": intent.get("subject", ""),
+            "max_price": intent.get("max_price"),
+            "condition": intent.get("condition", "")
         }
-        for l in listings
-    ]
-    
-    # Optimize: Simplify intent to only relevant fields
-    simplified_intent = {
-        "category": intent.get("category", ""),
-        "subject": intent.get("subject", ""),
-        "max_price": intent.get("max_price"),
-        "condition": intent.get("condition", "")
-    }
-    
-    intent_json = json.dumps(simplified_intent, ensure_ascii=False)
-    listings_json = json.dumps(simplified_listings, ensure_ascii=False)
+        
+        user_prompt = _build_ranking_prompt(query, simplified_intent, simplified_listings)
+        raw_response = await generate_content(SYSTEM_PROMPT, user_prompt, timeout=25)
+        
+        results = _parse_json_array(raw_response)
+        results = _apply_defaults(results)
+        
+        # Sort by match_score descending
+        results.sort(key=lambda x: x.get("match_score", 0), reverse=True)
+        
+        logger.info(f"Ranked {len(results)} listings")
+        return results
+        
+    except GeminiAPIError:
+        logger.error("Gemini API error during ranking")
+        raise
+    except Exception as e:
+        logger.error(f"Ranking failed: {e}")
+        raise ValueError(f"Failed to rank listings: {str(e)}")
 
-    user_prompt = (
-        "TASK: Rank these products based on how well they match the user's needs.\n\n"
-        f"USER QUERY: {query[:200]}\n\n"  # Limit query length
-        f"USER INTENT:\n{intent_json}\n\n"
-        f"PRODUCTS:\n{listings_json}\n\n"
-        "RANKING INSTRUCTIONS:\n"
-        "1. Compare each product against the user's intent\n"
-        "2. Consider: category match, item match, price fit, condition match\n"
-        "3. Score 0-100: 90-100=perfect, 70-89=good, 50-69=decent, 30-49=weak, 0-29=poor\n"
-        "4. Explain score briefly\n\n"
-        "OUTPUT FORMAT (JSON array only):\n"
+
+def _build_ranking_prompt(query: str, intent: Dict, listings: List[Dict]) -> str:
+    """Build optimized ranking prompt."""
+    # Truncate query to save tokens
+    query = query[:150] if len(query) > 150 else query
+    
+    intent_json = json.dumps(intent, ensure_ascii=False)
+    listings_json = json.dumps(listings, ensure_ascii=False)
+    
+    return (
+        f"QUERY: {query}\n"
+        f"INTENT: {intent_json}\n"
+        f"PRODUCTS: {listings_json}\n\n"
+        "Rank products by match quality:\n"
+        "- 90-100: Perfect match\n"
+        "- 70-89: Good match\n"
+        "- 50-69: Decent match\n"
+        "- 30-49: Weak match\n"
+        "- 0-29: Poor match\n\n"
+        "Return JSON array:\n"
         '[{"id": "1", "match_score": 85, "reason": "brief explanation"}, ...]\n\n'
         "Return ONLY the JSON array with ALL products."
     )
 
-    raw = await generate_content(SYSTEM_PROMPT, user_prompt)
 
-    # Attempt direct JSON parse first
-    results = _parse_json_array(raw)
-
-    # Apply defaults for missing fields
-    for item in results:
-        if "match_score" not in item:
-            item["match_score"] = 0
-        if "reason" not in item:
-            item["reason"] = "No reason provided"
-
-    # Sort descending by match_score
-    results.sort(key=lambda x: x.get("match_score", 0), reverse=True)
-
-    return results
-
-
-def _parse_json_array(text: str) -> list:
-    """Parse a JSON array from text, falling back to regex substring extraction."""
+def _parse_json_array(text: str) -> List[Dict]:
+    """
+    Parse JSON array from AI response.
+    
+    Args:
+        text: Raw AI response
+        
+    Returns:
+        list: Parsed JSON array
+        
+    Raises:
+        ValueError: If array cannot be extracted
+    """
     # Try direct parse
     try:
         parsed = json.loads(text)
@@ -90,7 +126,7 @@ def _parse_json_array(text: str) -> list:
     except json.JSONDecodeError:
         pass
 
-    # Fallback: extract first [...] substring
+    # Extract array substring
     match = re.search(r"\[.*\]", text, re.DOTALL)
     if match:
         try:
@@ -100,6 +136,18 @@ def _parse_json_array(text: str) -> list:
         except json.JSONDecodeError:
             pass
 
-    raise ValueError(
-        "Semantic ranker could not extract a valid JSON array from the Gemini response"
-    )
+    logger.error(f"Failed to parse JSON array from: {text[:200]}")
+    raise ValueError("Could not extract valid JSON array from AI response")
+
+
+def _apply_defaults(results: List[Dict]) -> List[Dict]:
+    """Apply default values for missing fields."""
+    for item in results:
+        if "match_score" not in item or item["match_score"] is None:
+            item["match_score"] = 0
+        if "reason" not in item or not item["reason"]:
+            item["reason"] = "No reason provided"
+        # Ensure match_score is int
+        item["match_score"] = int(item["match_score"])
+    
+    return results

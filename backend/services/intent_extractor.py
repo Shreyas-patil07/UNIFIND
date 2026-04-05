@@ -1,71 +1,72 @@
+"""
+Optimized intent extraction service for AI Need Board.
+Extracts structured data from natural language queries.
+"""
 import json
 import re
+import logging
+from typing import Dict
+from services.gemini_client import generate_content, GeminiAPIError
 
-from services.gemini_client import generate_content
+logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """You are a precise data extraction AI for a student marketplace. Your ONLY job is to extract structured information from queries and return valid JSON.
+SYSTEM_PROMPT = """You are a precise data extraction AI for a student marketplace. 
+Extract structured information from queries and return ONLY valid JSON.
 
-CRITICAL RULES:
-1. You MUST return ONLY a valid JSON object, nothing else
-2. Do NOT include any explanatory text before or after the JSON
-3. Do NOT use markdown code blocks
-4. Extract information accurately from the user's query"""
+RULES:
+1. Return ONLY a JSON object, no other text
+2. Do NOT use markdown code blocks
+3. Extract information accurately"""
 
 REQUIRED_KEYS = {"category", "subject", "semester", "max_price", "condition", "intent_summary"}
 
 
 def _build_user_prompt(query: str) -> str:
+    """Build optimized user prompt for intent extraction."""
+    # Truncate very long queries to save tokens
+    query = query[:300] if len(query) > 300 else query
+    
     return (
-        "TASK: Extract structured data from the user query below.\n\n"
-        "REQUIRED OUTPUT FORMAT - Return ONLY this JSON structure (no extra text):\n"
+        "Extract data from this query and return JSON:\n\n"
+        f"QUERY: {query}\n\n"
+        "OUTPUT FORMAT (JSON only):\n"
         "{\n"
-        '  "category": "string",\n'
-        '  "subject": "string",\n'
-        '  "semester": "string",\n'
+        '  "category": "Electronics|Books|Stationery|Furniture|Clothing|Sports|Other",\n'
+        '  "subject": "specific item name",\n'
+        '  "semester": "1-8 or Not specified",\n'
         '  "max_price": number or null,\n'
-        '  "condition": "string",\n'
-        '  "intent_summary": "string"\n'
+        '  "condition": "New|Like New|Good|Fair|Any",\n'
+        '  "intent_summary": "brief summary"\n'
         "}\n\n"
-        "FIELD INSTRUCTIONS:\n"
-        "1. category: Choose ONE from: 'Electronics', 'Books', 'Stationery', 'Furniture', 'Clothing', 'Sports', 'Other'\n"
-        "   - If user mentions laptop/phone/calculator → 'Electronics'\n"
-        "   - If user mentions textbook/novel/notes → 'Books'\n"
-        "   - If user mentions pen/notebook/folder → 'Stationery'\n"
-        "   - If user mentions desk/chair/table → 'Furniture'\n"
-        "   - Otherwise → 'Other'\n\n"
-        "2. subject: The SPECIFIC item they want (e.g., 'Laptop', 'Calculator', 'Physics Textbook', 'Desk')\n"
-        "   - Be specific: 'Calculator' not 'Electronics'\n"
-        "   - Use the exact item name from the query\n\n"
-        "3. semester: If mentioned, extract the number (e.g., '1', '2', '3', '4', '5', '6', '7', '8')\n"
-        "   - If NOT mentioned → 'Not specified'\n"
-        "   - Examples: '3rd semester' → '3', 'first year' → '1', 'final year' → '8'\n\n"
-        "4. max_price: Extract the maximum price as a NUMBER (no currency symbols)\n"
-        "   - 'under 50000' → 50000\n"
-        "   - 'around 30k' → 30000\n"
-        "   - 'budget 25000' → 25000\n"
-        "   - If NO price mentioned → null\n\n"
-        "5. condition: Choose ONE from: 'New', 'Like New', 'Good', 'Fair', 'Any'\n"
-        "   - If they say 'new' or 'brand new' → 'New'\n"
-        "   - If they say 'excellent' or 'barely used' → 'Like New'\n"
-        "   - If they say 'good' or 'working' → 'Good'\n"
-        "   - If they say 'used' or 'old' → 'Fair'\n"
-        "   - If NOT mentioned → 'Any'\n\n"
-        "6. intent_summary: Write a 1-sentence summary of what they want\n"
-        "   - Example: 'User wants a laptop for coding under 50000 rupees'\n\n"
-        f"USER QUERY: {query}\n\n"
-        "REMEMBER: Return ONLY the JSON object, no other text. Start with {{ and end with }}"
+        "CATEGORY MAPPING:\n"
+        "- laptop/phone/calculator → Electronics\n"
+        "- textbook/novel/notes → Books\n"
+        "- pen/notebook → Stationery\n"
+        "- desk/chair → Furniture\n\n"
+        "Return ONLY the JSON object."
     )
 
 
-def _parse_json(text: str) -> dict:
-    """Try direct JSON parse, then fall back to regex substring extraction."""
-    # 1. Direct parse
+def _parse_json(text: str) -> Dict:
+    """
+    Parse JSON from AI response with fallback extraction.
+    
+    Args:
+        text: Raw AI response text
+        
+    Returns:
+        dict: Parsed JSON object
+        
+    Raises:
+        ValueError: If JSON cannot be extracted
+    """
+    # Try direct parse
     try:
         return json.loads(text)
     except json.JSONDecodeError:
         pass
 
-    # 2. Substring extraction via regex
+    # Extract JSON substring
     match = re.search(r"\{.*\}", text, re.DOTALL)
     if match:
         try:
@@ -73,40 +74,64 @@ def _parse_json(text: str) -> dict:
         except json.JSONDecodeError:
             pass
 
-    raise ValueError(
-        f"Intent extraction failed: could not parse a valid JSON object from Gemini response. "
-        f"Raw response: {text!r}"
-    )
+    logger.error(f"Failed to parse JSON from: {text[:200]}")
+    raise ValueError("Could not extract valid JSON from AI response")
 
 
-async def extract_intent(query: str) -> dict:
-    """
-    Call the Gemini API to extract structured intent from a natural-language query.
-
-    Returns a dict with keys: category, subject, semester, max_price, condition, intent_summary.
-    Raises ValueError if the response cannot be parsed as JSON.
-    """
-    user_prompt = _build_user_prompt(query)
-    raw = await generate_content(SYSTEM_PROMPT, user_prompt)
-    parsed = _parse_json(raw)
+def _apply_defaults(parsed: Dict) -> Dict:
+    """Apply default values for missing or None fields."""
+    defaults = {
+        "category": "Other",
+        "subject": "Not specified",
+        "semester": "Not specified",
+        "max_price": None,
+        "condition": "Any",
+        "intent_summary": "User query"
+    }
     
-    # Apply defaults for missing or None values
-    parsed.setdefault("category", "Other")
-    parsed.setdefault("subject", "Not specified")
-    parsed.setdefault("semester", "Not specified")
-    parsed.setdefault("condition", "Any")
-    parsed.setdefault("intent_summary", query)
-    
-    # Replace None with defaults
-    if parsed["category"] is None:
-        parsed["category"] = "Other"
-    if parsed["subject"] is None:
-        parsed["subject"] = "Not specified"
-    if parsed["semester"] is None:
-        parsed["semester"] = "Not specified"
-    if parsed["condition"] is None:
-        parsed["condition"] = "Any"
-    if parsed["intent_summary"] is None:
-        parsed["intent_summary"] = query
+    for key, default_value in defaults.items():
+        if key not in parsed or parsed[key] is None:
+            parsed[key] = default_value
     
     return parsed
+
+
+async def extract_intent(query: str) -> Dict:
+    """
+    Extract structured intent from natural language query.
+    
+    Args:
+        query: Natural language query from user
+        
+    Returns:
+        dict: Structured intent with keys:
+            - category: Product category
+            - subject: Specific item
+            - semester: Academic semester (if applicable)
+            - max_price: Maximum price (if specified)
+            - condition: Desired condition
+            - intent_summary: Brief summary
+            
+    Raises:
+        ValueError: If intent cannot be extracted
+        GeminiAPIError: If AI API fails
+    """
+    if not query or not query.strip():
+        raise ValueError("Query cannot be empty")
+    
+    try:
+        user_prompt = _build_user_prompt(query)
+        raw_response = await generate_content(SYSTEM_PROMPT, user_prompt, timeout=20)
+        
+        parsed = _parse_json(raw_response)
+        parsed = _apply_defaults(parsed)
+        
+        logger.info(f"Extracted intent: {parsed.get('category')} - {parsed.get('subject')}")
+        return parsed
+        
+    except GeminiAPIError:
+        logger.error("Gemini API error during intent extraction")
+        raise
+    except Exception as e:
+        logger.error(f"Intent extraction failed: {e}")
+        raise ValueError(f"Failed to extract intent: {str(e)}")
