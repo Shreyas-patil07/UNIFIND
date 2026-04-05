@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     # CORS Configuration
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
     
+    # Gemini AI Configuration
+    GEMINI_API_KEY: str
+    
     class Config:
         env_file = ".env"
         case_sensitive = True
