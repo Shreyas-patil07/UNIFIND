@@ -302,7 +302,7 @@ const LandingPage = () => {
       </section>
 
       {/* ===== CTA SECTION ===== */}
-      <section className="py-24 px-4 sm:px-6 md:px-10 lg:px-20 relative overflow-hidden">
+      <section className="py-20 px-4 sm:px-6 md:px-10 lg:px-20 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-primary opacity-90" />
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-1/2 -right-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
@@ -310,18 +310,18 @@ const LandingPage = () => {
         </div>
         <div className="relative z-10 max-w-3xl mx-auto text-center">
           <h2
-            className="font-['Outfit'] text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-6"
+            className="font-['Outfit'] text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-5"
             data-testid="cta-title"
           >
             Ready to Start Trading?
           </h2>
-          <p className="text-xl text-indigo-100 mb-12">
+          <p className="text-lg text-indigo-100 mb-10">
             Join thousands of students buying and selling safely on campus
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => navigate('/signup')}
-              className="w-full sm:w-auto bg-white text-indigo-600 font-bold px-10 py-5 rounded-xl text-lg hover:bg-slate-50 transition-all duration-200 active:scale-95 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto bg-white text-indigo-600 font-bold px-8 py-4 rounded-xl text-base hover:bg-slate-50 transition-all duration-200 active:scale-95 flex items-center justify-center gap-2"
               data-testid="cta-signup-btn"
             >
               Create Free Account
@@ -329,7 +329,7 @@ const LandingPage = () => {
             </button>
             <button
               onClick={() => navigate('/buyer')}
-              className="w-full sm:w-auto glass border border-white/30 text-white font-semibold px-10 py-5 rounded-xl text-lg hover:bg-white/10 transition-all duration-200 active:scale-95"
+              className="w-full sm:w-auto glass border border-white/30 text-white font-semibold px-8 py-4 rounded-xl text-base hover:bg-white/10 transition-all duration-200 active:scale-95"
             >
               Browse Listings
             </button>
