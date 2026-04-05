@@ -140,3 +140,30 @@ class Review(ReviewBase):
     id: str
     product_id: Optional[str] = None
     created_at: datetime
+
+
+# AI Need Board Models
+class NeedBoardRequest(BaseModel):
+    query: str
+
+
+class ExtractedIntent(BaseModel):
+    category: str
+    subject: str
+    semester: str
+    max_price: Optional[float] = None
+    condition: str
+    intent_summary: str
+
+
+class RankedResult(BaseModel):
+    id: str | int
+    match_score: int  # 0–100
+    reason: str
+    title: Optional[str] = None
+    price: Optional[float] = None
+
+
+class NeedBoardResponse(BaseModel):
+    extracted: ExtractedIntent
+    rankedResults: List[RankedResult]
