@@ -38,7 +38,7 @@ function App() {
           <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
           <Route path="/signup" element={<PublicRoute><SignupPage /></PublicRoute>} />
           <Route path="/otp-verification" element={<OTPVerificationPage />} />
-          <Route path="/home" element={<ProtectedRoute><DashboardHome /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><DashboardHome /></ProtectedRoute>} />
           <Route path="/buyer" element={<ProtectedRoute><BuyerPage /></ProtectedRoute>} />
           <Route path="/listing/:id" element={<ProtectedRoute><ListingDetailPage /></ProtectedRoute>} />
           <Route path="/seller" element={<ProtectedRoute><SellerPage /></ProtectedRoute>} />

@@ -28,7 +28,7 @@ const OTPVerificationPage = () => {
         if (auth.currentUser.emailVerified) {
           // Sync verification status to database
           await syncEmailVerificationStatus(auth.currentUser);
-          navigate('/home');
+          navigate('/dashboard');
         }
       } catch (err) {
         console.error('Auto-check failed:', err);
@@ -65,7 +65,7 @@ const OTPVerificationPage = () => {
       if (auth.currentUser.emailVerified) {
         // Sync verification status to database
         await syncEmailVerificationStatus(auth.currentUser);
-        navigate('/home');
+        navigate('/dashboard');
       } else {
         setError("Email not verified yet. Check your inbox and click the link, then try again.");
       }

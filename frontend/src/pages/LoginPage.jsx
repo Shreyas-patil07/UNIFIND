@@ -29,7 +29,7 @@ const LoginPage = () => {
     setLoading(true);
     try {
       await login(email, password);
-      navigate('/home');
+      navigate('/dashboard');
     } catch (err) {
       // For invalid credentials, show option to create account (without error message)
       if (err.code === 'auth/user-not-found' || 
