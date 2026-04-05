@@ -38,6 +38,7 @@ class UserProfileBase(BaseModel):
     hostel_room: Optional[str] = None
     branch_change_history: Optional[List[Dict]] = []
     photo_change_history: Optional[List[Dict]] = []
+    dark_mode: bool = False
 
 
 class UserProfileCreate(UserProfileBase):
@@ -108,6 +109,9 @@ class MessageCreate(MessageBase):
 
 class Message(MessageBase):
     id: str
+    receiver_id: str
+    product_id: Optional[str] = None
+    chat_room_id: str
     timestamp: datetime
     is_read: bool = False
 

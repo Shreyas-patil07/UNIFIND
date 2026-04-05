@@ -55,6 +55,7 @@
 - 🔍 **Advanced Search** - Filter by category, price, condition, semester, and location
 - 📱 **Responsive Design** - Seamless experience across all devices
 - ⚡ **Lightning Fast** - Built with Vite for instant hot module replacement (<1s startup)
+- 🌙 **Dark Mode** - Toggle between light and dark themes with persistent preference
 
 ### AI-Powered Features
 - 🤖 **AI Need Board** - Post what you need in natural language, get smart matches
@@ -649,6 +650,19 @@ For detailed documentation, see the files above or visit the `/docs` endpoint wh
 ---
 
 ## 📝 Recent Updates
+
+### April 6, 2026 - Dark Mode Feature
+- **Complete Dark Mode System**: Toggle between light and dark themes
+  - Elegant toggle switch on Profile page with Moon/Sun icons
+  - Applies to all pages except landing page
+  - Saves preference to Firestore database
+  - Persists across sessions and devices
+  - Smooth animations and transitions
+  - Mobile responsive design
+- **Color Scheme**: Professional dark theme with slate colors
+  - Dark backgrounds: slate-900, slate-800
+  - Light text: slate-100, slate-200, slate-300
+  - Consistent across all components
 
 ### April 5, 2026 - Chat & Public Profiles
 - **Working Chat System**: Fully functional real-time messaging

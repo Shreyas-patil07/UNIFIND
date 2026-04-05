@@ -3,7 +3,14 @@ import re
 
 from services.gemini_client import generate_content
 
-SYSTEM_PROMPT = "You are a semantic search engine. Rank items based on relevance to user need."
+SYSTEM_PROMPT = """You are a product matching AI for a student marketplace. Your job is to rank products by how well they match what the user wants.
+
+CRITICAL RULES:
+1. You MUST return ONLY a valid JSON array, nothing else
+2. Do NOT include any explanatory text before or after the JSON
+3. Do NOT use markdown code blocks
+4. Rank ALL products provided, even if they don't match well
+5. Higher match_score means better match (0-100 scale)"""
 
 
 async def rank_listings(query: str, intent: dict, listings: list[dict]) -> list[dict]:
@@ -16,14 +23,43 @@ async def rank_listings(query: str, intent: dict, listings: list[dict]) -> list[
     Raises:
         ValueError: if the Gemini response cannot be parsed as a JSON array.
     """
-    intent_json = json.dumps(intent, ensure_ascii=False)
-    listings_json = json.dumps(listings, ensure_ascii=False)
+    # Optimize: Send only essential fields to reduce token usage
+    simplified_listings = [
+        {
+            "id": l["id"],
+            "title": l["title"],
+            "category": l.get("category", ""),
+            "price": l.get("price", 0),
+            "condition": l.get("condition", ""),
+            "description": l.get("description", "")[:100]  # Limit description to 100 chars
+        }
+        for l in listings
+    ]
+    
+    # Optimize: Simplify intent to only relevant fields
+    simplified_intent = {
+        "category": intent.get("category", ""),
+        "subject": intent.get("subject", ""),
+        "max_price": intent.get("max_price"),
+        "condition": intent.get("condition", "")
+    }
+    
+    intent_json = json.dumps(simplified_intent, ensure_ascii=False)
+    listings_json = json.dumps(simplified_listings, ensure_ascii=False)
 
     user_prompt = (
-        f"User query: {query}\n"
-        f"Extracted intent: {intent_json}\n"
-        f"Listings: {listings_json}\n"
-        "Return ONLY a JSON array of objects with keys: id, match_score (0-100), reason."
+        "TASK: Rank these products based on how well they match the user's needs.\n\n"
+        f"USER QUERY: {query[:200]}\n\n"  # Limit query length
+        f"USER INTENT:\n{intent_json}\n\n"
+        f"PRODUCTS:\n{listings_json}\n\n"
+        "RANKING INSTRUCTIONS:\n"
+        "1. Compare each product against the user's intent\n"
+        "2. Consider: category match, item match, price fit, condition match\n"
+        "3. Score 0-100: 90-100=perfect, 70-89=good, 50-69=decent, 30-49=weak, 0-29=poor\n"
+        "4. Explain score briefly\n\n"
+        "OUTPUT FORMAT (JSON array only):\n"
+        '[{"id": "1", "match_score": 85, "reason": "brief explanation"}, ...]\n\n'
+        "Return ONLY the JSON array with ALL products."
     )
 
     raw = await generate_content(SYSTEM_PROMPT, user_prompt)

@@ -61,7 +61,7 @@ const LoginPage = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-slate-900">
+    <div className="min-h-[100dvh] flex flex-col lg:flex-row bg-slate-900">
 
       {/* ===== LEFT PANEL - Branding (Desktop Only) ===== */}
       <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 bg-gradient-hero overflow-hidden">
@@ -118,7 +118,7 @@ const LoginPage = () => {
       </div>
 
       {/* ===== RIGHT PANEL - Form ===== */}
-      <div className="flex-1 flex flex-col justify-center p-6 sm:p-10 lg:p-14 bg-slate-50 min-h-screen lg:min-h-0">
+      <div className="flex-1 flex flex-col justify-center p-6 sm:p-10 lg:p-14 bg-slate-50 min-h-[100dvh] lg:min-h-0">
         <div className="w-full max-w-md mx-auto">
 
           {/* Mobile Logo */}
@@ -268,3 +268,4 @@ function getErrorMessage(code) {
 }
 
 export default LoginPage;
+

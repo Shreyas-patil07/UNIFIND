@@ -4,10 +4,12 @@ import Header from '../components/Header';
 import { ShoppingBag, Package, MessageCircle, BarChart3, Sparkles, List, TrendingUp, Clock, ArrowRight } from 'lucide-react';
 import { recentActivity, userStats } from '../data/mockData';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 const DashboardHome = () => {
   const navigate = useNavigate();
   const { currentUser, userProfile } = useAuth();
+  const { darkMode } = useTheme();
 
   const displayName = currentUser?.displayName || userProfile?.name || 'Student';
   const firstName = displayName.split(' ')[0];
@@ -87,7 +89,7 @@ const DashboardHome = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className={`min-h-[100dvh] ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
       <Header hideSearch />
 
       <div className="px-4 sm:px-6 md:px-10 lg:px-20 py-8 with-bottom-nav">
@@ -143,7 +145,7 @@ const DashboardHome = () => {
 
         {/* ===== QUICK STATS ===== */}
         <div className="mb-8">
-          <h2 className="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
+          <h2 className={`text-base font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
             <span className="h-4 w-1 bg-indigo-600 rounded-full inline-block" />
             Quick Stats
           </h2>
@@ -153,9 +155,9 @@ const DashboardHome = () => {
               { label: 'Items Sold', value: itemsSold, color: 'text-emerald-600', bg: 'bg-emerald-50', testId: 'stat-sold' },
               { label: 'Rating', value: `${rating.toFixed(1)}⭐`, color: 'text-amber-600', bg: 'bg-amber-50', testId: 'stat-rating' },
             ].map(({ label, value, color, bg, testId }) => (
-              <div key={label} className="card-premium p-4 text-center" data-testid={testId}>
+              <div key={label} className={`rounded-2xl border p-4 text-center ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`} data-testid={testId}>
                 <div className={`text-xl sm:text-2xl font-black ${color} mb-0.5`}>{value}</div>
-                <div className="text-xs text-slate-500">{label}</div>
+                <div className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{label}</div>
               </div>
             ))}
           </div>
@@ -163,7 +165,7 @@ const DashboardHome = () => {
 
         {/* ===== QUICK ACCESS GRID ===== */}
         <div className="mb-8">
-          <h2 className="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
+          <h2 className={`text-base font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
             <span className="h-4 w-1 bg-indigo-600 rounded-full inline-block" />
             Quick Access
           </h2>
@@ -174,14 +176,14 @@ const DashboardHome = () => {
                 <div
                   key={card.title}
                   onClick={() => navigate(card.path)}
-                  className="card-premium p-4 cursor-pointer text-center group"
+                  className={`rounded-2xl border p-4 cursor-pointer text-center group ${darkMode ? 'bg-slate-800 border-slate-700 hover:border-indigo-500' : 'bg-white border-slate-200 shadow-sm hover:shadow-card-hover'}`}
                   data-testid={card.testId}
                 >
                   <div className={`${card.bg} h-11 w-11 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300`}>
                     <Icon className={`h-5 w-5 ${card.iconColor}`} />
                   </div>
-                  <h3 className="text-sm font-bold text-slate-900 mb-0.5">{card.title}</h3>
-                  <p className="text-xs text-slate-500 hidden sm:block">{card.description}</p>
+                  <h3 className={`text-sm font-bold mb-0.5 ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{card.title}</h3>
+                  <p className={`text-xs hidden sm:block ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{card.description}</p>
                 </div>
               );
             })}
@@ -191,7 +193,7 @@ const DashboardHome = () => {
         {/* ===== RECENT ACTIVITY ===== */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-bold text-slate-700 flex items-center gap-2">
+            <h2 className={`text-base font-bold flex items-center gap-2 ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
               <span className="h-4 w-1 bg-indigo-600 rounded-full inline-block" />
               Recent Activity
             </h2>
@@ -202,12 +204,14 @@ const DashboardHome = () => {
               View all <ArrowRight className="h-3 w-3" />
             </button>
           </div>
-          <div className="card-premium overflow-hidden">
+          <div className={`rounded-2xl border overflow-hidden ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
             {recentActivity.map((activity, index) => (
               <div
                 key={activity.id}
-                className={`flex items-center justify-between px-4 sm:px-5 py-4 hover:bg-slate-50 transition-colors ${
-                  index !== recentActivity.length - 1 ? 'border-b border-slate-100' : ''
+                className={`flex items-center justify-between px-4 sm:px-5 py-4 transition-colors ${
+                  darkMode ? 'hover:bg-slate-700/50' : 'hover:bg-slate-50'
+                } ${
+                  index !== recentActivity.length - 1 ? (darkMode ? 'border-b border-slate-700' : 'border-b border-slate-100') : ''
                 }`}
                 data-testid={`activity-item-${activity.id}`}
               >
@@ -221,15 +225,15 @@ const DashboardHome = () => {
                     {activity.type === 'review' && <TrendingUp className="h-5 w-5 text-amber-600" />}
                   </div>
                   <div className="min-w-0">
-                    <div className="text-sm font-medium text-slate-900 truncate">{activity.title}</div>
-                    <div className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                    <div className={`text-sm font-medium truncate ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{activity.title}</div>
+                    <div className={`text-xs flex items-center gap-1 mt-0.5 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                       <Clock className="h-3 w-3" />
                       {activity.date}
                     </div>
                   </div>
                 </div>
                 {activity.amount && (
-                  <div className="text-base font-bold text-slate-900 flex-shrink-0 ml-2">
+                  <div className={`text-base font-bold flex-shrink-0 ml-2 ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>
                     ₹{activity.amount.toLocaleString()}
                   </div>
                 )}
@@ -243,3 +247,4 @@ const DashboardHome = () => {
 };
 
 export default DashboardHome;
+

@@ -32,6 +32,7 @@
 - ⭐ Trust Score System
 - 💬 **Real-time Messaging** (3-second auto-refresh)
 - 👤 **Public Profile Viewing** (with privacy protection)
+- 🌙 **Dark Mode** (toggle with persistent preference)
 - 📊 Analytics Dashboard
 - 🎯 Advanced Search & Filters
 - 📱 Fully Responsive Design
@@ -403,6 +404,7 @@ Visit `http://localhost:8000/docs` for Swagger UI with interactive API testing.
 ### Contexts
 
 - **AuthContext** - Firebase authentication state management
+- **ThemeContext** - Dark mode state management and persistence
 
 ---
 
@@ -815,6 +817,27 @@ This project is licensed under the MIT License.
 
 ## Recent Updates
 
+### April 6, 2026 - Dark Mode Feature
+
+**Complete Dark Mode System**:
+- Elegant toggle switch on Profile page (top right, above profile card)
+- Moon icon for Light Mode, Sun icon for Dark Mode
+- Applies to all pages except landing page (`/home`)
+- Saves preference to Firestore database
+- Persists across sessions and devices
+- Smooth animations and transitions
+- Mobile responsive design
+
+**Implementation Details**:
+- Created `ThemeContext.jsx` for state management
+- Added `dark_mode` boolean field to user profiles
+- Enabled Tailwind dark mode with `darkMode: 'class'`
+- Applied dark styles to 8 pages + Header component
+- Color scheme: slate-900/800 backgrounds, slate-100/200/300 text
+
+**Pages with Dark Mode**:
+- Dashboard Home, Buyer, Seller, Profile, Chat, NeedBoard, Post Listing, Header
+
 ### April 5, 2026 - Chat & Public Profiles
 
 **Working Chat System**:
@@ -868,4 +891,4 @@ This project is licensed under the MIT License.
 
 ---
 
-**Last Updated**: April 5, 2026 | **Version**: 2.2.0
+**Last Updated**: April 6, 2026 | **Version**: 2.3.0

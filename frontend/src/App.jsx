@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import PublicRoute from './components/PublicRoute'
 import { useAuth } from './contexts/AuthContext'
@@ -32,26 +33,28 @@ function ProfileRedirect() {
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/home" element={<LandingPage />} />
-          <Route path="/" element={<Navigate to="/home" replace />} />
-          <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-          <Route path="/signup" element={<PublicRoute><SignupPage /></PublicRoute>} />
-          <Route path="/otp-verification" element={<OTPVerificationPage />} />
-          <Route path="/dashboard" element={<ProtectedRoute><DashboardHome /></ProtectedRoute>} />
-          <Route path="/buyer" element={<ProtectedRoute><BuyerPage /></ProtectedRoute>} />
-          <Route path="/listing/:id" element={<ProtectedRoute><ListingDetailPage /></ProtectedRoute>} />
-          <Route path="/seller" element={<ProtectedRoute><SellerPage /></ProtectedRoute>} />
-          <Route path="/post-listing" element={<ProtectedRoute><PostListingPage /></ProtectedRoute>} />
-          <Route path="/need-board" element={<ProtectedRoute><NeedBoardPage /></ProtectedRoute>} />
-          <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
-          <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><ProfileRedirect /></ProtectedRoute>} />
-          <Route path="/profile/:userId" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-          <Route path="/profile/:userId/edit" element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} />
-        </Routes>
-      </BrowserRouter>
+      <ThemeProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/home" element={<LandingPage />} />
+            <Route path="/" element={<Navigate to="/home" replace />} />
+            <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+            <Route path="/signup" element={<PublicRoute><SignupPage /></PublicRoute>} />
+            <Route path="/otp-verification" element={<OTPVerificationPage />} />
+            <Route path="/dashboard" element={<ProtectedRoute><DashboardHome /></ProtectedRoute>} />
+            <Route path="/buyer" element={<ProtectedRoute><BuyerPage /></ProtectedRoute>} />
+            <Route path="/listing/:id" element={<ProtectedRoute><ListingDetailPage /></ProtectedRoute>} />
+            <Route path="/seller" element={<ProtectedRoute><SellerPage /></ProtectedRoute>} />
+            <Route path="/post-listing" element={<ProtectedRoute><PostListingPage /></ProtectedRoute>} />
+            <Route path="/need-board" element={<ProtectedRoute><NeedBoardPage /></ProtectedRoute>} />
+            <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+            <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><ProfileRedirect /></ProtectedRoute>} />
+            <Route path="/profile/:userId" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="/profile/:userId/edit" element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} />
+          </Routes>
+        </BrowserRouter>
+      </ThemeProvider>
     </AuthProvider>
   )
 }

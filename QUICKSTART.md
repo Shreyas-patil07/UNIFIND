@@ -393,7 +393,14 @@ Before asking for help, verify:
 
 ## 🎉 What's New
 
-### Latest Features (April 5, 2026)
+### Latest Features (April 6, 2026)
+
+**Dark Mode**:
+- Toggle between light and dark themes from your Profile page
+- Elegant switch with Moon/Sun icons
+- Preference saves automatically to your account
+- Works across all pages (except landing page)
+- Smooth transitions and animations
 
 **Working Chat System**:
 - Real-time messaging with 3-second auto-refresh

@@ -44,6 +44,7 @@ export const AuthProvider = ({ children }) => {
       member_since: new Date().getFullYear().toString(),
       avatar: null,
       email_verified: false,
+      dark_mode: false,
       created_at: new Date().toISOString()
     }
 

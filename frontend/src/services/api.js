@@ -134,3 +134,10 @@ export const markChatAsRead = async (chatRoomId, userId) => {
 }
 
 export default api
+
+
+// AI Need Board
+export const searchNeedBoard = async (query) => {
+  const response = await api.post('/need-board', { query })
+  return response.data // { extracted, rankedResults }
+}

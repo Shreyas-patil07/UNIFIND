@@ -4,8 +4,10 @@ import ProductCard from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/SkeletonLoader';
 import { products, categories } from '../data/mockData';
 import { SlidersHorizontal, X } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
 
 const BuyerPage = () => {
+  const { darkMode } = useTheme();
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [priceRange, setPriceRange] = useState('all');
@@ -39,7 +41,9 @@ const BuyerPage = () => {
       className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
         active
           ? 'bg-indigo-600 text-white shadow-glow-indigo'
-          : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
+          : darkMode 
+            ? 'bg-slate-800 text-slate-300 border border-slate-700 hover:border-indigo-500 hover:text-indigo-400'
+            : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
       }`}
       data-testid={testId}
     >
@@ -48,7 +52,7 @@ const BuyerPage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className={`min-h-[100dvh] pb-20 ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
       <Header />
 
       <div className="px-4 sm:px-6 md:px-10 lg:px-20 py-6 with-bottom-nav">
@@ -75,7 +79,7 @@ const BuyerPage = () => {
 
         {/* ===== CATEGORY CHIPS (horizontal scroll on mobile) ===== */}
         <div className="mb-5">
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5">Category</div>
+          <div className={`text-xs font-bold uppercase tracking-wider mb-2.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Category</div>
           <div className="chips-row">
             {categories.map((cat) => (
               <FilterChip
@@ -122,7 +126,11 @@ const BuyerPage = () => {
             )}
             <button
               onClick={() => setFilterDrawerOpen(true)}
-              className="relative flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold bg-white border border-slate-200 text-slate-700 hover:border-indigo-300 transition-colors shadow-sm"
+              className={`relative flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold border transition-colors shadow-sm ${
+                darkMode 
+                  ? 'bg-slate-800 border-slate-700 text-slate-300 hover:border-indigo-500'
+                  : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-300'
+              }`}
             >
               <SlidersHorizontal className="h-4 w-4" />
               <span className="hidden sm:inline">Condition</span>
@@ -140,10 +148,10 @@ const BuyerPage = () => {
               className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 animate-fade-in"
               onClick={() => setFilterDrawerOpen(false)}
             />
-            <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl p-6 shadow-2xl animate-slide-in-up md:static md:rounded-2xl md:bg-transparent md:shadow-none md:p-0 md:animate-none">
+            <div className={`fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl p-6 shadow-2xl animate-slide-in-up md:static md:rounded-2xl md:bg-transparent md:shadow-none md:p-0 md:animate-none ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
               <div className="flex items-center justify-between mb-5">
-                <h3 className="text-base font-bold text-slate-900">Condition</h3>
-                <button onClick={() => setFilterDrawerOpen(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500">
+                <h3 className={`text-base font-bold ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>Condition</h3>
+                <button onClick={() => setFilterDrawerOpen(false)} className={`p-1.5 rounded-lg ${darkMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}>
                   <X className="h-5 w-5" />
                 </button>
               </div>
@@ -170,8 +178,8 @@ const BuyerPage = () => {
 
         {/* ===== RESULTS COUNT ===== */}
         <div className="flex items-center justify-between mb-5">
-          <p className="text-sm text-slate-500" data-testid="results-count">
-            <span className="font-bold text-slate-900">{filteredProducts.length}</span> results
+          <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} data-testid="results-count">
+            <span className={`font-bold ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{filteredProducts.length}</span> results
             {selectedCategory !== 'All' && (
               <span className="ml-1">in <span className="font-semibold text-indigo-600">{selectedCategory}</span></span>
             )}
@@ -193,10 +201,10 @@ const BuyerPage = () => {
         {filteredProducts.length === 0 && !loading && (
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🔍</div>
-            <p className="text-lg font-semibold text-slate-700 mb-2" data-testid="no-results-message">
+            <p className={`text-lg font-semibold mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`} data-testid="no-results-message">
               No products found
             </p>
-            <p className="text-slate-400 text-sm mb-6">Try adjusting your filters</p>
+            <p className={`text-sm mb-6 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Try adjusting your filters</p>
             <button onClick={resetFilters} className="btn-gradient px-6 py-2.5 text-sm">
               Reset Filters
             </button>
@@ -208,3 +216,4 @@ const BuyerPage = () => {
 };
 
 export default BuyerPage;
+

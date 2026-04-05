@@ -84,13 +84,8 @@ const ProductCard = ({ product }) => {
           />
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-slate-800 truncate" data-testid="seller-name">
-              {seller?.name}
+              {seller?.name?.split(' ')[0] || seller?.name}
             </p>
-          </div>
-          <div className="flex-shrink-0 bg-emerald-50 px-1.5 py-0.5 rounded-md">
-            <span className="text-[10px] font-bold text-emerald-700" data-testid="seller-trust-score">
-              {seller?.trustScore}%
-            </span>
           </div>
         </div>
 

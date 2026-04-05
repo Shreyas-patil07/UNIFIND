@@ -76,43 +76,44 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-900 overflow-x-hidden">
+    <div className="min-h-[100dvh] bg-slate-900 overflow-x-hidden">
 
       {/* ===== NAVBAR ===== */}
       <header className="sticky top-0 z-50 glass-dark border-b border-white/10">
-        <div className="px-4 sm:px-6 md:px-10 lg:px-20 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2" data-testid="landing-logo">
-            <img src="/UNIFIND.png" alt="UNIFIND Logo" className="h-9 w-auto" />
-            <span className="font-['Outfit'] font-black text-xl tracking-tight">
+        <div className="px-3 sm:px-4 md:px-6 lg:px-10 xl:px-20 py-2.5 sm:py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-3" data-testid="landing-logo">
+            <img src="/UNIFIND.png" alt="UNIFIND Logo" className="h-12 sm:h-14 md:h-16 w-auto" />
+            <span className="font-['Outfit'] font-black text-2xl sm:text-3xl md:text-4xl tracking-tight">
               <span className="text-indigo-400">UNI</span>
               <span className="text-violet-400">FIND</span>
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {currentUser ? (
               <button
                 onClick={() => navigate('/profile')}
-                className="btn-gradient px-5 py-2 text-sm flex items-center gap-2"
+                className="btn-gradient px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2"
                 data-testid="landing-profile-btn"
               >
-                <User className="h-4 w-4" />
-                Profile
+                <User className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Profile</span>
               </button>
             ) : (
               <>
                 <button
                   onClick={() => navigate('/login')}
-                  className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200"
+                  className="px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-slate-300 hover:text-white hover:bg-white/10 rounded-lg sm:rounded-xl transition-all duration-200"
                   data-testid="landing-login-btn"
                 >
                   Login
                 </button>
                 <button
                   onClick={() => navigate('/signup')}
-                  className="btn-gradient px-5 py-2 text-sm"
+                  className="btn-gradient px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 text-xs sm:text-sm"
                   data-testid="landing-signup-btn"
                 >
-                  Get Started
+                  <span className="hidden sm:inline">Get Started</span>
+                  <span className="sm:hidden">Sign Up</span>
                 </button>
               </>
             )}
@@ -121,72 +122,72 @@ const LandingPage = () => {
       </header>
 
       {/* ===== HERO SECTION ===== */}
-      <section className="relative overflow-hidden pt-12 pb-24 md:pt-16 md:pb-32 px-4 sm:px-6 md:px-10 lg:px-20 bg-gradient-hero">
+      <section className="relative overflow-hidden pt-4 pb-20 md:pb-28 lg:pb-40 px-4 sm:px-6 md:px-10 lg:px-20 bg-gradient-hero min-h-[80vh] md:min-h-[85vh] flex flex-col justify-center">
         {/* Decorative orbs */}
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-violet-600/20 rounded-full blur-3xl pointer-events-none animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 left-0 w-64 h-64 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 left-1/4 w-[450px] h-[450px] bg-indigo-600/20 rounded-full blur-3xl pointer-events-none animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-[350px] h-[350px] bg-violet-600/20 rounded-full blur-3xl pointer-events-none animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-0 w-72 h-72 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
 
         {/* SIGCE Banner */}
-        <div className="relative z-10 flex justify-center mb-10">
-          <div className="glass border border-indigo-500/40 rounded-2xl px-5 py-3 inline-flex items-center gap-3 animate-fade-in-up">
-            <span className="text-2xl">🎓</span>
-            <div>
-              <p className="text-white font-bold text-sm">Currently Open to SIGCE Students</p>
-              <p className="text-slate-400 text-xs">Exclusively for Smt. Indira Gandhi College of Engineering</p>
+        <div className="relative z-10 flex justify-center mb-4 md:mb-6">
+          <div className="glass border border-indigo-500/40 rounded-xl md:rounded-2xl px-3 py-2.5 md:px-5 md:py-3.5 inline-flex items-center gap-2 md:gap-3 animate-fade-in-up shadow-xl max-w-full">
+            <span className="text-xl md:text-2xl lg:text-3xl flex-shrink-0">🎓</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-bold text-xs sm:text-sm md:text-base">Currently Open to SIGCE Students</p>
+              <p className="text-slate-400 text-[10px] sm:text-xs md:text-sm hidden sm:block">Exclusively for Smt. Indira Gandhi College of Engineering</p>
             </div>
             <a
               href="https://sigce.edu.in/"
               target="_blank"
               rel="noopener noreferrer"
-              className="ml-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all duration-200 active:scale-95 whitespace-nowrap"
+              className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-500 text-white text-xs md:text-sm font-semibold px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl transition-all duration-200 active:scale-95 whitespace-nowrap shadow-lg hover:shadow-xl"
               data-testid="sigce-link"
             >
-              Visit SIGCE →
+              Visit
             </a>
           </div>
         </div>
 
         {/* Hero Content */}
         <div className="relative z-10 max-w-5xl mx-auto text-center" ref={heroRef}>
-          <div className="mb-6 animate-fade-in-up animate-delay-100">
-            <span className="inline-flex items-center gap-2 bg-indigo-900/60 border border-indigo-500/40 rounded-full px-5 py-2 text-sm font-bold uppercase tracking-widest text-indigo-300">
-              <Sparkles className="h-4 w-4" />
+          <div className="mb-3 md:mb-4 animate-fade-in-up animate-delay-100">
+            <span className="inline-flex items-center gap-1.5 md:gap-2 bg-indigo-900/60 border border-indigo-500/40 rounded-full px-3 py-1.5 md:px-5 md:py-2.5 text-[10px] sm:text-xs md:text-sm lg:text-base font-bold uppercase tracking-widest text-indigo-300 shadow-lg">
+              <Sparkles className="h-3 w-3 md:h-4 md:w-4 lg:h-5 lg:w-5" />
               AI-Powered College Marketplace
             </span>
           </div>
 
           <h1
-            className="font-['Outfit'] text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight leading-tight mb-6 animate-fade-in-up animate-delay-200"
+            className="font-['Outfit'] text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-black tracking-tight leading-[1.1] mb-3 md:mb-4 lg:mb-5 animate-fade-in-up animate-delay-200 px-2"
             data-testid="hero-title"
           >
             <span className="text-white">Buy &amp; Sell </span>
             <br />
             <span className="gradient-text-hero">on Campus</span>
             <br />
-            <span className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold">Safely &amp; Easily</span>
+            <span className="text-white text-xl sm:text-2xl md:text-3xl lg:text-5xl xl:text-6xl font-bold">Safely &amp; Easily</span>
           </h1>
 
           <p
-            className="text-lg sm:text-xl leading-relaxed text-slate-400 max-w-2xl mx-auto mb-10 animate-fade-in-up animate-delay-300"
+            className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl leading-relaxed text-slate-300 max-w-3xl mx-auto mb-6 md:mb-8 lg:mb-12 animate-fade-in-up animate-delay-300 px-4"
             data-testid="hero-description"
           >
             India's most trusted student marketplace. Buy, sell, and trade with verified college students.
-            <span className="text-indigo-400 font-medium"> AI-powered matching</span>, trust scores, and instant chat.
+            <span className="text-indigo-400 font-semibold"> AI-powered matching</span>, trust scores, and instant chat.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up animate-delay-400">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 md:gap-4 lg:gap-5 animate-fade-in-up animate-delay-400 px-4">
             <button
               onClick={() => navigate('/signup')}
-              className="btn-gradient w-full sm:w-auto px-8 py-4 text-base flex items-center justify-center gap-2"
+              className="btn-gradient w-full sm:w-auto px-6 py-3 md:px-8 md:py-3.5 lg:px-9 lg:py-4 text-sm md:text-base lg:text-lg font-bold flex items-center justify-center gap-2 shadow-2xl hover:shadow-indigo-500/50 transition-all duration-300 hover:scale-105"
               data-testid="hero-get-started-btn"
             >
               Get Started Free
-              <ArrowRight className="h-5 w-5" />
+              <ArrowRight className="h-4 w-4 md:h-5 md:w-5" />
             </button>
             <button
               onClick={() => navigate('/buyer')}
-              className="w-full sm:w-auto glass border border-white/20 text-white font-semibold px-8 py-4 rounded-xl text-base hover:bg-white/10 transition-all duration-200 active:scale-95"
+              className="w-full sm:w-auto glass border border-white/20 text-white font-bold px-6 py-3 md:px-8 md:py-3.5 lg:px-9 lg:py-4 rounded-xl text-sm md:text-base lg:text-lg hover:bg-white/10 transition-all duration-300 active:scale-95 shadow-xl hover:shadow-2xl"
               data-testid="hero-browse-btn"
             >
               Browse Listings
@@ -194,16 +195,16 @@ const LandingPage = () => {
           </div>
 
           {/* Social Proof */}
-          <div className="mt-12 flex items-center justify-center gap-6 animate-fade-in-up animate-delay-500">
+          <div className="mt-8 md:mt-12 lg:mt-16 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 animate-fade-in-up animate-delay-500 px-4">
             <div className="flex -space-x-2">
               {['bg-indigo-500', 'bg-violet-500', 'bg-emerald-500', 'bg-blue-500'].map((c, i) => (
-                <div key={i} className={`h-9 w-9 ${c} rounded-full border-2 border-slate-900 flex items-center justify-center text-white text-sm font-bold`}>
+                <div key={i} className={`h-8 w-8 md:h-10 md:w-10 lg:h-11 lg:w-11 ${c} rounded-full border-2 md:border-3 border-slate-900 flex items-center justify-center text-white text-sm md:text-base lg:text-lg font-bold shadow-lg`}>
                   {['R', 'A', 'P', 'S'][i]}
                 </div>
               ))}
             </div>
-            <p className="text-slate-400 text-sm">
-              <span className="text-white font-semibold">8,900+</span> students already joined
+            <p className="text-slate-300 text-xs sm:text-sm md:text-base text-center sm:text-left">
+              <span className="text-white font-bold text-base sm:text-lg md:text-xl">8,900+</span> students already joined
             </p>
           </div>
         </div>
@@ -343,3 +344,4 @@ const LandingPage = () => {
 };
 
 export default LandingPage;
+

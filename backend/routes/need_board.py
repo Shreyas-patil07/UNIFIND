@@ -1,5 +1,6 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+import time
 
 from models import NeedBoardRequest, NeedBoardResponse, ExtractedIntent, RankedResult
 from services.mock_listings import MOCK_LISTINGS
@@ -9,9 +10,32 @@ from services.gemini_client import GeminiAPIError, GeminiTimeoutError
 
 router = APIRouter()
 
+# Rate limiting: track last request time per IP
+_last_request_time = {}
+RATE_LIMIT_SECONDS = 10  # 1 request per 10 seconds per IP
+
 
 @router.post("/need-board", response_model=NeedBoardResponse)
-async def need_board(request: NeedBoardRequest):
+async def need_board(request: NeedBoardRequest, req: Request):
+    # Rate limiting check
+    client_ip = req.client.host
+    current_time = time.time()
+    
+    if client_ip in _last_request_time:
+        time_since_last = current_time - _last_request_time[client_ip]
+        if time_since_last < RATE_LIMIT_SECONDS:
+            wait_time = int(RATE_LIMIT_SECONDS - time_since_last)
+            return JSONResponse(
+                status_code=429,
+                content={
+                    "error": "Too many requests",
+                    "detail": f"Please wait {wait_time} seconds before trying again.",
+                },
+            )
+    
+    # Update last request time
+    _last_request_time[client_ip] = current_time
+    
     # Validate query is non-empty / non-whitespace
     if not request.query or not request.query.strip():
         return JSONResponse(

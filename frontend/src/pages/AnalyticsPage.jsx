@@ -31,7 +31,7 @@ const AnalyticsPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-[100dvh] bg-slate-50">
       <Header />
       
       <div className="px-6 sm:px-8 md:px-12 lg:px-24 py-12">
@@ -185,3 +185,4 @@ const AnalyticsPage = () => {
 };
 
 export default AnalyticsPage;
+

@@ -59,6 +59,7 @@ async def create_user(user: UserCreate):
         'hostel_room': None,
         'branch_change_history': [],
         'photo_change_history': [],
+        'dark_mode': False,
         'updated_at': datetime.now()
     }
     
@@ -141,29 +142,48 @@ async def get_user_profile(user_id: str, include_private: bool = False):
     user_data = user_doc.to_dict()
     user_data['id'] = user_doc.id
     
-    # Get profile
+    # Get profile (if exists)
     profiles = db.collection('user_profiles').where('user_id', '==', user_id).limit(1).stream()
     
+    profile_data = None
     for doc in profiles:
         profile_data = doc.to_dict()
         profile_data['id'] = doc.id
-        
-        # Remove private fields if not requested
-        if not include_private:
-            private_fields = ['phone', 'hostel_room', 'branch_change_history', 'photo_change_history']
-            for field in private_fields:
-                profile_data.pop(field, None)
-            # Also hide email from user data for public view
-            user_data.pop('email', None)
-        
-        # Combine user and profile data
-        return {
-            **user_data,
-            **profile_data,
-            'user_id': user_id
+        break
+    
+    # If no profile exists, create default profile data
+    if not profile_data:
+        profile_data = {
+            'user_id': user_id,
+            'branch': None,
+            'avatar': None,
+            'cover_gradient': 'from-blue-600 to-purple-600',
+            'bio': None,
+            'trust_score': 0.0,
+            'rating': 0.0,
+            'review_count': 0,
+            'member_since': user_data.get('created_at', '').split('T')[0].split('-')[0] if user_data.get('created_at') else str(datetime.now().year),
+            'phone': None,
+            'hostel_room': None,
+            'branch_change_history': [],
+            'photo_change_history': [],
+            'dark_mode': False
         }
     
-    raise HTTPException(status_code=404, detail="User profile not found")
+    # Remove private fields if not requested
+    if not include_private:
+        private_fields = ['phone', 'hostel_room', 'branch_change_history', 'photo_change_history', 'dark_mode']
+        for field in private_fields:
+            profile_data.pop(field, None)
+        # Also hide email from user data for public view
+        user_data.pop('email', None)
+    
+    # Combine user and profile data
+    return {
+        **user_data,
+        **profile_data,
+        'user_id': user_id
+    }
 
 
 @router.put("/users/{user_id}/profile")

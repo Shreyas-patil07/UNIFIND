@@ -1,5 +1,8 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
+import os
+
+_env_path = os.path.join(os.path.dirname(__file__), ".env")
 
 
 class Settings(BaseSettings):
@@ -22,8 +25,9 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str
     
     class Config:
-        env_file = ".env"
+        env_file = _env_path
         case_sensitive = True
+        extra = "ignore"
 
 
 settings = Settings()

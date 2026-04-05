@@ -1263,6 +1263,7 @@ Private project - All rights reserved
 - Added Firebase Authentication integration
 - Added smart rating system
 - Added chat room auto-creation
+- Added dark mode feature with persistent preference
 - Improved build performance (5s vs 60s+)
 - Improved dev server startup (<1s vs 30s+)
 - Cleaned project structure
@@ -1279,7 +1280,31 @@ Private project - All rights reserved
 
 ---
 
-## Recent Updates (April 5, 2026)
+## Recent Updates (April 6, 2026)
+
+### Dark Mode Feature (April 6, 2026)
+- **Complete Dark Mode System**: Toggle between light and dark themes
+  - Elegant toggle switch on Profile page (top right, above profile card)
+  - Moon icon for Light Mode, Sun icon for Dark Mode
+  - Applies to all pages except landing page (`/home`)
+  - Saves preference to Firestore database (`dark_mode` boolean field)
+  - Persists across sessions and devices
+  - Smooth animations and transitions
+  - Mobile responsive design
+- **Implementation Details**:
+  - Created `ThemeContext.jsx` for state management
+  - Added `dark_mode` field to user profiles (backend models)
+  - Enabled Tailwind dark mode with `darkMode: 'class'` configuration
+  - Applied dark styles to 8 pages + Header component
+  - Color scheme: slate-900/800 backgrounds, slate-100/200/300 text
+- **Pages with Dark Mode Support**:
+  - Dashboard Home, Buyer, Seller, Profile, Chat, NeedBoard, Post Listing, Header
+  - Mobile bottom navigation bar
+- **Files Modified**:
+  - Backend: `models.py`, `routes/users.py`
+  - Frontend: `ThemeContext.jsx` (NEW), `AuthContext.jsx`, `App.jsx`, `tailwind.config.js`, `index.css`
+  - Pages: `ProfilePage.jsx`, `DashboardHome.jsx`, `BuyerPage.jsx`, `SellerPage.jsx`, `ChatPage.jsx`, `NeedBoardPage.jsx`, `PostListingPage.jsx`
+  - Components: `Header.jsx`
 
 ### Chat & Public Profiles (April 5, 2026)
 - **Working Chat System**: Fully functional real-time messaging
@@ -1326,8 +1351,8 @@ Private project - All rights reserved
 
 ---
 
-**Last Updated**: 2026-04-05
-**Documentation Version**: 2.2.0
+**Last Updated**: 2026-04-06
+**Documentation Version**: 2.3.0
 **Project Status**: Active Development
 **Build**: Vite + FastAPI + Firebase
 **Total Files**: ~50
@@ -1335,4 +1360,4 @@ Private project - All rights reserved
 **Build Time**: 5s (vs 60s+ in v1.0.0)
 **Dev Startup**: <1s (vs 30s+ in v1.0.0)
 **Database Collections**: 7 (users, user_profiles, transaction_history, products, chat_rooms, messages, reviews)
-**New Features**: Working chat system, public profile viewing
+**New Features**: Dark mode, working chat system, public profile viewing

@@ -1,9 +1,10 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
-import { Shield, Star, Award, Calendar, GraduationCap, LogOut, Mail, CheckCircle, AlertCircle, RefreshCw, Edit2, Lock, MessageCircle } from 'lucide-react';
+import { Shield, Star, Award, Calendar, GraduationCap, LogOut, Mail, CheckCircle, AlertCircle, RefreshCw, Edit2, Lock, MessageCircle, Moon, Sun } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { sendEmailVerification } from 'firebase/auth';
 import { actionCodeSettings } from '../services/firebase';
 import { getPublicProfile } from '../services/api';
@@ -12,6 +13,7 @@ const ProfilePage = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const { logout, currentUser: authUser, userProfile, syncEmailVerificationStatus } = useAuth();
+  const { darkMode, toggleDarkMode } = useTheme();
   
   // Determine if viewing own profile or another user's profile
   const isOwnProfile = !userId || userId === authUser?.uid;
@@ -176,12 +178,12 @@ const ProfilePage = () => {
   // Show loading state
   if (!isOwnProfile && loadingProfile) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className={`min-h-[100dvh] ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
         <Header />
-        <div className="flex items-center justify-center h-[calc(100vh-80px)]">
+        <div className="flex items-center justify-center min-h-[calc(100dvh-80px)]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-            <p className="text-slate-600">Loading profile...</p>
+            <p className={darkMode ? 'text-slate-400' : 'text-slate-600'}>Loading profile...</p>
           </div>
         </div>
       </div>
@@ -191,9 +193,9 @@ const ProfilePage = () => {
   // Show error state
   if (!isOwnProfile && profileError) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className={`min-h-[100dvh] ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
         <Header />
-        <div className="flex items-center justify-center h-[calc(100vh-80px)]">
+        <div className="flex items-center justify-center min-h-[calc(100dvh-80px)]">
           <div className="text-center">
             <p className="text-red-600 mb-4">{profileError}</p>
             <Button onClick={() => navigate(-1)}>Go Back</Button>
@@ -204,19 +206,50 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <Header />
+    <div className={`min-h-[100dvh] pb-20 ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
+      <Header hideSearch />
       
       <div className="px-6 sm:px-8 md:px-12 lg:px-24 py-12">
         <div className="max-w-5xl mx-auto">
+          {/* Dark Mode Toggle - Only for own profile */}
+          {isOwnProfile && (
+            <div className="flex justify-end mb-4">
+              <button
+                onClick={toggleDarkMode}
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 ${
+                  darkMode 
+                    ? 'bg-slate-800 border border-slate-700 hover:bg-slate-700' 
+                    : 'bg-white border border-slate-200 hover:bg-slate-50 shadow-sm'
+                }`}
+              >
+                <div className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${
+                  darkMode ? 'bg-indigo-600' : 'bg-slate-300'
+                }`}>
+                  <div className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform duration-200 flex items-center justify-center ${
+                    darkMode ? 'translate-x-6' : 'translate-x-0'
+                  }`}>
+                    {darkMode ? (
+                      <Moon className="h-3 w-3 text-indigo-600" />
+                    ) : (
+                      <Sun className="h-3 w-3 text-amber-500" />
+                    )}
+                  </div>
+                </div>
+                <span className={`text-sm font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                  {darkMode ? 'Dark Mode' : 'Light Mode'}
+                </span>
+              </button>
+            </div>
+          )}
+          
           {/* Profile Header */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+          <div className={`rounded-2xl border shadow-sm overflow-hidden mb-8 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
             {/* Cover Image with Edit Button */}
             <div className={`h-32 bg-gradient-to-r ${coverGradient} relative`}>
               {isOwnProfile && authUser && isVerified && (
                 <button
                   onClick={() => navigate(`/profile/${authUser.uid}/edit`)}
-                  className="absolute top-4 right-4 bg-white/90 hover:bg-white text-slate-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg hover:shadow-xl"
+                  className={`absolute top-4 right-4 px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg hover:shadow-xl ${darkMode ? 'bg-slate-700/90 hover:bg-slate-700 text-slate-200' : 'bg-white/90 hover:bg-white text-slate-700'}`}
                   title="Edit Profile"
                 >
                   <Edit2 className="h-4 w-4" />
@@ -249,7 +282,7 @@ const ProfilePage = () => {
                 {/* Name and Verified Badge */}
                 <div className="w-full -mt-2">
                   <div className="flex flex-wrap items-center gap-3">
-                    <h1 className="font-['Outfit'] text-3xl font-bold tracking-tight text-slate-900" data-testid="profile-name">
+                    <h1 className={`font-['Outfit'] text-3xl font-bold tracking-tight ${darkMode ? 'text-slate-100' : 'text-slate-900'}`} data-testid="profile-name">
                       {displayName}
                     </h1>
                     {isVerified && (
@@ -270,8 +303,8 @@ const ProfilePage = () => {
                         <GraduationCap className="h-5 w-5 text-blue-600" />
                       </div>
                       <div className="min-w-0">
-                        <div className="text-xs text-slate-500 mb-0.5">College</div>
-                        <div className="font-medium text-slate-900 text-sm leading-tight" data-testid="profile-college">{displayCollege}</div>
+                        <div className={`text-xs mb-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>College</div>
+                        <div className={`font-medium text-sm leading-tight ${darkMode ? 'text-slate-200' : 'text-slate-900'}`} data-testid="profile-college">{displayCollege}</div>
                       </div>
                     </div>
                     
@@ -280,8 +313,8 @@ const ProfilePage = () => {
                         <Award className="h-5 w-5 text-purple-600" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="text-xs text-slate-500 mb-0.5">Branch</div>
-                        <div className="font-medium text-slate-900 text-sm leading-tight">
+                        <div className={`text-xs mb-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Branch</div>
+                        <div className={`font-medium text-sm leading-tight ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>
                           <span className="truncate">{displayBranch}</span>
                         </div>
                       </div>
@@ -292,8 +325,8 @@ const ProfilePage = () => {
                         <Calendar className="h-5 w-5 text-amber-600" />
                       </div>
                       <div className="min-w-0">
-                        <div className="text-xs text-slate-500 mb-0.5">Member Since</div>
-                        <div className="font-medium text-slate-900 text-sm leading-tight">{memberSince}</div>
+                        <div className={`text-xs mb-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Member Since</div>
+                        <div className={`font-medium text-sm leading-tight ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{memberSince}</div>
                       </div>
                     </div>
                     
@@ -303,14 +336,14 @@ const ProfilePage = () => {
                           <Mail className="h-5 w-5 text-green-600" />
                         </div>
                         <div className="min-w-0">
-                          <div className="text-xs text-slate-500 mb-0.5">Email</div>
-                          <div className="font-medium text-slate-900 text-sm leading-tight truncate">{displayEmail}</div>
+                          <div className={`text-xs mb-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Email</div>
+                          <div className={`font-medium text-sm leading-tight truncate ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{displayEmail}</div>
                         </div>
                       </div>
                     )}
                   </div>
                   
-                  {/* Edit and Logout Buttons */}
+                  {/* Logout Button */}
                   {isOwnProfile && (
                     <div className="flex flex-col gap-3">
                       <Button 
@@ -413,61 +446,61 @@ const ProfilePage = () => {
           {isVerified && (
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 text-center" data-testid="profile-stat-sold">
+            <div className={`rounded-2xl border p-6 text-center ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`} data-testid="profile-stat-sold">
               <Package className="h-8 w-8 text-blue-600 mx-auto mb-3" />
-              <div className="text-3xl font-black text-slate-900 mb-1">{itemsSold}</div>
-              <div className="text-sm text-slate-600">Items Sold</div>
+              <div className={`text-3xl font-black mb-1 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>{itemsSold}</div>
+              <div className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Items Sold</div>
             </div>
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 text-center" data-testid="profile-stat-rating">
+            <div className={`rounded-2xl border p-6 text-center ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`} data-testid="profile-stat-rating">
               <Star className="h-8 w-8 text-amber-400 mx-auto mb-3" />
-              <div className="text-3xl font-black text-slate-900 mb-1">{rating.toFixed(1)}</div>
-              <div className="text-sm text-slate-600">Average Rating</div>
+              <div className={`text-3xl font-black mb-1 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>{rating.toFixed(1)}</div>
+              <div className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Average Rating</div>
             </div>
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 text-center" data-testid="profile-stat-reviews">
+            <div className={`rounded-2xl border p-6 text-center ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`} data-testid="profile-stat-reviews">
               <Award className="h-8 w-8 text-purple-600 mx-auto mb-3" />
-              <div className="text-3xl font-black text-slate-900 mb-1">{reviewCount}</div>
-              <div className="text-sm text-slate-600">Reviews</div>
+              <div className={`text-3xl font-black mb-1 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>{reviewCount}</div>
+              <div className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Reviews</div>
             </div>
           </div>
 
           {/* Badges */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-8 mb-8">
-            <h2 className="text-xl font-bold text-slate-900 mb-6">Achievements</h2>
+          <div className={`rounded-2xl border p-8 mb-8 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+            <h2 className={`text-xl font-bold mb-6 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>Achievements</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center" data-testid="badge-verified">
                 <div className="bg-blue-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-2">
                   <Shield className="h-8 w-8 text-blue-600" />
                 </div>
-                <div className="text-sm font-medium text-slate-900">Verified</div>
+                <div className={`text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-slate-900'}`}>Verified</div>
               </div>
               <div className="text-center" data-testid="badge-trusted">
                 <div className="bg-green-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-2">
                   <Award className="h-8 w-8 text-green-600" />
                 </div>
-                <div className="text-sm font-medium text-slate-900">Trusted Seller</div>
+                <div className={`text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-slate-900'}`}>Trusted Seller</div>
               </div>
               <div className="text-center" data-testid="badge-star">
                 <div className="bg-amber-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-2">
                   <Star className="h-8 w-8 text-amber-400" />
                 </div>
-                <div className="text-sm font-medium text-slate-900">Top Rated</div>
+                <div className={`text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-slate-900'}`}>Top Rated</div>
               </div>
               <div className="text-center" data-testid="badge-pro">
                 <div className="bg-purple-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-2">
                   <Award className="h-8 w-8 text-purple-600" />
                 </div>
-                <div className="text-sm font-medium text-slate-900">Pro Seller</div>
+                <div className={`text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-slate-900'}`}>Pro Seller</div>
               </div>
             </div>
           </div>
 
           {/* Reviews - Only show if there are reviews */}
           {userReviews && userReviews.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-8">
-              <h2 className="text-xl font-bold text-slate-900 mb-6">Recent Reviews</h2>
+            <div className={`rounded-2xl border p-8 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+              <h2 className={`text-xl font-bold mb-6 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>Recent Reviews</h2>
               <div className="space-y-6">
                 {userReviews.map((review, index) => (
-                  <div key={index} className="border-b border-slate-100 last:border-0 pb-6 last:pb-0" data-testid={`review-${index}`}>
+                  <div key={index} className={`border-b last:border-0 pb-6 last:pb-0 ${darkMode ? 'border-slate-700' : 'border-slate-100'}`} data-testid={`review-${index}`}>
                     <div className="flex items-start gap-4">
                       <img
                         src={review.reviewerAvatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(review.reviewerName || 'User')}
@@ -476,15 +509,15 @@ const ProfilePage = () => {
                       />
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
-                          <h3 className="text-sm font-bold text-slate-900">{review.reviewerName}</h3>
+                          <h3 className={`text-sm font-bold ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{review.reviewerName}</h3>
                           <div className="flex items-center gap-1">
                             {Array.from({ length: review.rating }).map((_, i) => (
                               <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
                             ))}
                           </div>
                         </div>
-                        <p className="text-sm text-slate-700 mb-2">{review.comment}</p>
-                        <p className="text-xs text-slate-500">{review.date}</p>
+                        <p className={`text-sm mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{review.comment}</p>
+                        <p className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>{review.date}</p>
                       </div>
                     </div>
                   </div>
@@ -500,16 +533,16 @@ const ProfilePage = () => {
       {/* Logout Confirmation Modal */}
       {showLogoutModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" data-testid="logout-modal">
-          <div className="bg-white rounded-2xl border border-slate-200 p-8 max-w-md w-full mx-4 shadow-2xl">
+          <div className={`rounded-2xl border p-8 max-w-md w-full mx-4 shadow-2xl ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
             <div className="flex justify-center mb-6">
               <div className="bg-red-50 h-16 w-16 rounded-full flex items-center justify-center">
                 <LogOut className="h-8 w-8 text-red-600" />
               </div>
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 text-center mb-3">
+            <h2 className={`text-2xl font-bold text-center mb-3 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
               Logout Confirmation
             </h2>
-            <p className="text-slate-600 text-center mb-8">
+            <p className={`text-center mb-8 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
               Are you sure you want to logout? You'll need to login again to access your account.
             </p>
             <div className="flex gap-3">
@@ -536,16 +569,16 @@ const ProfilePage = () => {
       {/* Change Branch Modal */}
       {showBranchModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border border-slate-200 p-8 max-w-md w-full mx-4 shadow-2xl">
+          <div className={`rounded-2xl border p-8 max-w-md w-full mx-4 shadow-2xl ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
             <div className="flex justify-center mb-6">
               <div className="bg-blue-50 h-16 w-16 rounded-full flex items-center justify-center">
                 <GraduationCap className="h-8 w-8 text-blue-600" />
               </div>
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 text-center mb-3">
+            <h2 className={`text-2xl font-bold text-center mb-3 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
               Change Branch
             </h2>
-            <p className="text-slate-600 text-center mb-6">
+            <p className={`text-center mb-6 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
               Select your new branch and enter your password to confirm.
             </p>
 
@@ -557,44 +590,44 @@ const ProfilePage = () => {
 
             <div className="space-y-4 mb-6">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Current Branch</label>
-                <div className="px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Current Branch</label>
+                <div className={`px-4 py-3 rounded-xl border ${darkMode ? 'bg-slate-700 border-slate-600 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
                   {displayBranch}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2" htmlFor="newBranch">New Branch</label>
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`} htmlFor="newBranch">New Branch</label>
                 <div className="relative">
-                  <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 z-10" />
+                  <GraduationCap className={`absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 z-10 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
                   <select
                     id="newBranch"
                     value={newBranch}
                     onChange={(e) => setNewBranch(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 pl-12 pr-4 py-3 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all appearance-none bg-white cursor-pointer"
+                    className={`w-full rounded-xl border pl-12 pr-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all appearance-none cursor-pointer ${darkMode ? 'bg-slate-700 border-slate-600 text-slate-200' : 'bg-white border-slate-200 text-slate-900'}`}
                   >
                     <option value="">Select new branch...</option>
                     {branches.map((branch) => (
                       <option key={branch} value={branch}>{branch}</option>
                     ))}
                   </select>
-                  <svg className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 pointer-events-none ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2" htmlFor="password">Password</label>
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`} htmlFor="password">Password</label>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                  <Lock className={`absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
                   <input
                     id="password"
                     type="password"
                     placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 pl-12 pr-4 py-3 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                    className={`w-full rounded-xl border pl-12 pr-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all ${darkMode ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-500' : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400'}`}
                   />
                 </div>
               </div>
@@ -636,3 +669,4 @@ const Package = ({ className }) => (
 );
 
 export default ProfilePage;
+

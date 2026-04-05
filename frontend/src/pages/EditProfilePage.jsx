@@ -278,7 +278,7 @@ const EditProfilePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-[100dvh] bg-slate-50">
       <Header />
       
       {/* Image Crop Modal */}
@@ -563,3 +563,4 @@ const EditProfilePage = () => {
 };
 
 export default EditProfilePage;
+

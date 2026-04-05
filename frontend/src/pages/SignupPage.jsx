@@ -95,7 +95,7 @@ const SignupPage = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-slate-900">
+    <div className="min-h-[100dvh] flex flex-col lg:flex-row bg-slate-900">
 
       {/* ===== LEFT PANEL - Branding ===== */}
       <div className="hidden lg:flex lg:w-5/12 relative flex-col justify-between p-12 bg-gradient-hero overflow-hidden">
@@ -357,3 +357,4 @@ function getErrorMessage(code) {
 }
 
 export default SignupPage;
+

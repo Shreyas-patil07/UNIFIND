@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
-from datetime import datetime
+from datetime import datetime, timezone
 from database import get_db
 from models import Message, MessageCreate, ChatRoom
 
@@ -27,10 +27,10 @@ async def send_message(message: MessageCreate):
             'user2_id': max(message.sender_id, message.receiver_id),
             'product_id': message.product_id,
             'last_message': message.text,
-            'last_message_time': datetime.now(),
+            'last_message_time': datetime.now(timezone.utc),
             'unread_count_user1': 1 if message.receiver_id == min(message.sender_id, message.receiver_id) else 0,
             'unread_count_user2': 1 if message.receiver_id == max(message.sender_id, message.receiver_id) else 0,
-            'created_at': datetime.now()
+            'created_at': datetime.now(timezone.utc)
         }
         chat_room_ref.set(chat_room_data)
     else:
@@ -39,13 +39,13 @@ async def send_message(message: MessageCreate):
         unread_field = 'unread_count_user1' if message.receiver_id == chat_data['user1_id'] else 'unread_count_user2'
         chat_room_ref.update({
             'last_message': message.text,
-            'last_message_time': datetime.now(),
+            'last_message_time': datetime.now(timezone.utc),
             unread_field: chat_data.get(unread_field, 0) + 1
         })
     
     # Create message with chat_room_id
     message_data = message.model_dump()
-    message_data['timestamp'] = datetime.now()
+    message_data['timestamp'] = datetime.now(timezone.utc)
     message_data['is_read'] = False
     message_data['chat_room_id'] = chat_room_id
     
@@ -84,10 +84,13 @@ async def get_chat_messages(chat_room_id: str):
     db = get_db()
     
     messages = []
-    for doc in db.collection('messages').where('chat_room_id', '==', chat_room_id).order_by('timestamp').stream():
+    for doc in db.collection('messages').where('chat_room_id', '==', chat_room_id).stream():
         message_data = doc.to_dict()
         message_data['id'] = doc.id
         messages.append(message_data)
+    
+    # Sort by timestamp in Python instead of Firestore to avoid index requirement
+    messages.sort(key=lambda x: x.get('timestamp', datetime.min))
     
     return messages
 
@@ -112,10 +115,10 @@ async def get_or_create_chat_room(user1_id: str, user2_id: str, product_id: str 
             'user2_id': max(user1_id, user2_id),
             'product_id': product_id,
             'last_message': '',
-            'last_message_time': datetime.now(),
+            'last_message_time': datetime.now(timezone.utc),
             'unread_count_user1': 0,
             'unread_count_user2': 0,
-            'created_at': datetime.now()
+            'created_at': datetime.now(timezone.utc)
         }
         chat_room_ref.set(chat_room_data)
         chat_room_data['id'] = chat_room_id
