@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
-from datetime import datetime
+from datetime import datetime, timezone
 from database import get_db
 from models import Message, MessageCreate, ChatRoom
 
@@ -11,11 +11,6 @@ router = APIRouter()
 async def send_message(message: MessageCreate):
     """Send a message and create/update chat room"""
     db = get_db()
-    
-    # Create message
-    message_data = message.model_dump()
-    message_data['timestamp'] = datetime.now()
-    message_data['is_read'] = False
     
     # Find or create chat room
     chat_room_id = f"{min(message.sender_id, message.receiver_id)}_{max(message.sender_id, message.receiver_id)}"
@@ -32,10 +27,10 @@ async def send_message(message: MessageCreate):
             'user2_id': max(message.sender_id, message.receiver_id),
             'product_id': message.product_id,
             'last_message': message.text,
-            'last_message_time': datetime.now(),
+            'last_message_time': datetime.now(timezone.utc),
             'unread_count_user1': 1 if message.receiver_id == min(message.sender_id, message.receiver_id) else 0,
             'unread_count_user2': 1 if message.receiver_id == max(message.sender_id, message.receiver_id) else 0,
-            'created_at': datetime.now()
+            'created_at': datetime.now(timezone.utc)
         }
         chat_room_ref.set(chat_room_data)
     else:
@@ -44,9 +39,15 @@ async def send_message(message: MessageCreate):
         unread_field = 'unread_count_user1' if message.receiver_id == chat_data['user1_id'] else 'unread_count_user2'
         chat_room_ref.update({
             'last_message': message.text,
-            'last_message_time': datetime.now(),
+            'last_message_time': datetime.now(timezone.utc),
             unread_field: chat_data.get(unread_field, 0) + 1
         })
+    
+    # Create message with chat_room_id
+    message_data = message.model_dump()
+    message_data['timestamp'] = datetime.now(timezone.utc)
+    message_data['is_read'] = False
+    message_data['chat_room_id'] = chat_room_id
     
     # Add message to messages collection
     message_ref = db.collection('messages').document()
@@ -77,18 +78,55 @@ async def get_user_chats(user_id: str):
     return chat_rooms
 
 
-@router.get("/chats/{chat_room_id}/messages", response_model=List[Message])
+@router.get("/chats/room/{chat_room_id}/messages", response_model=List[Message])
 async def get_chat_messages(chat_room_id: str):
     """Get all messages in a chat room"""
     db = get_db()
     
     messages = []
-    for doc in db.collection('messages').where('chat_room_id', '==', chat_room_id).order_by('timestamp').stream():
+    for doc in db.collection('messages').where('chat_room_id', '==', chat_room_id).stream():
         message_data = doc.to_dict()
         message_data['id'] = doc.id
         messages.append(message_data)
     
+    # Sort by timestamp in Python instead of Firestore to avoid index requirement
+    messages.sort(key=lambda x: x.get('timestamp', datetime.min))
+    
     return messages
+
+
+@router.get("/chats/between/{user1_id}/{user2_id}")
+async def get_or_create_chat_room(user1_id: str, user2_id: str, product_id: str = None):
+    """Get or create a chat room between two users"""
+    db = get_db()
+    
+    # Generate consistent chat room ID
+    chat_room_id = f"{min(user1_id, user2_id)}_{max(user1_id, user2_id)}"
+    if product_id:
+        chat_room_id += f"_{product_id}"
+    
+    chat_room_ref = db.collection('chat_rooms').document(chat_room_id)
+    chat_room = chat_room_ref.get()
+    
+    if not chat_room.exists:
+        # Create new chat room
+        chat_room_data = {
+            'user1_id': min(user1_id, user2_id),
+            'user2_id': max(user1_id, user2_id),
+            'product_id': product_id,
+            'last_message': '',
+            'last_message_time': datetime.now(timezone.utc),
+            'unread_count_user1': 0,
+            'unread_count_user2': 0,
+            'created_at': datetime.now(timezone.utc)
+        }
+        chat_room_ref.set(chat_room_data)
+        chat_room_data['id'] = chat_room_id
+        return chat_room_data
+    
+    chat_data = chat_room.to_dict()
+    chat_data['id'] = chat_room_id
+    return chat_data
 
 
 @router.put("/chats/{chat_room_id}/mark-read/{user_id}")

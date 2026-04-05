@@ -44,6 +44,14 @@ export const getUser = async (userId) => {
   throw new Error('User not found')
 }
 
+// Get public user profile via backend API
+export const getPublicProfile = async (userId, includePrivate = false) => {
+  const response = await api.get(`/users/${userId}/profile`, {
+    params: { include_private: includePrivate }
+  })
+  return response.data
+}
+
 export const getUsers = async (limitCount = 100) => {
   const q = query(collection(db, 'users'), limit(limitCount))
   const querySnapshot = await getDocs(q)
@@ -98,40 +106,38 @@ export const deleteProduct = async (productId) => {
   return { id: productId }
 }
 
-// Firebase direct calls - Chats
-export const getChats = async (userId) => {
-  const q = query(
-    collection(db, 'chats'),
-    where('participants', 'array-contains', userId),
-    orderBy('last_message_time', 'desc')
-  )
-  const querySnapshot = await getDocs(q)
-  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+// Chat API calls via backend
+export const getUserChats = async (userId) => {
+  const response = await api.get(`/chats/${userId}`)
+  return response.data
 }
 
-export const getMessages = async (chatId, limitCount = 50) => {
-  const q = query(
-    collection(db, 'chats', chatId, 'messages'),
-    orderBy('timestamp', 'asc'),
-    limit(limitCount)
-  )
-  const querySnapshot = await getDocs(q)
-  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+export const getChatMessages = async (chatRoomId) => {
+  const response = await api.get(`/chats/room/${chatRoomId}/messages`)
+  return response.data
 }
 
-export const sendMessage = async (chatId, messageData) => {
-  const docRef = await addDoc(collection(db, 'chats', chatId, 'messages'), {
-    ...messageData,
-    timestamp: new Date().toISOString()
-  })
-  
-  const chatRef = doc(db, 'chats', chatId)
-  await updateDoc(chatRef, {
-    last_message: messageData.text,
-    last_message_time: new Date().toISOString()
-  })
-  
-  return { id: docRef.id, ...messageData }
+export const sendChatMessage = async (messageData) => {
+  const response = await api.post('/chats/messages', messageData)
+  return response.data
+}
+
+export const getOrCreateChatRoom = async (user1Id, user2Id, productId = null) => {
+  const params = productId ? `?product_id=${productId}` : ''
+  const response = await api.get(`/chats/between/${user1Id}/${user2Id}${params}`)
+  return response.data
+}
+
+export const markChatAsRead = async (chatRoomId, userId) => {
+  const response = await api.put(`/chats/${chatRoomId}/mark-read/${userId}`)
+  return response.data
 }
 
 export default api
+
+
+// AI Need Board
+export const searchNeedBoard = async (query) => {
+  const response = await api.post('/need-board', { query })
+  return response.data // { extracted, rankedResults }
+}

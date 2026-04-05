@@ -12,7 +12,7 @@ const ProtectedRoute = ({ children }) => {
   // Show loading state while checking authentication
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-slate-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-slate-600">Loading...</p>
@@ -24,7 +24,7 @@ const ProtectedRoute = ({ children }) => {
   // Show authentication modal if not authenticated
   if (!currentUser) {
     return (
-      <div className="relative min-h-screen">
+      <div className="relative min-h-[100dvh]">
         {/* Background: Landing page with blur */}
         <div className="absolute inset-0 overflow-hidden" style={{ filter: 'blur(8px)' }}>
           <LandingPage />
@@ -34,7 +34,7 @@ const ProtectedRoute = ({ children }) => {
         <div className="absolute inset-0 bg-slate-900/60"></div>
 
         {/* Authentication Modal */}
-        <div className="relative z-50 min-h-screen flex items-center justify-center p-4">
+        <div className="relative z-50 min-h-[100dvh] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl border border-slate-200 p-8 max-w-md w-full shadow-2xl">
             <div className="flex justify-center mb-6">
               <div className="bg-blue-50 h-16 w-16 rounded-full flex items-center justify-center">
@@ -85,7 +85,7 @@ const ProtectedRoute = ({ children }) => {
   
   if (!currentUser.emailVerified && !isProfilePage) {
     return (
-      <div className="relative min-h-screen">
+      <div className="relative min-h-[100dvh]">
         {/* Background: Landing page with blur */}
         <div className="absolute inset-0 overflow-hidden" style={{ filter: 'blur(8px)' }}>
           <LandingPage />
@@ -95,7 +95,7 @@ const ProtectedRoute = ({ children }) => {
         <div className="absolute inset-0 bg-slate-900/60"></div>
 
         {/* Email Verification Modal */}
-        <div className="relative z-50 min-h-screen flex items-center justify-center p-4">
+        <div className="relative z-50 min-h-[100dvh] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl border border-slate-200 p-8 max-w-md w-full shadow-2xl">
             <div className="flex justify-center mb-6">
               <div className="bg-amber-50 h-16 w-16 rounded-full flex items-center justify-center">
@@ -139,3 +139,4 @@ const ProtectedRoute = ({ children }) => {
 };
 
 export default ProtectedRoute;
+

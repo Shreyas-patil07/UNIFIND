@@ -14,7 +14,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110.1-009688.svg)](https://fastapi.tiangolo.com/)
 [![Firebase](https://img.shields.io/badge/Firebase-10.7.1-FFCA28.svg)](https://firebase.google.com/)
 
-[🚀 Live Demo](#) • [📖 Documentation](Doc.md) • [🐛 Report Bug](https://github.com/Shreyas-patil07/UNIFIND/issues) • [✨ Request Feature](https://github.com/Shreyas-patil07/UNIFIND/issues) • [📧 Contact](mailto:systemrecord07@gmail.com)
+[🚀 Live Demo](#) • [📖 Documentation](DOCUMENTATION.md) • [🐛 Report Bug](https://github.com/Shreyas-patil07/UNIFIND/issues) • [✨ Request Feature](https://github.com/Shreyas-patil07/UNIFIND/issues) • [📧 Contact](mailto:systemrecord07@gmail.com)
 
 </div>
 
@@ -55,6 +55,7 @@
 - 🔍 **Advanced Search** - Filter by category, price, condition, semester, and location
 - 📱 **Responsive Design** - Seamless experience across all devices
 - ⚡ **Lightning Fast** - Built with Vite for instant hot module replacement (<1s startup)
+- 🌙 **Dark Mode** - Toggle between light and dark themes with persistent preference
 
 ### AI-Powered Features
 - 🤖 **AI Need Board** - Post what you need in natural language, get smart matches
@@ -358,7 +359,7 @@ unifind/
 │
 ├── .gitignore
 ├── INSTALL.md                      # Installation guide
-├── Doc.md                          # Complete documentation
+├── DOCUMENTATION.md                # Complete documentation
 └── README.md                       # This file
 ```
 
@@ -393,10 +394,11 @@ unifind/
 - `PUT /api/transactions/{id}` - Update transaction status
 
 ### Chats
-- `POST /api/chats/messages` - Send message
+- `POST /api/chats/messages` - Send message (auto-creates chat room)
 - `GET /api/chats/{user_id}` - Get user's chat rooms
-- `GET /api/chats/{chat_id}/messages` - Get chat messages
-- `PUT /api/chats/{chat_id}/mark-read/{user_id}` - Mark as read
+- `GET /api/chats/room/{chat_room_id}/messages` - Get chat messages
+- `GET /api/chats/between/{user1_id}/{user2_id}` - Get or create chat room
+- `PUT /api/chats/{chat_room_id}/mark-read/{user_id}` - Mark as read
 
 ### Reviews
 - `POST /api/reviews` - Create review
@@ -603,15 +605,15 @@ See [FOOTER_USAGE.md](frontend/FOOTER_USAGE.md) for implementation details and c
 
 ## 📚 Documentation
 
-### Available Documentation Files
+### Quick Start
+- **README.md** (this file) - Project overview and features
+- **QUICKSTART.md** - Get up and running in 5 minutes
+- **DEPLOYMENT.md** - Deploy to Render (backend) and Vercel (frontend)
+- **DEVELOPER_GUIDE.md** - Development workflow and best practices
 
-1. **README.md** (this file) - Project overview, setup, and quick reference
-2. **QUICKSTART.md** - Quick start guide for getting up and running fast
-3. **Doc.md** - Detailed technical documentation
-4. **Megalog.md** - Complete project documentation with full history
-5. **DATABASE_RESTRUCTURE.md** - Database restructure guide and architecture
-6. **API_MIGRATION_GUIDE.md** - Quick API reference for the new structure
-7. **DATABASE_MIGRATION_SUMMARY.md** - Summary of database migration changes
+### Technical Documentation
+- **DOCUMENTATION.md** - Complete technical documentation
+- **MEGA_LOG.md** - Complete project history, changelog, and documentation index
 
 For detailed documentation, see the files above or visit the `/docs` endpoint when running the backend.
 
@@ -649,6 +651,44 @@ For detailed documentation, see the files above or visit the `/docs` endpoint wh
 
 ## 📝 Recent Updates
 
+### April 6, 2026 - Version 2.0.0 - Production Ready Release
+- **Complete Refactoring**: Transformed from prototype to production-ready application
+- **Backend Optimization**: 50% AI cost reduction, proper async/await, comprehensive error handling
+- **Code Cleanup**: Removed Supabase (unused), dead code, and unused dependencies
+- **Security Hardening**: Environment-based configuration, input validation, rate limiting
+- **Deployment Ready**: Complete Render + Vercel deployment configuration
+- **Documentation**: Comprehensive guides for deployment and development
+- **Performance**: Optimized AI integration with response caching
+- **Dark Mode Fix**: Fixed EditProfilePage and Button component dark mode support
+
+### April 6, 2026 - Dark Mode Feature
+- **Complete Dark Mode System**: Toggle between light and dark themes
+  - Elegant toggle switch on Profile page with Moon/Sun icons
+  - Applies to all pages except landing page
+  - Saves preference to Firestore database
+  - Persists across sessions and devices
+  - Smooth animations and transitions
+  - Mobile responsive design
+- **Color Scheme**: Professional dark theme with slate colors
+  - Dark backgrounds: slate-900, slate-800
+  - Light text: slate-100, slate-200, slate-300
+  - Consistent across all components
+
+### April 5, 2026 - Chat & Public Profiles
+- **Working Chat System**: Fully functional real-time messaging
+  - Auto-creates chat rooms between users
+  - Messages persist in Firestore
+  - 3-second auto-refresh for new messages
+  - Unread message tracking
+  - Product context support
+  - Mobile responsive design
+- **Public Profile Viewing**: View other users' profiles safely
+  - Automatic privacy protection (hides email, phone, etc.)
+  - "Send Message" button integration
+  - Profile-to-chat navigation
+  - Loading and error states
+- **API Enhancements**: New chat endpoints for room creation and message management
+
 ### April 5, 2026 - Database Restructure
 - **Major Update**: Restructured database from single `users` collection to three collections
   - Separated core authentication data from extended profile information
@@ -656,13 +696,7 @@ For detailed documentation, see the files above or visit the `/docs` endpoint wh
   - Improved privacy controls with public/private profile fields
 - **New API Endpoints**: Added profile management and transaction history endpoints
 - **Migration Tool**: Created `migrate_database.py` for seamless data migration
-- **Documentation**: Added comprehensive guides (`DATABASE_RESTRUCTURE.md`, `API_MIGRATION_GUIDE.md`)
 - **Benefits**: Better performance, scalability, and privacy control
-
-### April 5, 2026 - Documentation Cleanup
-- Cleaned up redundant documentation files
-- Enhanced .gitignore with comprehensive Python cache patterns
-- Improved repository structure and maintenance
 
 ---
 
@@ -704,7 +738,7 @@ For detailed documentation, see the files above or visit the `/docs` endpoint wh
   
   ⭐ **Star us on GitHub** — it motivates us a lot!
   
-  [Documentation](Doc.md) • [Report Bug](https://github.com/Shreyas-patil07/UNIFIND/issues) • [Request Feature](https://github.com/Shreyas-patil07/UNIFIND/issues) • [Contact](mailto:systemrecord07@gmail.com)
+  [Documentation](DOCUMENTATION.md) • [Report Bug](https://github.com/Shreyas-patil07/UNIFIND/issues) • [Request Feature](https://github.com/Shreyas-patil07/UNIFIND/issues) • [Contact](mailto:systemrecord07@gmail.com)
   
   ---
   

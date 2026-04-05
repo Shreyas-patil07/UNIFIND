@@ -5,6 +5,7 @@ import ImageCropModal from '../components/ImageCropModal';
 import { GraduationCap, Lock, ArrowLeft, Save, Upload, X, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import imageService from '../services/imageService';
 
 // Rate limiting configuration
@@ -16,6 +17,7 @@ const RATE_LIMITS = {
 const EditProfilePage = () => {
   const navigate = useNavigate();
   const { currentUser: authUser, userProfile, refreshUserProfile } = useAuth();
+  const { darkMode: isDarkMode } = useTheme();
 
   const displayBranch = userProfile?.branch || 'Not specified';
   const coverGradient = userProfile?.cover_gradient || 'from-blue-600 to-purple-600';
@@ -278,7 +280,7 @@ const EditProfilePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className={`min-h-[100dvh] ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
       <Header />
       
       {/* Image Crop Modal */}
@@ -295,7 +297,7 @@ const EditProfilePage = () => {
           {/* Back Button */}
           <button
             onClick={() => navigate('/profile')}
-            className="flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-6 transition-colors"
+            className={`flex items-center gap-2 ${isDarkMode ? 'text-slate-400 hover:text-slate-100' : 'text-slate-600 hover:text-slate-900'} mb-6 transition-colors`}
           >
             <ArrowLeft className="h-5 w-5" />
             <span className="font-medium">Back to Profile</span>
@@ -303,21 +305,21 @@ const EditProfilePage = () => {
 
           {/* Page Header */}
           <div className="mb-8">
-            <h1 className="font-['Outfit'] text-3xl font-bold tracking-tight text-slate-900 mb-2">
+            <h1 className={`font-['Outfit'] text-3xl font-bold tracking-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-900'} mb-2`}>
               Edit Profile
             </h1>
-            <p className="text-slate-600">
+            <p className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>
               Update your profile information. All changes require password confirmation.
             </p>
           </div>
 
           {/* Rate Limit Info */}
-          <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
+          <div className={`mb-6 ${isDarkMode ? 'bg-blue-900/30 border-blue-700' : 'bg-blue-50 border-blue-200'} border rounded-xl p-4`}>
             <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <AlertCircle className={`h-5 w-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'} mt-0.5 flex-shrink-0`} />
               <div className="flex-1">
-                <h3 className="text-sm font-semibold text-blue-900 mb-2">Monthly Change Limits</h3>
-                <div className="space-y-1 text-sm text-blue-800">
+                <h3 className={`text-sm font-semibold ${isDarkMode ? 'text-blue-300' : 'text-blue-900'} mb-2`}>Monthly Change Limits</h3>
+                <div className={`space-y-1 text-sm ${isDarkMode ? 'text-blue-200' : 'text-blue-800'}`}>
                   <p>
                     • Branch changes: <span className="font-bold">{rateLimitInfo.branchChangesRemaining}</span> of {RATE_LIMITS.BRANCH_CHANGES_PER_MONTH} remaining
                   </p>
@@ -325,7 +327,7 @@ const EditProfilePage = () => {
                     • Photo changes: <span className="font-bold">{rateLimitInfo.photoChangesRemaining}</span> of {RATE_LIMITS.PHOTO_CHANGES_PER_MONTH} remaining
                   </p>
                   {rateLimitInfo.branchNextReset && (
-                    <p className="text-xs text-blue-600 mt-2">
+                    <p className={`text-xs ${isDarkMode ? 'text-blue-300' : 'text-blue-600'} mt-2`}>
                       Resets on: {rateLimitInfo.branchNextReset.toLocaleDateString('en-US', { 
                         month: 'long', 
                         day: 'numeric', 
@@ -340,14 +342,14 @@ const EditProfilePage = () => {
 
           {/* Success Message */}
           {success && (
-            <div className="mb-6 px-4 py-3 rounded-xl bg-green-50 border border-green-200 text-sm text-green-700">
+            <div className={`mb-6 px-4 py-3 rounded-xl ${isDarkMode ? 'bg-green-900/30 border-green-700 text-green-300' : 'bg-green-50 border-green-200 text-green-700'} border text-sm`}>
               ✓ Profile updated successfully! Redirecting...
             </div>
           )}
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-600">
+            <div className={`mb-6 px-4 py-3 rounded-xl ${isDarkMode ? 'bg-red-900/30 border-red-700 text-red-300' : 'bg-red-50 border-red-200 text-red-600'} border text-sm`}>
               {error}
             </div>
           )}
@@ -355,9 +357,9 @@ const EditProfilePage = () => {
           {/* Edit Form */}
           <form onSubmit={handleSaveChanges} className="space-y-6">
             {/* Branch Selection */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+            <div className={`${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'} rounded-2xl border p-6`}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-slate-900">Branch/Department</h2>
+                <h2 className={`text-lg font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Branch/Department</h2>
                 {rateLimitInfo.branchChangesRemaining === 0 && (
                   <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-lg">
                     Limit Reached
@@ -365,18 +367,18 @@ const EditProfilePage = () => {
                 )}
               </div>
               <div className="relative">
-                <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 z-10" />
+                <GraduationCap className={`absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'} z-10`} />
                 <select
                   value={editBranch}
                   onChange={(e) => setEditBranch(e.target.value)}
                   disabled={rateLimitInfo.branchChangesRemaining === 0}
-                  className="w-full rounded-xl border border-slate-200 pl-12 pr-4 py-3 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all appearance-none bg-white cursor-pointer disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
+                  className={`w-full rounded-xl border ${isDarkMode ? 'bg-slate-700 border-slate-600 text-slate-100' : 'bg-white border-slate-200 text-slate-900'} pl-12 pr-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all appearance-none cursor-pointer disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500`}
                 >
                   {branches.map((branch) => (
                     <option key={branch} value={branch}>{branch}</option>
                   ))}
                 </select>
-                <svg className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'} pointer-events-none`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
@@ -388,8 +390,8 @@ const EditProfilePage = () => {
             </div>
 
             {/* Cover Gradient Selection */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
-              <h2 className="text-lg font-bold text-slate-900 mb-4">Cover Gradient</h2>
+            <div className={`${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'} rounded-2xl border p-6`}>
+              <h2 className={`text-lg font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'} mb-4`}>Cover Gradient</h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
                 {gradientOptions.map((gradient) => (
                   <button
@@ -407,15 +409,15 @@ const EditProfilePage = () => {
                   </button>
                 ))}
               </div>
-              <p className="text-sm text-slate-600">
+              <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                 Selected: <span className="font-medium">{gradientOptions.find(g => g.value === editGradient)?.name}</span>
               </p>
             </div>
 
             {/* Profile Image */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+            <div className={`${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'} rounded-2xl border p-6`}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-slate-900">Profile Image</h2>
+                <h2 className={`text-lg font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Profile Image</h2>
                 {rateLimitInfo.photoChangesRemaining === 0 && (
                   <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-lg">
                     Limit Reached
@@ -431,20 +433,20 @@ const EditProfilePage = () => {
               
               {/* File Upload */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-slate-700 mb-3">Upload Image</label>
+                <label className={`block text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'} mb-3`}>Upload Image</label>
                 
                 {!selectedFile && !previewUrl ? (
-                  <label className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-slate-300 rounded-xl transition-all ${
+                  <label className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed ${isDarkMode ? 'border-slate-600' : 'border-slate-300'} rounded-xl transition-all ${
                     rateLimitInfo.photoChangesRemaining > 0 
-                      ? 'cursor-pointer hover:border-blue-500 hover:bg-blue-50' 
-                      : 'cursor-not-allowed opacity-50 bg-slate-50'
+                      ? `cursor-pointer ${isDarkMode ? 'hover:border-blue-400 hover:bg-slate-700' : 'hover:border-blue-500 hover:bg-blue-50'}` 
+                      : `cursor-not-allowed opacity-50 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-50'}`
                   }`}>
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <Upload className="h-10 w-10 text-slate-400 mb-3" />
-                      <p className="mb-2 text-sm text-slate-600">
+                      <Upload className={`h-10 w-10 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'} mb-3`} />
+                      <p className={`mb-2 text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                         <span className="font-semibold">Click to upload</span> or drag and drop
                       </p>
-                      <p className="text-xs text-slate-500">PNG, JPG, GIF up to 5MB</p>
+                      <p className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>PNG, JPG, GIF up to 5MB</p>
                     </div>
                     <input
                       type="file"
@@ -475,19 +477,19 @@ const EditProfilePage = () => {
                     
                     {/* Preview Label */}
                     <div className="text-center">
-                      <p className="text-sm font-medium text-slate-900">Preview</p>
-                      <p className="text-xs text-slate-500">This is how your photo will appear</p>
+                      <p className={`text-sm font-medium ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Preview</p>
+                      <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>This is how your photo will appear</p>
                     </div>
                     
                     {uploadProgress > 0 && uploadProgress < 100 && (
                       <div className="w-full max-w-xs">
-                        <div className="w-full bg-slate-200 rounded-full h-2">
+                        <div className={`w-full ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'} rounded-full h-2`}>
                           <div
                             className="bg-blue-600 h-2 rounded-full transition-all"
                             style={{ width: `${uploadProgress}%` }}
                           ></div>
                         </div>
-                        <p className="text-xs text-slate-600 text-center mt-1">Uploading... {Math.round(uploadProgress)}%</p>
+                        <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-600'} text-center mt-1`}>Uploading... {Math.round(uploadProgress)}%</p>
                       </div>
                     )}
                   </div>
@@ -496,35 +498,35 @@ const EditProfilePage = () => {
 
               {/* Current Profile Picture */}
               {!selectedFile && !previewUrl && (
-                <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl">
+                <div className={`flex items-center gap-4 p-4 ${isDarkMode ? 'bg-slate-700' : 'bg-slate-50'} rounded-xl`}>
                   <img 
                     src={editAvatar} 
                     alt="Current" 
-                    className="h-20 w-20 rounded-full object-cover border-2 border-slate-200" 
+                    className={`h-20 w-20 rounded-full object-cover border-2 ${isDarkMode ? 'border-slate-600' : 'border-slate-200'}`} 
                   />
                   <div>
-                    <p className="text-sm font-medium text-slate-900">Current Profile Picture</p>
-                    <p className="text-xs text-slate-500">Upload a new image to replace</p>
+                    <p className={`text-sm font-medium ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Current Profile Picture</p>
+                    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Upload a new image to replace</p>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Password Confirmation */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
-              <h2 className="text-lg font-bold text-slate-900 mb-4">Confirm Changes</h2>
-              <p className="text-sm text-slate-600 mb-4">
+            <div className={`${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'} rounded-2xl border p-6`}>
+              <h2 className={`text-lg font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'} mb-4`}>Confirm Changes</h2>
+              <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'} mb-4`}>
                 Enter your password to save changes to your profile.
               </p>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                <Lock className={`absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} />
                 <input
                   type="password"
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full rounded-xl border border-slate-200 pl-12 pr-4 py-3 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                  className={`w-full rounded-xl border ${isDarkMode ? 'bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-500' : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400'} pl-12 pr-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all`}
                 />
               </div>
             </div>
@@ -563,3 +565,4 @@ const EditProfilePage = () => {
 };
 
 export default EditProfilePage;
+

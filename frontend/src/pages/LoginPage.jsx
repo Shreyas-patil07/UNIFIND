@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import { Button } from '../components/ui/Button';
+import { Mail, Lock, Eye, EyeOff, Sparkles, Shield, Zap } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const LoginPage = () => {
@@ -19,21 +18,19 @@ const LoginPage = () => {
     e.preventDefault();
     setError('');
     setUserNotFound(false);
-    
-    // Validate email domain
+
     if (!email.endsWith('@sigce.edu.in')) {
       setError('Only SIGCE email addresses (@sigce.edu.in) are allowed.');
       return;
     }
-    
+
     setLoading(true);
     try {
       await login(email, password);
       navigate('/dashboard');
     } catch (err) {
-      // For invalid credentials, show option to create account (without error message)
-      if (err.code === 'auth/user-not-found' || 
-          err.code === 'auth/invalid-credential' || 
+      if (err.code === 'auth/user-not-found' ||
+          err.code === 'auth/invalid-credential' ||
           err.code === 'auth/wrong-password') {
         setUserNotFound(true);
       } else {
@@ -44,15 +41,10 @@ const LoginPage = () => {
     }
   };
 
-  const handleGoToSignup = () => {
-    navigate('/signup', { state: { email, password } });
-  };
+  const handleGoToSignup = () => navigate('/signup', { state: { email, password } });
 
   const handleForgotPassword = async () => {
-    if (!email) {
-      setError('Enter your email above first.');
-      return;
-    }
+    if (!email) { setError('Enter your email above first.'); return; }
     setError('');
     try {
       await resetPassword(email);
@@ -62,92 +54,150 @@ const LoginPage = () => {
     }
   };
 
+  const perks = [
+    { icon: Sparkles, text: 'AI-powered buyer-seller matching' },
+    { icon: Shield, text: 'Verified trust score system' },
+    { icon: Zap, text: 'Instant in-app chat' },
+  ];
+
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
-      {/* Left Side - Form */}
-      <div className="flex items-center justify-center p-6 sm:p-8 md:p-12 lg:p-24 bg-slate-50">
-        <div className="w-full max-w-md">
-          <div className="mb-10">
-            <Link to="/home" className="flex items-center gap-3" data-testid="login-logo">
-              <img 
-                src="/UNIFIND.png" 
-                alt="UNIFIND Logo" 
-                className="h-16 w-auto"
-              />
-              <span className="font-['Outfit'] font-black text-3xl tracking-tight">
-                <span className="text-blue-600">UNI</span>
-                <span className="text-purple-600">FIND</span>
-              </span>
-            </Link>
+    <div className="min-h-[100dvh] flex flex-col lg:flex-row bg-slate-900">
+
+      {/* ===== LEFT PANEL - Branding (Desktop Only) ===== */}
+      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 bg-gradient-hero overflow-hidden">
+        {/* Decorative Orbs */}
+        <div className="absolute top-0 right-0 w-72 h-72 bg-indigo-600/25 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-violet-600/20 rounded-full blur-3xl pointer-events-none" />
+
+        {/* Logo */}
+        <Link to="/home" className="relative z-10 flex items-center gap-3">
+          <img src="/UNIFIND.png" alt="UNIFIND" className="h-12 w-auto" />
+          <span className="font-['Outfit'] font-black text-3xl">
+            <span className="text-indigo-400">UNI</span>
+            <span className="text-violet-400">FIND</span>
+          </span>
+        </Link>
+
+        {/* Center content */}
+        <div className="relative z-10 flex-1 flex flex-col justify-center">
+          <h2 className="font-['Outfit'] text-4xl xl:text-5xl font-black text-white mb-4 leading-tight">
+            Welcome Back to<br />
+            <span className="gradient-text-hero">Campus Commerce</span>
+          </h2>
+          <p className="text-slate-400 text-lg mb-10 leading-relaxed">
+            Your trusted student marketplace for buying and selling everything from textbooks to electronics.
+          </p>
+          <div className="space-y-4">
+            {perks.map(({ icon: Icon, text }) => (
+              <div key={text} className="flex items-center gap-3 glass border border-white/10 rounded-xl px-4 py-3">
+                <div className="bg-indigo-500/20 h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Icon className="h-5 w-5 text-indigo-400" />
+                </div>
+                <span className="text-slate-300 text-sm font-medium">{text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Floating card at bottom */}
+        <div className="relative z-10">
+          <div className="glass border border-white/10 rounded-2xl p-4 flex items-center gap-3">
+            <div className="flex -space-x-1.5">
+              {['bg-indigo-500', 'bg-violet-500', 'bg-emerald-500'].map((c, i) => (
+                <div key={i} className={`h-7 w-7 ${c} rounded-full border-2 border-slate-800 flex items-center justify-center text-white text-xs font-bold`}>
+                  {['A', 'P', 'S'][i]}
+                </div>
+              ))}
+            </div>
+            <div>
+              <p className="text-white text-xs font-semibold">8,900+ students trading</p>
+              <p className="text-slate-500 text-xs">Join the community today</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ===== RIGHT PANEL - Form ===== */}
+      <div className="flex-1 flex flex-col justify-center p-6 sm:p-10 lg:p-14 bg-slate-50 min-h-[100dvh] lg:min-h-0">
+        <div className="w-full max-w-md mx-auto">
+
+          {/* Mobile Logo */}
+          <div className="flex items-center gap-2 mb-10 lg:hidden">
+            <img src="/UNIFIND.png" alt="UNIFIND" className="h-10 w-auto" />
+            <span className="font-['Outfit'] font-black text-2xl">
+              <span className="text-indigo-600">UNI</span>
+              <span className="text-violet-600">FIND</span>
+            </span>
           </div>
 
           <div className="mb-8">
-            <h1 className="font-['Outfit'] text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 mb-2" data-testid="login-title">
-              Welcome Back
+            <h1 className="font-['Outfit'] text-2xl sm:text-3xl font-black text-slate-900 mb-2" data-testid="login-title">
+              Welcome Back 👋
             </h1>
-            <p className="text-base text-slate-600">Login to your account to continue</p>
+            <p className="text-slate-500 text-sm">Sign in to your SIGCE student account</p>
           </div>
 
-          {/* Error / Reset message */}
+          {/* Alerts */}
           {error && (
-            <div className="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-600" data-testid="login-error">
+            <div className="mb-5 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-600" data-testid="login-error">
               {error}
             </div>
           )}
           {userNotFound && (
-            <div className="mb-4 px-4 py-3 rounded-xl bg-orange-50 border border-orange-200" data-testid="user-not-found">
-              <p className="text-sm text-orange-900 mb-3">
-                Don't have an account? Create one now with this email.
-              </p>
-              <Button
+            <div className="mb-5 px-4 py-4 rounded-xl bg-indigo-50 border border-indigo-200" data-testid="user-not-found">
+              <p className="text-sm text-indigo-900 mb-3 font-medium">No account found — want to create one?</p>
+              <button
                 onClick={handleGoToSignup}
-                className="w-full bg-blue-600 text-white hover:bg-blue-700 rounded-xl"
+                className="w-full btn-gradient py-2.5 text-sm"
                 data-testid="go-to-signup-btn"
               >
                 Create New Account
-              </Button>
+              </button>
             </div>
           )}
           {resetSent && (
-            <div className="mb-4 px-4 py-3 rounded-xl bg-green-50 border border-green-200 text-sm text-green-600" data-testid="reset-sent">
-              Password reset email sent. Check your inbox.
+            <div className="mb-5 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-700" data-testid="reset-sent">
+              ✓ Password reset email sent. Check your inbox.
             </div>
           )}
 
+          {/* Form */}
           <form onSubmit={handleLogin} className="space-y-5">
+            {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2" htmlFor="email">
+              <label className="block text-sm font-semibold text-slate-700 mb-2" htmlFor="email">
                 SIGCE Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-400" />
                 <input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your.name@sigce.edu.in"
-                  className="w-full rounded-xl border border-slate-200 pl-12 pr-4 py-3 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                  className="input-premium w-full pl-11 pr-4 py-3 text-sm"
                   required
                   data-testid="login-email-input"
                 />
               </div>
-              <p className="mt-1 text-xs text-slate-500">Must be a valid @sigce.edu.in email address</p>
+              <p className="mt-1.5 text-xs text-slate-400">Must be a valid @sigce.edu.in address</p>
             </div>
 
+            {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2" htmlFor="password">
+              <label className="block text-sm font-semibold text-slate-700 mb-2" htmlFor="password">
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-400" />
                 <input
                   id="password"
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-xl border border-slate-200 pl-12 pr-12 py-3 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                  className="input-premium w-full pl-11 pr-12 py-3 text-sm"
                   required
                   data-testid="login-password-input"
                 />
@@ -157,80 +207,65 @@ const LoginPage = () => {
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                   data-testid="toggle-password-visibility"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
                 </button>
               </div>
             </div>
 
+            {/* Forgot Password */}
             <div className="flex justify-end">
               <button
                 type="button"
                 onClick={handleForgotPassword}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
                 data-testid="forgot-password-btn"
               >
                 Forgot Password?
               </button>
             </div>
 
-            <Button
+            {/* Submit */}
+            <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white font-medium px-6 py-3 rounded-xl hover:bg-blue-700 shadow-[0_0_0_1px_rgba(37,99,235,1)_inset] transition-all duration-200 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full btn-gradient py-3.5 text-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:animate-none"
               data-testid="login-submit-btn"
             >
-              {loading ? 'Logging in...' : 'Login'}
-            </Button>
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Signing in...
+                </span>
+              ) : 'Sign In'}
+            </button>
           </form>
 
-          <p className="mt-8 text-center text-sm text-slate-600">
+          <p className="mt-8 text-center text-sm text-slate-500">
             Don't have an account?{' '}
-            <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-medium" data-testid="signup-link">
+            <Link to="/signup" className="text-indigo-600 hover:text-indigo-700 font-semibold" data-testid="signup-link">
               Sign Up
             </Link>
           </p>
-        </div>
-      </div>
-
-      {/* Right Side - Image */}
-      <div className="hidden lg:block relative bg-slate-900">
-        <img
-          src="https://images.pexels.com/photos/1454360/pexels-photo-1454360.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
-          alt="Students"
-          className="w-full h-full object-cover opacity-60"
-        />
-        <div className="absolute inset-0 flex items-center justify-center p-12">
-          <div className="text-center text-white">
-            <h2 className="font-['Outfit'] text-4xl font-bold mb-4">College Marketplace</h2>
-            <p className="text-lg text-slate-300">Buy and sell with verified students on campus</p>
-          </div>
         </div>
       </div>
     </div>
   );
 };
 
-// Map Firebase error codes to readable messages
 function getErrorMessage(code) {
   switch (code) {
-    case 'auth/user-not-found':
-      return 'No account found with this email.';
+    case 'auth/user-not-found': return 'No account found with this email.';
     case 'auth/wrong-password':
-    case 'auth/invalid-credential':
-      return 'Invalid email or password.';
-    case 'auth/too-many-requests':
-      return 'Too many attempts. Try again later.';
-    case 'auth/user-disabled':
-      return 'This account has been disabled.';
-    case 'auth/invalid-email':
-      return 'Invalid email address.';
-    default:
-      return 'Something went wrong. Please try again.';
+    case 'auth/invalid-credential': return 'Invalid email or password.';
+    case 'auth/too-many-requests': return 'Too many attempts. Try again later.';
+    case 'auth/user-disabled': return 'This account has been disabled.';
+    case 'auth/invalid-email': return 'Invalid email address.';
+    default: return 'Something went wrong. Please try again.';
   }
 }
 
 export default LoginPage;
+

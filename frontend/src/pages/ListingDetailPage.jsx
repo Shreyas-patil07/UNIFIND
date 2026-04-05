@@ -12,7 +12,7 @@ const ListingDetailPage = () => {
   const seller = users.find(u => u.id === product.sellerId);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-[100dvh] bg-slate-50">
       <Header />
       
       <div className="px-6 sm:px-8 md:px-12 lg:px-24 py-12">
@@ -56,7 +56,7 @@ const ListingDetailPage = () => {
                 ₹{product.price.toLocaleString()}
               </div>
 
-              <div className="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-6 pb-6 border-b border-slate-100">
                 <span className="bg-green-100 text-green-700 px-3 py-1.5 rounded-lg text-sm font-semibold">
                   {product.condition}
                 </span>
@@ -125,3 +125,4 @@ const ListingDetailPage = () => {
 };
 
 export default ListingDetailPage;
+

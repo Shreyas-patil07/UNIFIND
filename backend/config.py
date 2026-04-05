@@ -1,8 +1,17 @@
+"""
+Configuration management for UNIFIND backend.
+Loads environment variables and provides settings object.
+"""
 from pydantic_settings import BaseSettings
-from typing import Optional
+from functools import lru_cache
+import os
+
+_env_path = os.path.join(os.path.dirname(__file__), ".env")
 
 
 class Settings(BaseSettings):
+    """Application settings loaded from environment variables."""
+    
     # Firebase Service Account Credentials
     FIREBASE_TYPE: str = "service_account"
     FIREBASE_PROJECT_ID: str
@@ -18,9 +27,23 @@ class Settings(BaseSettings):
     # CORS Configuration
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
     
+    # Gemini AI Configuration
+    GEMINI_API_KEY: str
+    
+    # Environment
+    ENVIRONMENT: str = "development"  # development, staging, production
+    
     class Config:
-        env_file = ".env"
+        env_file = _env_path
         case_sensitive = True
+        extra = "ignore"
 
 
-settings = Settings()
+@lru_cache()
+def get_settings() -> Settings:
+    """Get cached settings instance."""
+    return Settings()
+
+
+# Global settings instance
+settings = get_settings()

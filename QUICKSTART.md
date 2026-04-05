@@ -348,7 +348,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 
 ## 📚 Next Steps
 
-- 📖 Read the [Complete Documentation](Doc.md)
+- 📖 Read the [Complete Documentation](DOCUMENTATION.md)
 - 🔍 Explore the [API Documentation](http://localhost:8000/docs)
 - 🎨 Check out the [Project Structure](README.md#-project-structure)
 - 🤝 Learn about [Contributing](README.md#-contributing)
@@ -369,7 +369,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 
 - 📧 Email: systemrecord07@gmail.com
 - 🐛 GitHub Issues: [Report a bug](https://github.com/Shreyas-patil07/UNIFIND/issues)
-- 📖 Full Documentation: [Doc.md](Doc.md)
+- 📖 Full Documentation: [DOCUMENTATION.md](DOCUMENTATION.md)
 
 ---
 
@@ -388,6 +388,33 @@ Before asking for help, verify:
 - [ ] Frontend running on port 5173
 - [ ] No errors in terminal outputs
 - [ ] No errors in browser console
+
+---
+
+## 🎉 What's New
+
+### Latest Features (April 6, 2026)
+
+**Dark Mode**:
+- Toggle between light and dark themes from your Profile page
+- Elegant switch with Moon/Sun icons
+- Preference saves automatically to your account
+- Works across all pages (except landing page)
+- Smooth transitions and animations
+
+**Working Chat System**:
+- Real-time messaging with 3-second auto-refresh
+- Chat rooms auto-create between users
+- Messages persist in Firestore
+- Unread message tracking
+- Product context support
+- Mobile responsive
+
+**Public Profile Viewing**:
+- View any user's profile via `/profile/{userId}`
+- Automatic privacy protection (hides email, phone, etc.)
+- "Send Message" button to start chats
+- Profile-to-chat integration
 
 ---
 
