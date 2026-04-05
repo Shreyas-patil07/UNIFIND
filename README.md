@@ -8,13 +8,13 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
-[![Made with Love](https://img.shields.io/badge/Made%20with-❤️-red.svg)](https://github.com/Shreyas-patil07/Numero_Uno--UNIFIND)
+[![Made with Love](https://img.shields.io/badge/Made%20with-❤️-red.svg)](https://github.com/Shreyas-patil07/UNIFIND)
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![React](https://img.shields.io/badge/React-18.3.1-61DAFB.svg)](https://reactjs.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110.1-009688.svg)](https://fastapi.tiangolo.com/)
 [![Firebase](https://img.shields.io/badge/Firebase-10.7.1-FFCA28.svg)](https://firebase.google.com/)
 
-[🚀 Live Demo](#) • [📖 Documentation](Megalog.md) • [🐛 Report Bug](https://github.com/Shreyas-patil07/Numero_Uno--UNIFIND/issues) • [✨ Request Feature](https://github.com/Shreyas-patil07/Numero_Uno--UNIFIND/issues) • [📧 Contact](mailto:systemrecord07@gmail.com)
+[🚀 Live Demo](#) • [📖 Documentation](Megalog.md) • [🐛 Report Bug](https://github.com/Shreyas-patil07/UNIFIND/issues) • [✨ Request Feature](https://github.com/Shreyas-patil07/UNIFIND/issues) • [📧 Contact](mailto:systemrecord07@gmail.com)
 
 </div>
 
@@ -189,8 +189,8 @@
 ### 1️⃣ Clone the Repository
 
 ```bash
-git clone https://github.com/Shreyas-patil07/Numero_Uno--UNIFIND.git
-cd Numero_Uno--UNIFIND
+git clone https://github.com/Shreyas-patil07/UNIFIND.git
+cd UNIFIND
 ```
 
 ### 2️⃣ Backend Setup
@@ -656,14 +656,14 @@ For detailed documentation, see [Megalog.md](Megalog.md)
   
   ⭐ **Star us on GitHub** — it motivates us a lot!
   
-  [Documentation](Megalog.md) • [Report Bug](https://github.com/Shreyas-patil07/Numero_Uno--UNIFIND/issues) • [Request Feature](https://github.com/Shreyas-patil07/Numero_Uno--UNIFIND/issues) • [Contact](mailto:systemrecord07@gmail.com)
+  [Documentation](Megalog.md) • [Report Bug](https://github.com/Shreyas-patil07/UNIFIND/issues) • [Request Feature](https://github.com/Shreyas-patil07/UNIFIND/issues) • [Contact](mailto:systemrecord07@gmail.com)
   
   ---
   
   ### Join us in making education accessible for everyone 🎓
   
-  ![GitHub stars](https://img.shields.io/github/stars/Shreyas-patil07/Numero_Uno--UNIFIND?style=social)
-  ![GitHub forks](https://img.shields.io/github/forks/Shreyas-patil07/Numero_Uno--UNIFIND?style=social)
-  ![GitHub watchers](https://img.shields.io/github/watchers/Shreyas-patil07/Numero_Uno--UNIFIND?style=social)
+  ![GitHub stars](https://img.shields.io/github/stars/Shreyas-patil07/UNIFIND?style=social)
+  ![GitHub forks](https://img.shields.io/github/forks/Shreyas-patil07/UNIFIND?style=social)
+  ![GitHub watchers](https://img.shields.io/github/watchers/Shreyas-patil07/UNIFIND?style=social)
   
 </div>
