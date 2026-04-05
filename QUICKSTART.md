@@ -25,8 +25,8 @@ git --version
 ## 🎯 Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/Shreyas-patil07/Numero_Uno--UNIFIND.git
-cd Numero_Uno--UNIFIND
+git clone https://github.com/Shreyas-patil07/UNIFIND.git
+cd UNIFIND
 ```
 
 ---
@@ -368,7 +368,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 ## 🆘 Need Help?
 
 - 📧 Email: systemrecord07@gmail.com
-- 🐛 GitHub Issues: [Report a bug](https://github.com/Shreyas-patil07/Numero_Uno--UNIFIND/issues)
+- 🐛 GitHub Issues: [Report a bug](https://github.com/Shreyas-patil07/UNIFIND/issues)
 - 📖 Full Documentation: [Doc.md](Doc.md)
 
 ---

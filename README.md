@@ -189,8 +189,8 @@
 ### 1️⃣ Clone the Repository
 
 ```bash
-git clone https://github.com/Shreyas-patil07/Numero_Uno--UNIFIND.git
-cd Numero_Uno--UNIFIND
+git clone https://github.com/Shreyas-patil07/UNIFIND.git
+cd UNIFIND
 ```
 
 ### 2️⃣ Backend Setup
@@ -342,7 +342,7 @@ unifind/
 │
 ├── .gitignore
 ├── INSTALL.md                      # Installation guide
-├── Megalog.md                      # Complete documentation
+├── Doc.md                          # Complete documentation
 └── README.md                       # This file
 ```
 
@@ -575,7 +575,7 @@ See [FOOTER_USAGE.md](frontend/FOOTER_USAGE.md) for implementation details and c
 
 ## 📚 Documentation
 
-For detailed documentation, see [Megalog.md](Megalog.md)
+For detailed documentation, see [Doc.md](Doc.md)
 
 ---
 
@@ -656,14 +656,14 @@ For detailed documentation, see [Megalog.md](Megalog.md)
   
   ⭐ **Star us on GitHub** — it motivates us a lot!
   
-  [Documentation](Megalog.md) • [Report Bug](https://github.com/Shreyas-patil07/Numero_Uno--UNIFIND/issues) • [Request Feature](https://github.com/Shreyas-patil07/Numero_Uno--UNIFIND/issues) • [Contact](mailto:systemrecord07@gmail.com)
+  [Documentation](Doc.md) • [Report Bug](https://github.com/Shreyas-patil07/UNIFIND/issues) • [Request Feature](https://github.com/Shreyas-patil07/UNIFIND/issues) • [Contact](mailto:systemrecord07@gmail.com)
   
   ---
   
   ### Join us in making education accessible for everyone 🎓
   
-  ![GitHub stars](https://img.shields.io/github/stars/Shreyas-patil07/Numero_Uno--UNIFIND?style=social)
-  ![GitHub forks](https://img.shields.io/github/forks/Shreyas-patil07/Numero_Uno--UNIFIND?style=social)
-  ![GitHub watchers](https://img.shields.io/github/watchers/Shreyas-patil07/Numero_Uno--UNIFIND?style=social)
+  ![GitHub stars](https://img.shields.io/github/stars/Shreyas-patil07/UNIFIND?style=social)
+  ![GitHub forks](https://img.shields.io/github/forks/Shreyas-patil07/UNIFIND?style=social)
+  ![GitHub watchers](https://img.shields.io/github/watchers/Shreyas-patil07/UNIFIND?style=social)
   
 </div>

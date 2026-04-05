@@ -37,7 +37,7 @@
 
 ### Repository
 
-- **GitHub**: https://github.com/Shreyas-patil07/Numero_Uno--UNIFIND
+- **GitHub**: https://github.com/Shreyas-patil07/UNIFIND
 - **License**: MIT
 - **Version**: 2.0.0
 
@@ -56,8 +56,8 @@
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/Shreyas-patil07/Numero_Uno--UNIFIND.git
-cd Numero_Uno--UNIFIND
+git clone https://github.com/Shreyas-patil07/UNIFIND.git
+cd UNIFIND
 ```
 
 2. **Backend Setup**
@@ -153,7 +153,7 @@ npm run dev
 ## Project Structure
 
 ```
-Numero_Uno--UNIFIND/
+UNIFIND/
 ├── backend/                        # FastAPI Backend
 │   ├── routes/                     # API route modules
 │   │   ├── __init__.py
@@ -218,7 +218,6 @@ Numero_Uno--UNIFIND/
 │
 ├── .gitignore
 ├── Doc.md                          # This file
-├── Megalog.md                      # Complete project log
 └── README.md                       # Project README
 ```
 
@@ -698,9 +697,8 @@ console.log('Debug info:', data)
 
 ## Additional Resources
 
-- [Complete Project Log](Megalog.md)
 - [README](README.md)
-- [GitHub Repository](https://github.com/Shreyas-patil07/Numero_Uno--UNIFIND)
+- [GitHub Repository](https://github.com/Shreyas-patil07/UNIFIND)
 - [API Documentation](http://localhost:8000/docs)
 
 ---
@@ -726,7 +724,7 @@ This project is licensed under the MIT License.
 
 For questions or support:
 - Email: systemrecord07@gmail.com
-- GitHub Issues: https://github.com/Shreyas-patil07/Numero_Uno--UNIFIND/issues
+- GitHub Issues: https://github.com/Shreyas-patil07/UNIFIND/issues
 
 ---
 
