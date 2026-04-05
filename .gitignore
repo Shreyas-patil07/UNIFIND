@@ -19,12 +19,17 @@ htmlcov/
 *.egg-info/
 dist/
 build/
+venv/
+env/
+.venv/
+ENV/
+.venv
 
 # Node
 node_modules/
-dist
-dist-ssr
-logs
+dist/
+dist-ssr/
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -32,14 +37,31 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 *.local
+package-lock.json
+yarn.lock
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*.swp
+*.swo
+.project
+.settings/
+
+# Firebase
+.firebaserc
+.firebase/
+
+# OS specific
+Thumbs.db
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
