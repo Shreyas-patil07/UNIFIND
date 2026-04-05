@@ -1281,6 +1281,34 @@ Private project - All rights reserved
 
 ## Recent Updates (April 5, 2026)
 
+### Chat & Public Profiles (April 5, 2026)
+- **Working Chat System**: Fully functional real-time messaging
+  - Auto-creates chat rooms between users
+  - Messages persist in Firestore with 3-second auto-refresh
+  - Unread message tracking
+  - Product context support
+  - Mobile responsive design
+  - Profile integration (click names/avatars to view profiles)
+- **Public Profile Viewing**: View other users' profiles safely
+  - Route: `/profile/{userId}`
+  - Automatic privacy protection (hides email, phone, hostel room, etc.)
+  - "Send Message" button integration
+  - Profile-to-chat navigation
+  - Loading and error states
+- **API Enhancements**: New chat endpoints
+  - `GET /api/chats/room/{chat_room_id}/messages` - Get messages in room
+  - `GET /api/chats/between/{user1_id}/{user2_id}` - Get or create chat room
+  - `GET /api/users/{user_id}/profile?include_private=false` - Public profile data
+- **Frontend Updates**:
+  - Complete rewrite of ChatPage.jsx with real functionality
+  - Enhanced ProfilePage.jsx to support viewing other users
+  - Added chat API functions to services/api.js
+  - Added getPublicProfile() function
+- **Backend Updates**:
+  - Enhanced chat routes with room creation endpoint
+  - Updated profile endpoint to return combined user + profile data
+  - Automatic privacy filtering for public profile views
+
 ### Database Restructure (April 5, 2026)
 - **Major Change**: Restructured database from single `users` collection to three collections
   - `users`: Core authentication data (id, name, email, college, firebase_uid, email_verified, created_at)
@@ -1295,32 +1323,16 @@ Private project - All rights reserved
   - `PUT /users/{user_id}/profile` - Update profile
   - `GET /users/{user_id}/transactions` - Get transaction history
   - `POST /users/{user_id}/transactions` - Create transaction record
-- **Documentation**: Added `DATABASE_RESTRUCTURE.md` and `API_MIGRATION_GUIDE.md`
-
-### Documentation Cleanup
-- Removed `frontend/FOOTER_USAGE.md` - Redundant footer documentation
-- Removed `frontend/BADGE_EXAMPLES.md` - Redundant badge documentation
-- Updated `.gitignore` with comprehensive Python cache patterns
-  - Changed `__pycache__/` to `**/__pycache__/` for recursive matching
-  - Added `.pytest_cache/`, `.coverage`, `htmlcov/`, `*.egg-info/`, `dist/`, `build/`
-- Committed changes to git repository
-
-### Git Ignore Improvements
-The `.gitignore` now properly handles:
-- Python cache files at all directory levels
-- Test coverage reports
-- Build artifacts
-- Package distribution files
-- All common Python development artifacts
 
 ---
 
 **Last Updated**: 2026-04-05
-**Documentation Version**: 2.1.0
+**Documentation Version**: 2.2.0
 **Project Status**: Active Development
 **Build**: Vite + FastAPI + Firebase
-**Total Files**: ~50 (cleaned up documentation)
+**Total Files**: ~50
 **Total Dependencies**: 17 (vs 77 in v1.0.0)
 **Build Time**: 5s (vs 60s+ in v1.0.0)
 **Dev Startup**: <1s (vs 30s+ in v1.0.0)
 **Database Collections**: 7 (users, user_profiles, transaction_history, products, chat_rooms, messages, reviews)
+**New Features**: Working chat system, public profile viewing

@@ -391,6 +391,26 @@ Before asking for help, verify:
 
 ---
 
+## 🎉 What's New
+
+### Latest Features (April 5, 2026)
+
+**Working Chat System**:
+- Real-time messaging with 3-second auto-refresh
+- Chat rooms auto-create between users
+- Messages persist in Firestore
+- Unread message tracking
+- Product context support
+- Mobile responsive
+
+**Public Profile Viewing**:
+- View any user's profile via `/profile/{userId}`
+- Automatic privacy protection (hides email, phone, etc.)
+- "Send Message" button to start chats
+- Profile-to-chat integration
+
+---
+
 **Made with ❤️ by Numero Uno Team**
 
 Happy coding! 🚀

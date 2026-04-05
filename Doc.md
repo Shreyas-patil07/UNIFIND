@@ -30,10 +30,12 @@
 - 🛍️ Smart Product Listings
 - 🤖 AI-Powered Need Board
 - ⭐ Trust Score System
-- 💬 Real-time Messaging
+- 💬 **Real-time Messaging** (3-second auto-refresh)
+- 👤 **Public Profile Viewing** (with privacy protection)
 - 📊 Analytics Dashboard
 - 🎯 Advanced Search & Filters
 - 📱 Fully Responsive Design
+- 🔒 Automatic Privacy Controls
 
 ### Repository
 
@@ -334,9 +336,15 @@ Currently using Firebase Authentication. Backend validates Firebase tokens.
 - Description: Get all chat rooms for user
 - Response: Array of ChatRoom objects
 
-**GET /api/chats/{chat_room_id}/messages**
+**GET /api/chats/room/{chat_room_id}/messages**
 - Description: Get messages in chat room
 - Response: Array of Message objects
+
+**GET /api/chats/between/{user1_id}/{user2_id}**
+- Description: Get or create chat room between two users
+- Query Parameters:
+  - `product_id` (optional): Associate chat with product
+- Response: ChatRoom object
 
 **PUT /api/chats/{chat_room_id}/mark-read/{user_id}**
 - Description: Mark messages as read
@@ -807,6 +815,29 @@ This project is licensed under the MIT License.
 
 ## Recent Updates
 
+### April 5, 2026 - Chat & Public Profiles
+
+**Working Chat System**:
+- Fully functional real-time messaging with 3-second polling
+- Auto-creates chat rooms between users
+- Messages persist in Firestore
+- Unread message tracking
+- Product context in conversations
+- Mobile responsive design
+- Profile integration (click to view profiles)
+
+**Public Profile Viewing**:
+- View other users' profiles via `/profile/{userId}`
+- Automatic privacy protection (hides email, phone, hostel room, etc.)
+- "Send Message" button on profiles
+- Profile-to-chat navigation
+- Loading and error states
+
+**API Enhancements**:
+- `GET /api/chats/room/{chat_room_id}/messages` - Get messages
+- `GET /api/chats/between/{user1_id}/{user2_id}` - Get/create chat room
+- `GET /api/users/{user_id}/profile?include_private=false` - Public profile
+
 ### April 5, 2026 - Database Restructure
 
 **Major Update**: Restructured database from single `users` collection to three collections:
@@ -835,23 +866,6 @@ This project is licensed under the MIT License.
 
 **Migration**: Use `backend/migrate_database.py` to migrate existing data
 
-### April 5, 2026 - Documentation Cleanup
-- **Documentation Cleanup**: Removed 16 redundant documentation files
-- **Git Ignore Enhancement**: Updated `.gitignore` with comprehensive Python cache patterns
-- **Repository Maintenance**: Improved project structure and organization
-
 ---
 
-## Contact
-
-For questions or support:
-- Email: systemrecord07@gmail.com
-- GitHub Issues: https://github.com/Shreyas-patil07/UNIFIND/issues
-
----
-
-**Made with ❤️ by Numero Uno Team**
-
-© 2026 UNIFIND - All Rights Reserved
-
-**Last Updated**: April 5, 2026 | **Version**: 2.1.0
+**Last Updated**: April 5, 2026 | **Version**: 2.2.0

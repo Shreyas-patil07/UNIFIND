@@ -393,10 +393,11 @@ unifind/
 - `PUT /api/transactions/{id}` - Update transaction status
 
 ### Chats
-- `POST /api/chats/messages` - Send message
+- `POST /api/chats/messages` - Send message (auto-creates chat room)
 - `GET /api/chats/{user_id}` - Get user's chat rooms
-- `GET /api/chats/{chat_id}/messages` - Get chat messages
-- `PUT /api/chats/{chat_id}/mark-read/{user_id}` - Mark as read
+- `GET /api/chats/room/{chat_room_id}/messages` - Get chat messages
+- `GET /api/chats/between/{user1_id}/{user2_id}` - Get or create chat room
+- `PUT /api/chats/{chat_room_id}/mark-read/{user_id}` - Mark as read
 
 ### Reviews
 - `POST /api/reviews` - Create review
@@ -649,6 +650,21 @@ For detailed documentation, see the files above or visit the `/docs` endpoint wh
 
 ## 📝 Recent Updates
 
+### April 5, 2026 - Chat & Public Profiles
+- **Working Chat System**: Fully functional real-time messaging
+  - Auto-creates chat rooms between users
+  - Messages persist in Firestore
+  - 3-second auto-refresh for new messages
+  - Unread message tracking
+  - Product context support
+  - Mobile responsive design
+- **Public Profile Viewing**: View other users' profiles safely
+  - Automatic privacy protection (hides email, phone, etc.)
+  - "Send Message" button integration
+  - Profile-to-chat navigation
+  - Loading and error states
+- **API Enhancements**: New chat endpoints for room creation and message management
+
 ### April 5, 2026 - Database Restructure
 - **Major Update**: Restructured database from single `users` collection to three collections
   - Separated core authentication data from extended profile information
@@ -656,13 +672,7 @@ For detailed documentation, see the files above or visit the `/docs` endpoint wh
   - Improved privacy controls with public/private profile fields
 - **New API Endpoints**: Added profile management and transaction history endpoints
 - **Migration Tool**: Created `migrate_database.py` for seamless data migration
-- **Documentation**: Added comprehensive guides (`DATABASE_RESTRUCTURE.md`, `API_MIGRATION_GUIDE.md`)
 - **Benefits**: Better performance, scalability, and privacy control
-
-### April 5, 2026 - Documentation Cleanup
-- Cleaned up redundant documentation files
-- Enhanced .gitignore with comprehensive Python cache patterns
-- Improved repository structure and maintenance
 
 ---
 

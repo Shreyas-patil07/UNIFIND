@@ -128,15 +128,18 @@ async def update_user(user_id: str, updates: Dict[str, Any]):
 
 # ============= USER PROFILE ROUTES (Extended Information) =============
 
-@router.get("/users/{user_id}/profile", response_model=UserProfile)
+@router.get("/users/{user_id}/profile")
 async def get_user_profile(user_id: str, include_private: bool = False):
-    """Get user profile (public data by default)"""
+    """Get user profile with user data (public data by default)"""
     db = get_db()
     
-    # Verify user exists
+    # Verify user exists and get user data
     user_doc = db.collection('users').document(user_id).get()
     if not user_doc.exists:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    user_data = user_doc.to_dict()
+    user_data['id'] = user_doc.id
     
     # Get profile
     profiles = db.collection('user_profiles').where('user_id', '==', user_id).limit(1).stream()
@@ -150,8 +153,15 @@ async def get_user_profile(user_id: str, include_private: bool = False):
             private_fields = ['phone', 'hostel_room', 'branch_change_history', 'photo_change_history']
             for field in private_fields:
                 profile_data.pop(field, None)
+            # Also hide email from user data for public view
+            user_data.pop('email', None)
         
-        return profile_data
+        # Combine user and profile data
+        return {
+            **user_data,
+            **profile_data,
+            'user_id': user_id
+        }
     
     raise HTTPException(status_code=404, detail="User profile not found")
 

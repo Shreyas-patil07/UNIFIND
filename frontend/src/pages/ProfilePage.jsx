@@ -1,11 +1,12 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
-import { Shield, Star, Award, Calendar, GraduationCap, LogOut, Mail, CheckCircle, AlertCircle, RefreshCw, Edit2, Lock } from 'lucide-react';
+import { Shield, Star, Award, Calendar, GraduationCap, LogOut, Mail, CheckCircle, AlertCircle, RefreshCw, Edit2, Lock, MessageCircle } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { sendEmailVerification } from 'firebase/auth';
 import { actionCodeSettings } from '../services/firebase';
+import { getPublicProfile } from '../services/api';
 
 const ProfilePage = () => {
   const { userId } = useParams();
@@ -15,26 +16,54 @@ const ProfilePage = () => {
   // Determine if viewing own profile or another user's profile
   const isOwnProfile = !userId || userId === authUser?.uid;
   
-  // Use real user data from userProfile
-  const displayName = authUser?.displayName || userProfile?.name || 'User';
+  // State for viewing other user's profile
+  const [viewedProfile, setViewedProfile] = React.useState(null);
+  const [loadingProfile, setLoadingProfile] = React.useState(false);
+  const [profileError, setProfileError] = React.useState(null);
+  
+  // Fetch profile if viewing another user
+  React.useEffect(() => {
+    if (!isOwnProfile && userId) {
+      setLoadingProfile(true);
+      setProfileError(null);
+      getPublicProfile(userId, false)
+        .then(data => {
+          setViewedProfile(data);
+          setLoadingProfile(false);
+        })
+        .catch(err => {
+          console.error('Failed to load profile:', err);
+          setProfileError('Failed to load profile');
+          setLoadingProfile(false);
+        });
+    }
+  }, [userId, isOwnProfile]);
+  
+  // Use appropriate profile data
+  const profileData = isOwnProfile ? userProfile : viewedProfile;
+  
+  // Use real user data from userProfile or viewedProfile
+  const displayName = isOwnProfile 
+    ? (authUser?.displayName || userProfile?.name || 'User')
+    : (viewedProfile?.name || 'User');
   const displayEmail = authUser?.email || '';
-  const displayCollege = userProfile?.college || 'College';
-  const displayBranch = userProfile?.branch || 'Not specified';
-  const memberSince = userProfile?.member_since || new Date().getFullYear().toString();
-  const trustScore = userProfile?.trust_score || 0;
-  const itemsSold = userProfile?.items_sold || 0;
-  const rating = userProfile?.rating || 0.0;
-  const reviewCount = userProfile?.review_count || 0;
-  const coverGradient = userProfile?.cover_gradient || 'from-blue-600 to-purple-600';
-  const avatar = userProfile?.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(displayName);
+  const displayCollege = profileData?.college || 'College';
+  const displayBranch = profileData?.branch || 'Not specified';
+  const memberSince = profileData?.member_since || new Date().getFullYear().toString();
+  const trustScore = profileData?.trust_score || 0;
+  const itemsSold = profileData?.items_sold || 0;
+  const rating = profileData?.rating || 0.0;
+  const reviewCount = profileData?.review_count || 0;
+  const coverGradient = profileData?.cover_gradient || 'from-blue-600 to-purple-600';
+  const avatar = profileData?.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(displayName);
+  const isVerified = isOwnProfile ? (authUser?.emailVerified || false) : (viewedProfile?.email_verified || false);
   
   // Real reviews from database (empty for now until we fetch from Firestore)
-  const userReviews = userProfile?.reviews || [];
+  const userReviews = profileData?.reviews || [];
   
   const [showLogoutModal, setShowLogoutModal] = React.useState(false);
   const [resendingEmail, setResendingEmail] = React.useState(false);
   const [resendSuccess, setResendSuccess] = React.useState(false);
-  const [isVerified, setIsVerified] = React.useState(authUser?.emailVerified || false);
   const [showBranchModal, setShowBranchModal] = React.useState(false);
   const [newBranch, setNewBranch] = React.useState('');
   const [password, setPassword] = React.useState('');
@@ -43,14 +72,13 @@ const ProfilePage = () => {
 
   // Auto-check verification status every 5 seconds if not verified
   React.useEffect(() => {
-    if (!authUser || isVerified) return;
+    if (!authUser || !isOwnProfile || isVerified) return;
 
     const checkVerificationStatus = async () => {
       try {
         const { reload } = await import('firebase/auth');
         await reload(authUser);
         if (authUser.emailVerified) {
-          setIsVerified(true);
           // Sync verification status to database
           await syncEmailVerificationStatus(authUser);
           // Force re-render by updating state
@@ -68,7 +96,7 @@ const ProfilePage = () => {
     const interval = setInterval(checkVerificationStatus, 5000);
 
     return () => clearInterval(interval);
-  }, [authUser, isVerified, syncEmailVerificationStatus]);
+  }, [authUser, isOwnProfile, isVerified, syncEmailVerificationStatus]);
 
   const handleLogout = async () => {
     try {
@@ -140,6 +168,41 @@ const ProfilePage = () => {
     }
   };
 
+  const handleStartChat = () => {
+    if (!authUser || !userId) return;
+    navigate(`/chat?user=${userId}`);
+  };
+
+  // Show loading state
+  if (!isOwnProfile && loadingProfile) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Header />
+        <div className="flex items-center justify-center h-[calc(100vh-80px)]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+            <p className="text-slate-600">Loading profile...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (!isOwnProfile && profileError) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Header />
+        <div className="flex items-center justify-center h-[calc(100vh-80px)]">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">{profileError}</p>
+            <Button onClick={() => navigate(-1)}>Go Back</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
@@ -150,7 +213,7 @@ const ProfilePage = () => {
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
             {/* Cover Image with Edit Button */}
             <div className={`h-32 bg-gradient-to-r ${coverGradient} relative`}>
-              {isOwnProfile && authUser && authUser.emailVerified && (
+              {isOwnProfile && authUser && isVerified && (
                 <button
                   onClick={() => navigate(`/profile/${authUser.uid}/edit`)}
                   className="absolute top-4 right-4 bg-white/90 hover:bg-white text-slate-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg hover:shadow-xl"
@@ -158,6 +221,16 @@ const ProfilePage = () => {
                 >
                   <Edit2 className="h-4 w-4" />
                   <span className="text-sm font-medium">Edit Profile</span>
+                </button>
+              )}
+              {!isOwnProfile && authUser && (
+                <button
+                  onClick={handleStartChat}
+                  className="absolute top-4 right-4 bg-white/90 hover:bg-white text-indigo-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg hover:shadow-xl"
+                  title="Send Message"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  <span className="text-sm font-medium">Send Message</span>
                 </button>
               )}
             </div>
@@ -179,7 +252,7 @@ const ProfilePage = () => {
                     <h1 className="font-['Outfit'] text-3xl font-bold tracking-tight text-slate-900" data-testid="profile-name">
                       {displayName}
                     </h1>
-                    {isOwnProfile && authUser && authUser.emailVerified && (
+                    {isVerified && (
                       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 text-sm font-semibold rounded-lg border border-green-200">
                         <CheckCircle className="h-4 w-4" />
                         Verified
@@ -224,7 +297,7 @@ const ProfilePage = () => {
                       </div>
                     </div>
                     
-                    {isOwnProfile && authUser && authUser.emailVerified && (
+                    {isOwnProfile && authUser && isVerified && (
                       <div className="flex items-start gap-3">
                         <div className="bg-green-50 p-2 rounded-lg flex-shrink-0">
                           <Mail className="h-5 w-5 text-green-600" />
@@ -256,7 +329,7 @@ const ProfilePage = () => {
             </div>
 
             {/* Trust Score - Big and Prominent - Only for verified users */}
-            {authUser && authUser.emailVerified && isOwnProfile && (
+            {isVerified && (
               <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200 p-8 text-center mt-6">
                 <div className="flex items-center justify-center gap-2 mb-3">
                   <Shield className="h-6 w-6 text-green-600" />
@@ -295,7 +368,7 @@ const ProfilePage = () => {
             )}
 
             {/* Email Verification Status - Only for unverified users viewing their own profile */}
-            {isOwnProfile && authUser && !authUser.emailVerified && (
+            {isOwnProfile && authUser && !isVerified && (
               <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl p-6">
                 <div className="flex items-start gap-4">
                   <div className="bg-amber-100 h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0">
@@ -337,7 +410,7 @@ const ProfilePage = () => {
           </div>
 
           {/* Stats Grid - Only for verified users */}
-          {authUser && authUser.emailVerified && (
+          {isVerified && (
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white rounded-2xl border border-slate-200 p-6 text-center" data-testid="profile-stat-sold">

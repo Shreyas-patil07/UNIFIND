@@ -12,7 +12,7 @@
   "then": {
     "type": "runCommand",
     "command": "git add . && git commit -m \"Auto-commit: Changes detected\" && git push origin shreyas",
-    "timeout": 30
+    "timeout": 360
   },
   "workspaceFolderName": "UniFind-main",
   "shortName": "auto-push-shreyas"
