@@ -17,11 +17,11 @@ const ChatPage = () => {
     <div className="min-h-screen bg-slate-50">
       <Header hideSearch />
       
-      <div className="h-[calc(100vh-80px)] flex">
+      <div className="h-[calc(100vh-60px)] flex with-bottom-nav">
         {/* Chat List - Left Sidebar */}
-        <div className="w-full md:w-80 lg:w-96 bg-white border-r border-slate-200 flex flex-col">
-          <div className="p-6 border-b border-slate-200">
-            <h2 className="text-xl font-bold text-slate-900" data-testid="chat-list-title">Messages</h2>
+        <div className="w-full md:w-72 lg:w-80 bg-white border-r border-slate-200 flex flex-col">
+          <div className="px-4 py-4 border-b border-slate-200">
+            <h2 className="text-lg font-bold text-slate-900" data-testid="chat-list-title">Messages</h2>
           </div>
           <div className="flex-1 overflow-y-auto">
             {chats.map((chat) => {
@@ -31,8 +31,8 @@ const ChatPage = () => {
                 <div
                   key={chat.id}
                   onClick={() => setSelectedChat(chat)}
-                  className={`p-4 border-b border-slate-100 cursor-pointer transition-colors ${
-                    selectedChat.id === chat.id ? 'bg-blue-50' : 'hover:bg-slate-50'
+                  className={`p-3.5 border-b border-slate-100 cursor-pointer transition-colors ${
+                    selectedChat.id === chat.id ? 'bg-indigo-50' : 'hover:bg-slate-50'
                   }`}
                   data-testid={`chat-item-${chat.id}`}
                 >
@@ -40,13 +40,13 @@ const ChatPage = () => {
                     <img
                       src={user?.avatar}
                       alt={user?.name}
-                      className="h-12 w-12 rounded-full object-cover"
+                      className="h-10 w-10 rounded-full object-cover ring-2 ring-slate-100"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
                         <h3 className="text-sm font-bold text-slate-900 truncate">{user?.name}</h3>
                         {chat.unread > 0 && (
-                          <span className="bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center" data-testid="unread-badge">
+                          <span className="bg-indigo-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold" data-testid="unread-badge">
                             {chat.unread}
                           </span>
                         )}
@@ -99,7 +99,7 @@ const ChatPage = () => {
                     <h4 className="text-sm font-bold text-slate-900 mb-1">
                       {getProduct(selectedChat.productId)?.title}
                     </h4>
-                    <p className="text-lg font-black text-blue-600">
+                    <p className="text-lg font-black text-indigo-600">
                       ₹{getProduct(selectedChat.productId)?.price.toLocaleString()}
                     </p>
                   </div>
@@ -116,10 +116,10 @@ const ChatPage = () => {
                       className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
                       data-testid={`message-${msg.id}`}
                     >
-                      <div className={`max-w-[70%] rounded-2xl px-4 py-3 ${
+                      <div className={`max-w-[75%] sm:max-w-[65%] rounded-2xl px-4 py-2.5 ${
                         isCurrentUser
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-white border border-slate-200 text-slate-900'
+                          ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white'
+                          : 'bg-white border border-slate-200 text-slate-900 shadow-sm'
                       }`}>
                         <p className="text-sm">{msg.text}</p>
                         <p className={`text-xs mt-1 ${
@@ -168,11 +168,11 @@ const ChatPage = () => {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Type a message..."
-                    className="flex-1 rounded-xl border border-slate-200 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                    className="input-premium flex-1 px-4 py-2.5 text-sm"
                     data-testid="message-input"
                   />
                   <Button
-                    className="bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 active:scale-95"
+                    className="btn-gradient h-10 w-10 p-0 flex items-center justify-center rounded-xl flex-shrink-0"
                     data-testid="send-btn"
                   >
                     <Send className="h-5 w-5" />

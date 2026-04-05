@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
-import { ShoppingBag, Package, MessageCircle, BarChart3, Sparkles, List, TrendingUp, Clock } from 'lucide-react';
+import { ShoppingBag, Package, MessageCircle, BarChart3, Sparkles, List, TrendingUp, Clock, ArrowRight } from 'lucide-react';
 import { recentActivity, userStats } from '../data/mockData';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -9,116 +9,227 @@ const DashboardHome = () => {
   const navigate = useNavigate();
   const { currentUser, userProfile } = useAuth();
 
-  // Use real user data if available, fallback to defaults
-  const displayName = currentUser?.displayName || userProfile?.name || 'User';
+  const displayName = currentUser?.displayName || userProfile?.name || 'Student';
+  const firstName = displayName.split(' ')[0];
   const trustScore = userProfile?.trust_score || 0;
   const itemsBought = userProfile?.items_bought || 0;
   const itemsSold = userProfile?.items_sold || 0;
   const rating = userProfile?.rating || 0.0;
 
   const navCards = [
-    { icon: ShoppingBag, title: 'Browse & Buy', description: 'Explore listings', path: '/buyer', color: 'bg-blue-50', iconColor: 'text-blue-600', testId: 'nav-card-buyer' },
-    { icon: Package, title: 'My Listings', description: 'Manage your items', path: '/seller', color: 'bg-green-50', iconColor: 'text-green-600', testId: 'nav-card-seller' },
-    { icon: Sparkles, title: 'Need Board', description: 'AI-powered matching', path: '/need-board', color: 'bg-purple-50', iconColor: 'text-purple-600', testId: 'nav-card-need-board' },
-    { icon: BarChart3, title: 'Analytics', description: 'Track your stats', path: '/analytics', color: 'bg-amber-50', iconColor: 'text-amber-600', testId: 'nav-card-analytics' },
-    { icon: MessageCircle, title: 'Chats', description: 'Your conversations', path: '/chat', color: 'bg-pink-50', iconColor: 'text-pink-600', testId: 'nav-card-chat' },
-    { icon: List, title: 'Orders', description: 'Purchase history', path: '/analytics', color: 'bg-teal-50', iconColor: 'text-teal-600', testId: 'nav-card-orders' }
+    {
+      icon: ShoppingBag,
+      title: 'Browse & Buy',
+      description: 'Explore listings',
+      path: '/buyer',
+      gradient: 'from-blue-500 to-indigo-600',
+      bg: 'bg-blue-50',
+      iconColor: 'text-blue-600',
+      testId: 'nav-card-buyer',
+    },
+    {
+      icon: Package,
+      title: 'My Listings',
+      description: 'Manage your items',
+      path: '/seller',
+      gradient: 'from-emerald-500 to-teal-600',
+      bg: 'bg-emerald-50',
+      iconColor: 'text-emerald-600',
+      testId: 'nav-card-seller',
+    },
+    {
+      icon: Sparkles,
+      title: 'NeedBoard AI',
+      description: 'AI-powered matching',
+      path: '/need-board',
+      gradient: 'from-violet-500 to-purple-600',
+      bg: 'bg-violet-50',
+      iconColor: 'text-violet-600',
+      testId: 'nav-card-need-board',
+    },
+    {
+      icon: BarChart3,
+      title: 'Analytics',
+      description: 'Track your stats',
+      path: '/analytics',
+      gradient: 'from-amber-500 to-orange-500',
+      bg: 'bg-amber-50',
+      iconColor: 'text-amber-600',
+      testId: 'nav-card-analytics',
+    },
+    {
+      icon: MessageCircle,
+      title: 'Chats',
+      description: 'Your conversations',
+      path: '/chat',
+      gradient: 'from-pink-500 to-rose-500',
+      bg: 'bg-pink-50',
+      iconColor: 'text-pink-600',
+      testId: 'nav-card-chat',
+    },
+    {
+      icon: List,
+      title: 'Orders',
+      description: 'Purchase history',
+      path: '/analytics',
+      gradient: 'from-teal-500 to-cyan-600',
+      bg: 'bg-teal-50',
+      iconColor: 'text-teal-600',
+      testId: 'nav-card-orders',
+    },
   ];
+
+  const timeOfDay = () => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
       <Header hideSearch />
-      
-      <div className="px-6 sm:px-8 md:px-12 lg:px-24 py-12">
-        {/* Welcome Section */}
-        <div className="mb-12">
-          <h1 className="font-['Outfit'] text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 mb-2" data-testid="dashboard-welcome-title">
-            Welcome back, {displayName}! 👋
-          </h1>
-          <p className="text-base text-slate-600">Your marketplace dashboard</p>
-          
-          {/* Trust Score - Only show if verified */}
-          {currentUser?.emailVerified && (
-            <div className="mt-6 inline-flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl px-6 py-3">
-              <div className="text-sm font-medium text-green-900">Trust Score</div>
-              <div className="text-3xl font-black text-green-600" data-testid="dashboard-trust-score">{trustScore}%</div>
-              <TrendingUp className="h-5 w-5 text-green-600" />
+
+      <div className="px-4 sm:px-6 md:px-10 lg:px-20 py-8 with-bottom-nav">
+
+        {/* ===== WELCOME BANNER ===== */}
+        <div className="relative overflow-hidden bg-gradient-hero rounded-2xl sm:rounded-3xl p-6 sm:p-8 mb-8">
+          {/* Decorative orbs */}
+          <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute bottom-0 left-1/2 w-64 h-64 bg-violet-500/15 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <p className="text-indigo-300 text-sm font-medium mb-1">{timeOfDay()},</p>
+              <h1
+                className="font-['Outfit'] text-2xl sm:text-3xl lg:text-4xl font-black text-white mb-2"
+                data-testid="dashboard-welcome-title"
+              >
+                {firstName}! 👋
+              </h1>
+              <p className="text-slate-400 text-sm">Your campus marketplace dashboard</p>
             </div>
-          )}
+
+            {currentUser?.emailVerified && (
+              <div className="inline-flex items-center gap-3 glass border border-white/20 rounded-xl px-5 py-3 self-start sm:self-center">
+                <div>
+                  <p className="text-slate-400 text-xs">Trust Score</p>
+                  <p className="text-2xl font-black text-white" data-testid="dashboard-trust-score">
+                    {trustScore}%
+                  </p>
+                </div>
+                <div className="relative h-12 w-12">
+                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 36 36">
+                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="3" />
+                    <circle
+                      cx="18" cy="18" r="15.9" fill="none"
+                      stroke="url(#trustGrad)" strokeWidth="3"
+                      strokeDasharray={`${trustScore} ${100 - trustScore}`}
+                      strokeLinecap="round"
+                    />
+                    <defs>
+                      <linearGradient id="trustGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#818cf8" />
+                        <stop offset="100%" stopColor="#a78bfa" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <TrendingUp className="absolute inset-0 m-auto h-5 w-5 text-indigo-400" />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Navigation Grid */}
-        <div className="mb-12">
-          <h2 className="text-xl font-bold text-slate-900 mb-6">Quick Access</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+        {/* ===== QUICK STATS ===== */}
+        <div className="mb-8">
+          <h2 className="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
+            <span className="h-4 w-1 bg-indigo-600 rounded-full inline-block" />
+            Quick Stats
+          </h2>
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+            {[
+              { label: 'Items Bought', value: itemsBought, color: 'text-blue-600', bg: 'bg-blue-50', testId: 'stat-bought' },
+              { label: 'Items Sold', value: itemsSold, color: 'text-emerald-600', bg: 'bg-emerald-50', testId: 'stat-sold' },
+              { label: 'Rating', value: `${rating.toFixed(1)}⭐`, color: 'text-amber-600', bg: 'bg-amber-50', testId: 'stat-rating' },
+            ].map(({ label, value, color, bg, testId }) => (
+              <div key={label} className="card-premium p-4 text-center" data-testid={testId}>
+                <div className={`text-xl sm:text-2xl font-black ${color} mb-0.5`}>{value}</div>
+                <div className="text-xs text-slate-500">{label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ===== QUICK ACCESS GRID ===== */}
+        <div className="mb-8">
+          <h2 className="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
+            <span className="h-4 w-1 bg-indigo-600 rounded-full inline-block" />
+            Quick Access
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
             {navCards.map((card) => {
               const Icon = card.icon;
               return (
                 <div
                   key={card.title}
                   onClick={() => navigate(card.path)}
-                  className="group bg-white rounded-2xl border border-slate-200 p-6 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/10"
+                  className="card-premium p-4 cursor-pointer text-center group"
                   data-testid={card.testId}
                 >
-                  <div className={`${card.color} h-12 w-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                    <Icon className={`h-6 w-6 ${card.iconColor}`} />
+                  <div className={`${card.bg} h-11 w-11 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300`}>
+                    <Icon className={`h-5 w-5 ${card.iconColor}`} />
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-1">{card.title}</h3>
-                  <p className="text-sm text-slate-600">{card.description}</p>
+                  <h3 className="text-sm font-bold text-slate-900 mb-0.5">{card.title}</h3>
+                  <p className="text-xs text-slate-500 hidden sm:block">{card.description}</p>
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="mb-12">
-          <h2 className="text-xl font-bold text-slate-900 mb-6">Quick Stats</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white rounded-2xl border border-slate-200 p-6" data-testid="stat-bought">
-              <div className="text-sm text-slate-600 mb-1">Items Bought</div>
-              <div className="text-3xl font-black text-slate-900">{itemsBought}</div>
-            </div>
-            <div className="bg-white rounded-2xl border border-slate-200 p-6" data-testid="stat-sold">
-              <div className="text-sm text-slate-600 mb-1">Items Sold</div>
-              <div className="text-3xl font-black text-slate-900">{itemsSold}</div>
-            </div>
-            <div className="bg-white rounded-2xl border border-slate-200 p-6" data-testid="stat-rating">
-              <div className="text-sm text-slate-600 mb-1">Your Rating</div>
-              <div className="text-3xl font-black text-slate-900">{rating.toFixed(1)} ⭐</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Activity */}
+        {/* ===== RECENT ACTIVITY ===== */}
         <div>
-          <h2 className="text-xl font-bold text-slate-900 mb-6">Recent Activity</h2>
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-bold text-slate-700 flex items-center gap-2">
+              <span className="h-4 w-1 bg-indigo-600 rounded-full inline-block" />
+              Recent Activity
+            </h2>
+            <button
+              onClick={() => navigate('/analytics')}
+              className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1"
+            >
+              View all <ArrowRight className="h-3 w-3" />
+            </button>
+          </div>
+          <div className="card-premium overflow-hidden">
             {recentActivity.map((activity, index) => (
               <div
                 key={activity.id}
-                className={`flex items-center justify-between p-5 ${index !== recentActivity.length - 1 ? 'border-b border-slate-100' : ''}`}
+                className={`flex items-center justify-between px-4 sm:px-5 py-4 hover:bg-slate-50 transition-colors ${
+                  index !== recentActivity.length - 1 ? 'border-b border-slate-100' : ''
+                }`}
                 data-testid={`activity-item-${activity.id}`}
               >
-                <div className="flex items-center gap-4">
-                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                  <div className={`h-10 w-10 flex-shrink-0 rounded-xl flex items-center justify-center ${
                     activity.type === 'purchase' ? 'bg-blue-50' :
-                    activity.type === 'sale' ? 'bg-green-50' : 'bg-amber-50'
+                    activity.type === 'sale' ? 'bg-emerald-50' : 'bg-amber-50'
                   }`}>
                     {activity.type === 'purchase' && <ShoppingBag className="h-5 w-5 text-blue-600" />}
-                    {activity.type === 'sale' && <Package className="h-5 w-5 text-green-600" />}
+                    {activity.type === 'sale' && <Package className="h-5 w-5 text-emerald-600" />}
                     {activity.type === 'review' && <TrendingUp className="h-5 w-5 text-amber-600" />}
                   </div>
-                  <div>
-                    <div className="text-sm font-medium text-slate-900">{activity.title}</div>
-                    <div className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-slate-900 truncate">{activity.title}</div>
+                    <div className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
                       <Clock className="h-3 w-3" />
                       {activity.date}
                     </div>
                   </div>
                 </div>
                 {activity.amount && (
-                  <div className="text-lg font-bold text-slate-900">
+                  <div className="text-base font-bold text-slate-900 flex-shrink-0 ml-2">
                     ₹{activity.amount.toLocaleString()}
                   </div>
                 )}
