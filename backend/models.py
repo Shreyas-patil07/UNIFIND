@@ -22,6 +22,7 @@ class User(UserBase):
     rating: float = 0.0
     review_count: int = 0
     member_since: str
+    email_verified: bool = False
     created_at: datetime
 
 

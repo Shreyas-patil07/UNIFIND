@@ -5,11 +5,12 @@ import { Shield, Star, Award, Calendar, GraduationCap, LogOut, Mail, CheckCircle
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { sendEmailVerification } from 'firebase/auth';
+import { actionCodeSettings } from '../services/firebase';
 
 const ProfilePage = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
-  const { logout, currentUser: authUser, userProfile } = useAuth();
+  const { logout, currentUser: authUser, userProfile, syncEmailVerificationStatus } = useAuth();
   
   // Determine if viewing own profile or another user's profile
   const isOwnProfile = !userId || userId === authUser?.uid;
@@ -43,6 +44,8 @@ const ProfilePage = () => {
         await reload(authUser);
         if (authUser.emailVerified) {
           setIsVerified(true);
+          // Sync verification status to database
+          await syncEmailVerificationStatus(authUser);
           // Force re-render by updating state
           window.location.reload();
         }
@@ -58,7 +61,7 @@ const ProfilePage = () => {
     const interval = setInterval(checkVerificationStatus, 5000);
 
     return () => clearInterval(interval);
-  }, [authUser, isVerified]);
+  }, [authUser, isVerified, syncEmailVerificationStatus]);
 
   const handleLogout = async () => {
     try {
@@ -74,7 +77,7 @@ const ProfilePage = () => {
     setResendingEmail(true);
     setResendSuccess(false);
     try {
-      await sendEmailVerification(authUser);
+      await sendEmailVerification(authUser, actionCodeSettings);
       setResendSuccess(true);
       setTimeout(() => setResendSuccess(false), 5000);
     } catch (error) {

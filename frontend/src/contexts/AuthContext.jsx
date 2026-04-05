@@ -7,7 +7,7 @@ import {
   sendPasswordResetEmail,
   updateProfile
 } from 'firebase/auth'
-import { doc, setDoc, getDoc } from 'firebase/firestore'
+import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore'
 import { auth, db } from '../services/firebase'
 
 const AuthContext = createContext({})
@@ -42,6 +42,7 @@ export const AuthProvider = ({ children }) => {
       review_count: 0,
       member_since: new Date().getFullYear().toString(),
       avatar: null,
+      email_verified: false,
       created_at: new Date().toISOString()
     }
 
@@ -75,11 +76,40 @@ export const AuthProvider = ({ children }) => {
     return null
   }
 
+  const syncEmailVerificationStatus = async (user) => {
+    if (!user) return
+
+    try {
+      // Reload user to get latest emailVerified status
+      await user.reload()
+      
+      const docRef = doc(db, 'users', user.uid)
+      const docSnap = await getDoc(docRef)
+
+      if (docSnap.exists()) {
+        const currentData = docSnap.data()
+        
+        // Only update if verification status changed
+        if (currentData.email_verified !== user.emailVerified) {
+          await updateDoc(docRef, {
+            email_verified: user.emailVerified
+          })
+          
+          // Update local state
+          setUserProfile(prev => prev ? { ...prev, email_verified: user.emailVerified } : null)
+        }
+      }
+    } catch (error) {
+      console.error('Error syncing email verification status:', error)
+    }
+  }
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user)
       if (user) {
         await fetchUserProfile(user.uid)
+        await syncEmailVerificationStatus(user)
       } else {
         setUserProfile(null)
       }
@@ -97,6 +127,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     resetPassword,
     fetchUserProfile,
+    syncEmailVerificationStatus,
     loading
   }
 

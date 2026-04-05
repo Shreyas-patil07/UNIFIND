@@ -3,11 +3,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { ArrowLeft, Mail, RefreshCw } from 'lucide-react';
 import { sendEmailVerification, reload } from 'firebase/auth';
-import { auth } from '../services/firebase';
+import { auth, actionCodeSettings } from '../services/firebase';
+import { useAuth } from '../contexts/AuthContext';
 
 const OTPVerificationPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { syncEmailVerificationStatus } = useAuth();
   const email = location.state?.email || auth.currentUser?.email || 'your email';
 
   const [checking, setChecking] = useState(false);
@@ -24,6 +26,8 @@ const OTPVerificationPage = () => {
       try {
         await reload(auth.currentUser);
         if (auth.currentUser.emailVerified) {
+          // Sync verification status to database
+          await syncEmailVerificationStatus(auth.currentUser);
           navigate('/home');
         }
       } catch (err) {
@@ -38,7 +42,7 @@ const OTPVerificationPage = () => {
     const interval = setInterval(checkVerificationStatus, 5000);
 
     return () => clearInterval(interval);
-  }, [navigate]);
+  }, [navigate, syncEmailVerificationStatus]);
 
   // Countdown timer for resend button
   useEffect(() => {
@@ -59,6 +63,8 @@ const OTPVerificationPage = () => {
       // Reload user to get latest emailVerified status from Firebase
       await reload(auth.currentUser);
       if (auth.currentUser.emailVerified) {
+        // Sync verification status to database
+        await syncEmailVerificationStatus(auth.currentUser);
         navigate('/home');
       } else {
         setError("Email not verified yet. Check your inbox and click the link, then try again.");
@@ -79,7 +85,7 @@ const OTPVerificationPage = () => {
     setError('');
     setResendSuccess(false);
     try {
-      await sendEmailVerification(auth.currentUser);
+      await sendEmailVerification(auth.currentUser, actionCodeSettings);
       setResendSuccess(true);
       setCountdown(60); // 60s cooldown
     } catch (err) {

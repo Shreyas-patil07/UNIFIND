@@ -18,4 +18,10 @@ export const auth = getAuth(app)
 export const db = getFirestore(app)
 export const storage = getStorage(app)
 
+// Action code settings for email verification
+export const actionCodeSettings = {
+  url: `${window.location.origin}/home`,
+  handleCodeInApp: false,
+}
+
 export default app

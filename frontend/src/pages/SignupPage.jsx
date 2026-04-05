@@ -4,7 +4,7 @@ import { Mail, Lock, User, GraduationCap, Eye, EyeOff, Calendar } from 'lucide-r
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { sendEmailVerification } from 'firebase/auth';
-import { auth } from '../services/firebase';
+import { auth, actionCodeSettings } from '../services/firebase';
 
 const SignupPage = () => {
   const navigate = useNavigate();
@@ -84,9 +84,9 @@ const SignupPage = () => {
     setLoading(true);
     try {
       await signup(formData.email, formData.password, formData.name, formData.college, formData.yearOfAdmission);
-      // Send verification email
+      // Send verification email with custom settings
       if (auth.currentUser) {
-        await sendEmailVerification(auth.currentUser);
+        await sendEmailVerification(auth.currentUser, actionCodeSettings);
       }
       // Pass email to OTP page so it can display it
       navigate('/otp-verification', { state: { email: formData.email } });
