@@ -111,10 +111,11 @@ unifind/
 │   └── vite.config.js              # Vite configuration
 │
 ├── .gitignore                      # Git ignore rules
-├── .gitkeep                        # Keep empty directories
-├── A1_README.md                    # Legacy README
-├── INSTALL.md                      # Installation guide
+├── API_MIGRATION_GUIDE.md          # Quick API migration reference
+├── DATABASE_RESTRUCTURE.md         # Database restructure documentation
+├── Doc.md                          # Detailed documentation
 ├── Megalog.md                      # This file (complete documentation)
+├── QUICKSTART.md                   # Quick start guide
 └── README.md                       # Project README
 
 ```
@@ -577,8 +578,10 @@ unifind/
 - `get_db()`: Returns Firestore database instance
 
 **Collections**:
+- `users`: Core user authentication data (id, name, email, college, firebase_uid, email_verified, created_at)
+- `user_profiles`: Extended user information (branch, avatar, bio, ratings, phone, hostel_room, histories)
+- `transaction_history`: Buy and sell transaction records
 - `products`: Product listings
-- `users`: User profiles
 - `chat_rooms`: Chat room metadata
 - `messages`: Chat messages
 - `reviews`: User reviews
@@ -587,11 +590,25 @@ unifind/
 
 #### Models (models.py)
 
-**User Models**:
+**User Models** (Core Authentication):
 ```python
-UserBase: name, email, college, avatar
+UserBase: name, email, college
 UserCreate: UserBase + firebase_uid
-User: UserBase + id, firebase_uid, trust_score, rating, review_count, member_since, created_at
+User: UserBase + id, firebase_uid, email_verified, created_at
+```
+
+**User Profile Models** (Extended Information):
+```python
+UserProfileBase: branch, avatar, cover_gradient, bio, trust_score, rating, review_count, member_since, phone, hostel_room, branch_change_history, photo_change_history
+UserProfileCreate: UserProfileBase + user_id
+UserProfile: UserProfileBase + id, user_id, updated_at
+```
+
+**Transaction History Models**:
+```python
+TransactionBase: user_id, product_id, transaction_type, amount, status, other_party_id
+TransactionCreate: TransactionBase
+Transaction: TransactionBase + id, created_at, completed_at
 ```
 
 **Product Models**:
@@ -1264,6 +1281,22 @@ Private project - All rights reserved
 
 ## Recent Updates (April 5, 2026)
 
+### Database Restructure (April 5, 2026)
+- **Major Change**: Restructured database from single `users` collection to three collections
+  - `users`: Core authentication data (id, name, email, college, firebase_uid, email_verified, created_at)
+  - `user_profiles`: Extended user information with public/private fields
+    - Public: branch, avatar, bio, trust_score, rating, review_count, member_since
+    - Private: phone, hostel_room, branch_change_history, photo_change_history
+  - `transaction_history`: Complete buy/sell transaction records
+- **Benefits**: Better privacy control, improved performance, scalability, and flexibility
+- **Migration**: Created `migrate_database.py` script for seamless data migration
+- **API Updates**: New endpoints for profile management and transaction history
+  - `GET /users/{user_id}/profile?include_private=true` - Get user profile
+  - `PUT /users/{user_id}/profile` - Update profile
+  - `GET /users/{user_id}/transactions` - Get transaction history
+  - `POST /users/{user_id}/transactions` - Create transaction record
+- **Documentation**: Added `DATABASE_RESTRUCTURE.md` and `API_MIGRATION_GUIDE.md`
+
 ### Documentation Cleanup
 - Removed `frontend/FOOTER_USAGE.md` - Redundant footer documentation
 - Removed `frontend/BADGE_EXAMPLES.md` - Redundant badge documentation
@@ -1283,10 +1316,11 @@ The `.gitignore` now properly handles:
 ---
 
 **Last Updated**: 2026-04-05
-**Documentation Version**: 2.0.1
+**Documentation Version**: 2.1.0
 **Project Status**: Active Development
 **Build**: Vite + FastAPI + Firebase
-**Total Files**: ~48 (cleaned up documentation)
+**Total Files**: ~50 (cleaned up documentation)
 **Total Dependencies**: 17 (vs 77 in v1.0.0)
 **Build Time**: 5s (vs 60s+ in v1.0.0)
 **Dev Startup**: <1s (vs 30s+ in v1.0.0)
+**Database Collections**: 7 (users, user_profiles, transaction_history, products, chat_rooms, messages, reviews)
