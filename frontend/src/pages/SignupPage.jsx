@@ -115,7 +115,7 @@ const SignupPage = () => {
       <div className="flex items-center justify-center p-6 sm:p-8 md:p-12 lg:p-24 bg-slate-50">
         <div className="w-full max-w-md">
           <div className="mb-10">
-            <Link to="/" className="flex items-center gap-3" data-testid="signup-logo">
+            <Link to="/home" className="flex items-center gap-3" data-testid="signup-logo">
               <img 
                 src="/UNIFIND.png" 
                 alt="UNIFIND Logo" 

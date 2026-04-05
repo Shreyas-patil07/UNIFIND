@@ -23,7 +23,7 @@ export default function Header({ hideSearch = false }) {
       <div className="px-6 sm:px-8 md:px-12 lg:px-24 py-4">
         <div className="flex items-center justify-between gap-4">
           <Link 
-            to="/" 
+            to="/home" 
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
             data-testid="header-logo"
           >
