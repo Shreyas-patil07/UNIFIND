@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
-import { Shield, Star, Award, Calendar, GraduationCap, LogOut, Mail, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { Shield, Star, Award, Calendar, GraduationCap, LogOut, Mail, CheckCircle, AlertCircle, RefreshCw, Edit2, Lock } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { sendEmailVerification } from 'firebase/auth';
@@ -19,11 +19,13 @@ const ProfilePage = () => {
   const displayName = authUser?.displayName || userProfile?.name || 'User';
   const displayEmail = authUser?.email || '';
   const displayCollege = userProfile?.college || 'College';
+  const displayBranch = userProfile?.branch || 'Not specified';
   const memberSince = userProfile?.member_since || new Date().getFullYear().toString();
   const trustScore = userProfile?.trust_score || 0;
   const itemsSold = userProfile?.items_sold || 0;
   const rating = userProfile?.rating || 0.0;
   const reviewCount = userProfile?.review_count || 0;
+  const coverGradient = userProfile?.cover_gradient || 'from-blue-600 to-purple-600';
   const avatar = userProfile?.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(displayName);
   
   // Real reviews from database (empty for now until we fetch from Firestore)
@@ -33,6 +35,11 @@ const ProfilePage = () => {
   const [resendingEmail, setResendingEmail] = React.useState(false);
   const [resendSuccess, setResendSuccess] = React.useState(false);
   const [isVerified, setIsVerified] = React.useState(authUser?.emailVerified || false);
+  const [showBranchModal, setShowBranchModal] = React.useState(false);
+  const [newBranch, setNewBranch] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [branchError, setBranchError] = React.useState('');
+  const [branchLoading, setBranchLoading] = React.useState(false);
 
   // Auto-check verification status every 5 seconds if not verified
   React.useEffect(() => {
@@ -87,6 +94,52 @@ const ProfilePage = () => {
     }
   };
 
+  const branches = [
+    'Computer Engineering',
+    'Artificial Intelligence (AI) And Data Science',
+    'CSE Artificial Intelligence and Machine Learning',
+    'IOT and Cybersecurity Including Blockchain',
+    'Electrical Engineering',
+    'Mechanical Engineering'
+  ];
+
+  const handleBranchChange = async () => {
+    if (!authUser || !newBranch || !password) {
+      setBranchError('Please select a branch and enter your password.');
+      return;
+    }
+
+    setBranchLoading(true);
+    setBranchError('');
+
+    try {
+      // Re-authenticate user with password
+      const { EmailAuthProvider, reauthenticateWithCredential } = await import('firebase/auth');
+      const credential = EmailAuthProvider.credential(authUser.email, password);
+      await reauthenticateWithCredential(authUser, credential);
+
+      // Update branch in Firestore
+      const { doc, updateDoc } = await import('firebase/firestore');
+      const { db } = await import('../services/firebase');
+      await updateDoc(doc(db, 'users', authUser.uid), {
+        branch: newBranch
+      });
+
+      // Refresh user profile
+      await syncEmailVerificationStatus(authUser);
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to update branch:', error);
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        setBranchError('Incorrect password. Please try again.');
+      } else {
+        setBranchError('Failed to update branch. Please try again.');
+      }
+    } finally {
+      setBranchLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
@@ -94,62 +147,117 @@ const ProfilePage = () => {
       <div className="px-6 sm:px-8 md:px-12 lg:px-24 py-12">
         <div className="max-w-5xl mx-auto">
           {/* Profile Header */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-8 mb-8">
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-6 mb-6">
-              <img
-                src={avatar}
-                alt={displayName}
-                className="h-24 w-24 rounded-full object-cover border-4 border-blue-100"
-                data-testid="profile-avatar"
-              />
-              <div className="flex-1">
-                <h1 className="font-['Outfit'] text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 mb-2" data-testid="profile-name">
-                  {displayName}
-                  {isOwnProfile && authUser && authUser.emailVerified && (
-                    <span className="inline-flex items-center gap-1 ml-3 px-3 py-1 bg-green-100 text-green-700 text-sm font-medium rounded-full border border-green-200">
-                      <CheckCircle className="h-4 w-4" />
-                      Verified
-                    </span>
-                  )}
-                </h1>
-                <div className="flex flex-wrap gap-4 text-sm text-slate-600">
-                  <div className="flex items-center gap-1">
-                    <GraduationCap className="h-4 w-4" />
-                    <span data-testid="profile-college">{displayCollege}</span>
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+            {/* Cover Image with Edit Button */}
+            <div className={`h-32 bg-gradient-to-r ${coverGradient} relative`}>
+              {isOwnProfile && authUser && authUser.emailVerified && (
+                <button
+                  onClick={() => navigate(`/profile/${authUser.uid}/edit`)}
+                  className="absolute top-4 right-4 bg-white/90 hover:bg-white text-slate-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg hover:shadow-xl"
+                  title="Edit Profile"
+                >
+                  <Edit2 className="h-4 w-4" />
+                  <span className="text-sm font-medium">Edit Profile</span>
+                </button>
+              )}
+            </div>
+            
+            {/* Profile Content */}
+            <div className="px-8 pb-8 relative">
+              <div className="flex flex-col items-start gap-6">
+                {/* Avatar - positioned to overlap gradient */}
+                <img
+                  src={avatar}
+                  alt={displayName}
+                  className="h-32 w-32 rounded-2xl object-cover border-4 border-white shadow-lg flex-shrink-0 -mt-16"
+                  data-testid="profile-avatar"
+                />
+                
+                {/* Name and Verified Badge */}
+                <div className="w-full -mt-2">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h1 className="font-['Outfit'] text-3xl font-bold tracking-tight text-slate-900" data-testid="profile-name">
+                      {displayName}
+                    </h1>
+                    {isOwnProfile && authUser && authUser.emailVerified && (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 text-sm font-semibold rounded-lg border border-green-200">
+                        <CheckCircle className="h-4 w-4" />
+                        Verified
+                      </span>
+                    )}
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    <span>Member since {memberSince}</span>
+                </div>
+                
+                {/* Info Grid and Logout Button */}
+                <div className="w-full flex flex-col md:flex-row gap-6">
+                  {/* Professional Info Grid */}
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-blue-50 p-2 rounded-lg flex-shrink-0">
+                        <GraduationCap className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs text-slate-500 mb-0.5">College</div>
+                        <div className="font-medium text-slate-900 text-sm leading-tight" data-testid="profile-college">{displayCollege}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-3">
+                      <div className="bg-purple-50 p-2 rounded-lg flex-shrink-0">
+                        <Award className="h-5 w-5 text-purple-600" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs text-slate-500 mb-0.5">Branch</div>
+                        <div className="font-medium text-slate-900 text-sm leading-tight">
+                          <span className="truncate">{displayBranch}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-3">
+                      <div className="bg-amber-50 p-2 rounded-lg flex-shrink-0">
+                        <Calendar className="h-5 w-5 text-amber-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs text-slate-500 mb-0.5">Member Since</div>
+                        <div className="font-medium text-slate-900 text-sm leading-tight">{memberSince}</div>
+                      </div>
+                    </div>
+                    
+                    {isOwnProfile && authUser && authUser.emailVerified && (
+                      <div className="flex items-start gap-3">
+                        <div className="bg-green-50 p-2 rounded-lg flex-shrink-0">
+                          <Mail className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs text-slate-500 mb-0.5">Email</div>
+                          <div className="font-medium text-slate-900 text-sm leading-tight truncate">{displayEmail}</div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  {isOwnProfile && authUser && authUser.emailVerified && (
-                    <div className="flex items-center gap-1 text-green-600">
-                      <Mail className="h-4 w-4" />
-                      <span>{displayEmail}</span>
+                  
+                  {/* Edit and Logout Buttons */}
+                  {isOwnProfile && (
+                    <div className="flex flex-col gap-3">
+                      <Button 
+                        onClick={() => setShowLogoutModal(true)}
+                        variant="outline" 
+                        className="rounded-xl text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 flex-shrink-0" 
+                        data-testid="logout-btn"
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Logout
+                      </Button>
                     </div>
                   )}
                 </div>
               </div>
-              {isOwnProfile && (
-                <div className="flex gap-3">
-                  <Button variant="outline" className="rounded-xl" data-testid="edit-profile-btn">
-                    Edit Profile
-                  </Button>
-                  <Button 
-                    onClick={() => setShowLogoutModal(true)}
-                    variant="outline" 
-                    className="rounded-xl text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300" 
-                    data-testid="logout-btn"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Logout
-                  </Button>
-                </div>
-              )}
             </div>
 
             {/* Trust Score - Big and Prominent - Only for verified users */}
             {authUser && authUser.emailVerified && isOwnProfile && (
-              <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200 p-8 text-center">
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200 p-8 text-center mt-6">
                 <div className="flex items-center justify-center gap-2 mb-3">
                   <Shield className="h-6 w-6 text-green-600" />
                   <h2 className="text-lg font-bold text-green-900">Trust Score</h2>
@@ -346,6 +454,99 @@ const ProfilePage = () => {
                 data-testid="confirm-logout-btn"
               >
                 Yes, Logout
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Change Branch Modal */}
+      {showBranchModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl border border-slate-200 p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div className="flex justify-center mb-6">
+              <div className="bg-blue-50 h-16 w-16 rounded-full flex items-center justify-center">
+                <GraduationCap className="h-8 w-8 text-blue-600" />
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900 text-center mb-3">
+              Change Branch
+            </h2>
+            <p className="text-slate-600 text-center mb-6">
+              Select your new branch and enter your password to confirm.
+            </p>
+
+            {branchError && (
+              <div className="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-600">
+                {branchError}
+              </div>
+            )}
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Current Branch</label>
+                <div className="px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">
+                  {displayBranch}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2" htmlFor="newBranch">New Branch</label>
+                <div className="relative">
+                  <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 z-10" />
+                  <select
+                    id="newBranch"
+                    value={newBranch}
+                    onChange={(e) => setNewBranch(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 pl-12 pr-4 py-3 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all appearance-none bg-white cursor-pointer"
+                  >
+                    <option value="">Select new branch...</option>
+                    {branches.map((branch) => (
+                      <option key={branch} value={branch}>{branch}</option>
+                    ))}
+                  </select>
+                  <svg className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2" htmlFor="password">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                  <input
+                    id="password"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 pl-12 pr-4 py-3 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                onClick={() => {
+                  setShowBranchModal(false);
+                  setNewBranch('');
+                  setPassword('');
+                  setBranchError('');
+                }}
+                variant="outline"
+                className="flex-1 rounded-xl"
+                disabled={branchLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleBranchChange}
+                disabled={branchLoading || !newBranch || !password}
+                className="flex-1 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {branchLoading ? 'Updating...' : 'Update Branch'}
               </Button>
             </div>
           </div>

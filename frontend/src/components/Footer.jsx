@@ -39,8 +39,28 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-slate-700 pt-6 text-center text-sm">
-          <p>© 2026 UNIFIND. All rights reserved.</p>
+        <div className="border-t border-slate-700 pt-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-sm text-center md:text-left">© 2026 UNIFIND. All rights reserved.</p>
+            
+            {/* Numero Uno Attribution */}
+            <a 
+              href="https://github.com/Shreyas-patil07/UniFind" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="group flex items-center gap-3 px-4 py-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 border border-slate-700 hover:border-blue-500/50 transition-all duration-300"
+            >
+              <img 
+                src="/Numero_Uno.png" 
+                alt="Numero Uno" 
+                className="h-8 w-8 rounded-full object-cover ring-2 ring-slate-700 group-hover:ring-blue-500 transition-all"
+              />
+              <div className="text-left">
+                <p className="text-[10px] text-slate-500 group-hover:text-blue-400 transition-colors">Created by</p>
+                <p className="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors">Numero Uno</p>
+              </div>
+            </a>
+          </div>
         </div>
       </div>
     </footer>

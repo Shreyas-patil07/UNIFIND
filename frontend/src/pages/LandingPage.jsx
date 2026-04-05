@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Sparkles, Shield, Award, TrendingUp, Users, Package, ArrowRight, User } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import Footer from '../components/Footer';
-import FloatingBadge from '../components/FloatingBadge';
 import { useAuth } from '../contexts/AuthContext';
 
 const LandingPage = () => {
@@ -12,9 +11,6 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Floating Badge - Always visible */}
-      <FloatingBadge />
-      
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200">
         <div className="px-6 sm:px-8 md:px-12 lg:px-24 py-4 flex items-center justify-between">

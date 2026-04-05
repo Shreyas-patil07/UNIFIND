@@ -3,12 +3,11 @@ from typing import Optional, List, Dict
 from datetime import datetime
 
 
-# User Models
+# User Models (Core Authentication Data)
 class UserBase(BaseModel):
     name: str
     email: EmailStr
     college: str
-    avatar: Optional[str] = None
 
 
 class UserCreate(UserBase):
@@ -18,12 +17,57 @@ class UserCreate(UserBase):
 class User(UserBase):
     id: str
     firebase_uid: str
+    email_verified: bool = False
+    created_at: datetime
+
+
+# User Profile Models (Extended Information)
+class UserProfileBase(BaseModel):
+    # Public fields
+    branch: Optional[str] = None
+    avatar: Optional[str] = None
+    cover_gradient: Optional[str] = "from-blue-600 to-purple-600"
+    bio: Optional[str] = None
     trust_score: float = 0.0
     rating: float = 0.0
     review_count: int = 0
     member_since: str
-    email_verified: bool = False
+    
+    # Private fields (not shown to public)
+    phone: Optional[str] = None
+    hostel_room: Optional[str] = None
+    branch_change_history: Optional[List[Dict]] = []
+    photo_change_history: Optional[List[Dict]] = []
+
+
+class UserProfileCreate(UserProfileBase):
+    user_id: str
+
+
+class UserProfile(UserProfileBase):
+    id: str
+    user_id: str
+    updated_at: datetime
+
+
+# Transaction History Models
+class TransactionBase(BaseModel):
+    user_id: str
+    product_id: str
+    transaction_type: str  # "buy" or "sell"
+    amount: float
+    status: str  # "pending", "completed", "cancelled"
+    other_party_id: str  # buyer_id if selling, seller_id if buying
+
+
+class TransactionCreate(TransactionBase):
+    pass
+
+
+class Transaction(TransactionBase):
+    id: str
     created_at: datetime
+    completed_at: Optional[datetime] = None
 
 
 # Product Models

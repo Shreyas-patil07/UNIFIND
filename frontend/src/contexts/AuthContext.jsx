@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
   const [userProfile, setUserProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  const signup = async (email, password, name, college, yearOfAdmission) => {
+  const signup = async (email, password, name, college, branch, yearOfAdmission) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password)
     const user = userCredential.user
 
@@ -36,6 +36,7 @@ export const AuthProvider = ({ children }) => {
       name,
       email,
       college,
+      branch,
       year_of_admission: yearOfAdmission,
       trust_score: 0,
       rating: 0.0,
@@ -72,6 +73,13 @@ export const AuthProvider = ({ children }) => {
       const profile = { id: docSnap.id, ...docSnap.data() }
       setUserProfile(profile)
       return profile
+    }
+    return null
+  }
+
+  const refreshUserProfile = async () => {
+    if (currentUser) {
+      return await fetchUserProfile(currentUser.uid)
     }
     return null
   }
@@ -127,6 +135,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     resetPassword,
     fetchUserProfile,
+    refreshUserProfile,
     syncEmailVerificationStatus,
     loading
   }
