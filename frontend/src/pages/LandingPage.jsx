@@ -210,21 +210,21 @@ const LandingPage = () => {
       </section>
 
       {/* ===== STATS SECTION ===== */}
-      <section className="py-20 px-4 sm:px-6 md:px-10 lg:px-20 bg-slate-800/50">
+      <section className="py-16 px-4 sm:px-6 md:px-10 lg:px-20 bg-slate-800/50">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
             {stats.map(({ icon: Icon, value, label, color, bg }, i) => (
               <div
                 key={label}
-                className="glass border border-white/10 rounded-2xl p-7 text-center hover:border-indigo-500/40 transition-all duration-300 hover:-translate-y-1"
+                className="glass border border-white/10 rounded-2xl p-6 text-center hover:border-indigo-500/40 transition-all duration-300 hover:-translate-y-1"
                 style={{ animationDelay: `${i * 100}ms` }}
                 data-testid={`stat-card-${label.toLowerCase().replace(' ', '-')}`}
               >
-                <div className={`${bg} h-14 w-14 rounded-xl flex items-center justify-center mx-auto mb-4`}>
-                  <Icon className={`h-7 w-7 ${color}`} />
+                <div className={`${bg} h-12 w-12 rounded-xl flex items-center justify-center mx-auto mb-3`}>
+                  <Icon className={`h-6 w-6 ${color}`} />
                 </div>
-                <div className="text-3xl sm:text-4xl font-black text-white mb-1">{value}</div>
-                <div className="text-sm text-slate-400">{label}</div>
+                <div className="text-2xl sm:text-3xl font-black text-white mb-1">{value}</div>
+                <div className="text-xs text-slate-400">{label}</div>
               </div>
             ))}
           </div>
@@ -232,20 +232,20 @@ const LandingPage = () => {
       </section>
 
       {/* ===== FEATURES SECTION ===== */}
-      <section className="py-20 md:py-28 px-4 sm:px-6 md:px-10 lg:px-20 bg-slate-900" data-testid="features-section">
+      <section className="py-16 md:py-20 px-4 sm:px-6 md:px-10 lg:px-20 bg-slate-900" data-testid="features-section">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <span className="inline-block bg-indigo-900/60 border border-indigo-500/30 text-indigo-400 text-sm font-bold uppercase tracking-widest px-5 py-2 rounded-full mb-5">
+          <div className="text-center mb-12">
+            <span className="inline-block bg-indigo-900/60 border border-indigo-500/30 text-indigo-400 text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full mb-4">
               Why UNIFIND
             </span>
             <h2
-              className="font-['Outfit'] text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white mb-5"
+              className="font-['Outfit'] text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white mb-4"
               data-testid="features-title"
             >
               Everything you need to{' '}
               <span className="gradient-text-hero">trade on campus</span>
             </h2>
-            <p className="text-slate-400 text-xl max-w-2xl mx-auto">
+            <p className="text-slate-400 text-base max-w-2xl mx-auto">
               Built for students, by students. Experience the future of campus commerce.
             </p>
           </div>
@@ -254,14 +254,14 @@ const LandingPage = () => {
             {features.map(({ icon: Icon, title, desc, gradient, bg, iconColor }, i) => (
               <div
                 key={title}
-                className="group glass border border-white/10 rounded-2xl p-8 hover:border-indigo-500/40 transition-all duration-300 hover:-translate-y-1 hover:bg-white/5"
+                className="group glass border border-white/10 rounded-2xl p-6 hover:border-indigo-500/40 transition-all duration-300 hover:-translate-y-1 hover:bg-white/5"
                 data-testid={`feature-card-${title.toLowerCase().replace(' ', '-')}`}
               >
-                <div className={`${bg} h-14 w-14 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                  <Icon className={`h-7 w-7 ${iconColor}`} />
+                <div className={`${bg} h-12 w-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                  <Icon className={`h-6 w-6 ${iconColor}`} />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3">{title}</h3>
-                <p className="text-slate-400 text-base leading-relaxed">{desc}</p>
+                <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
