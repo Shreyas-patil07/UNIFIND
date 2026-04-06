@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Search, ShoppingBag, MessageCircle, User, Menu, X, LayoutDashboard, Sparkles, Package, UserPlus, Bell } from 'lucide-react'
+import { Search, ShoppingBag, MessageCircle, User, Menu, X, LayoutDashboard, Sparkles, Package, UserPlus, Bell, CheckCircle, AlertCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { getUserChats, searchUsers, getPendingFriendRequests, acceptFriendRequest, rejectFriendRequest } from '../services/api'
@@ -19,6 +19,10 @@ export default function Header({ hideSearch = false }) {
   const [showNotifications, setShowNotifications] = useState(false)
   const [friendRequests, setFriendRequests] = useState([])
   const [requestsLoading, setRequestsLoading] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
+  const [showErrorModal, setShowErrorModal] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
   const searchRef = useRef(null)
 
   // Fetch unread message count
@@ -124,10 +128,12 @@ export default function Header({ hideSearch = false }) {
     try {
       await acceptFriendRequest(currentUser.uid, friendId)
       await fetchFriendRequests()
-      alert('Friend request accepted!')
+      setSuccessMessage('Friend request accepted!')
+      setShowSuccessModal(true)
     } catch (error) {
       console.error('Failed to accept request:', error)
-      alert('Failed to accept friend request')
+      setErrorMessage('Failed to accept friend request. Please try again.')
+      setShowErrorModal(true)
     } finally {
       setRequestsLoading(false)
     }
@@ -140,9 +146,12 @@ export default function Header({ hideSearch = false }) {
     try {
       await rejectFriendRequest(currentUser.uid, friendId)
       await fetchFriendRequests()
+      setSuccessMessage('Friend request declined')
+      setShowSuccessModal(true)
     } catch (error) {
       console.error('Failed to reject request:', error)
-      alert('Failed to reject friend request')
+      setErrorMessage('Failed to decline friend request. Please try again.')
+      setShowErrorModal(true)
     } finally {
       setRequestsLoading(false)
     }
@@ -640,6 +649,56 @@ export default function Header({ hideSearch = false }) {
             )
           })}
         </nav>
+      )}
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className={`w-full max-w-md rounded-2xl shadow-xl ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
+            <div className="p-6 text-center">
+              <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className={`text-xl font-bold mb-2 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                Success!
+              </h3>
+              <p className={`text-sm mb-6 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                {successMessage}
+              </p>
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-all"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Modal */}
+      {showErrorModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className={`w-full max-w-md rounded-2xl shadow-xl ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
+            <div className="p-6 text-center">
+              <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                <AlertCircle className="h-8 w-8 text-red-600" />
+              </div>
+              <h3 className={`text-xl font-bold mb-2 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                Error
+              </h3>
+              <p className={`text-sm mb-6 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                {errorMessage}
+              </p>
+              <button
+                onClick={() => setShowErrorModal(false)}
+                className="w-full px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   )

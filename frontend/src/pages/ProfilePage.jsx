@@ -31,6 +31,10 @@ const ProfilePage = () => {
   const [friendLoading, setFriendLoading] = React.useState(false);
   const [friendshipStatus, setFriendshipStatus] = React.useState('none');
   const [showFriendRequestModal, setShowFriendRequestModal] = React.useState(false);
+  const [showSuccessModal, setShowSuccessModal] = React.useState(false);
+  const [successMessage, setSuccessMessage] = React.useState('');
+  const [showErrorModal, setShowErrorModal] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState('');
   
   // Fetch profile if viewing another user
   React.useEffect(() => {
@@ -196,7 +200,8 @@ const ProfilePage = () => {
 
   const handleReportUser = async () => {
     if (!reportReason) {
-      alert('Please select a reason for reporting');
+      setErrorMessage('Please select a reason for reporting');
+      setShowErrorModal(true);
       return;
     }
 
@@ -214,13 +219,15 @@ const ProfilePage = () => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      alert('Report submitted successfully. Our team will review it shortly.');
+      setSuccessMessage('Report submitted successfully. Our team will review it shortly.');
+      setShowSuccessModal(true);
       setShowReportModal(false);
       setReportReason('');
       setReportDetails('');
     } catch (error) {
       console.error('Failed to submit report:', error);
-      alert('Failed to submit report. Please try again.');
+      setErrorMessage('Failed to submit report. Please try again.');
+      setShowErrorModal(true);
     } finally {
       setReportSubmitting(false);
     }
@@ -236,25 +243,29 @@ const ProfilePage = () => {
         await removeFriend(authUser.uid, userId);
         setFriendshipStatus('none');
         setIsFriend(false);
-        alert('Friend removed successfully');
+        setSuccessMessage('Friend removed successfully');
+        setShowSuccessModal(true);
       } else if (friendshipStatus === 'request_sent') {
         // Cancel request
         await removeFriend(authUser.uid, userId);
         setFriendshipStatus('none');
-        alert('Friend request cancelled');
+        setSuccessMessage('Friend request cancelled');
+        setShowSuccessModal(true);
       } else if (friendshipStatus === 'request_received') {
         // Accept request
         await acceptFriendRequest(authUser.uid, userId);
         setFriendshipStatus('friends');
         setIsFriend(true);
-        alert('Friend request accepted!');
+        setSuccessMessage('Friend request accepted! You are now friends.');
+        setShowSuccessModal(true);
       } else {
         // Send friend request
         const result = await addFriend(authUser.uid, userId);
         if (result.status === 'active') {
           setFriendshipStatus('friends');
           setIsFriend(true);
-          alert('Friend request accepted! You are now friends.');
+          setSuccessMessage('Friend request accepted! You are now friends.');
+          setShowSuccessModal(true);
         } else {
           setFriendshipStatus('request_sent');
           setShowFriendRequestModal(true);
@@ -262,7 +273,8 @@ const ProfilePage = () => {
       }
     } catch (error) {
       console.error('Failed to toggle friend:', error);
-      alert(error.response?.data?.detail || 'Failed to update friend status');
+      setErrorMessage(error.response?.data?.detail || 'Failed to update friend status. Please try again.');
+      setShowErrorModal(true);
     } finally {
       setFriendLoading(false);
     }
@@ -894,6 +906,56 @@ const ProfilePage = () => {
                 className="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-all"
               >
                 Got it!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className={`w-full max-w-md rounded-2xl shadow-xl ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
+            <div className="p-6 text-center">
+              <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className={`text-xl font-bold mb-2 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                Success!
+              </h3>
+              <p className={`text-sm mb-6 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                {successMessage}
+              </p>
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-all"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Modal */}
+      {showErrorModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className={`w-full max-w-md rounded-2xl shadow-xl ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
+            <div className="p-6 text-center">
+              <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                <AlertCircle className="h-8 w-8 text-red-600" />
+              </div>
+              <h3 className={`text-xl font-bold mb-2 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                Error
+              </h3>
+              <p className={`text-sm mb-6 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                {errorMessage}
+              </p>
+              <button
+                onClick={() => setShowErrorModal(false)}
+                className="w-full px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-all"
+              >
+                Close
               </button>
             </div>
           </div>
