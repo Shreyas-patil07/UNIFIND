@@ -121,7 +121,7 @@ const BuyerPage = () => {
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 transition-colors"
               >
                 <X className="h-3 w-3" />
-                Reset
+                <span className="hidden sm:inline">Reset</span>
               </button>
             )}
             <button

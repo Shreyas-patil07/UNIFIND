@@ -182,7 +182,7 @@ const DashboardHome = () => {
                   <div className={`${card.bg} h-11 w-11 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300`}>
                     <Icon className={`h-5 w-5 ${card.iconColor}`} />
                   </div>
-                  <h3 className={`text-sm font-bold mb-0.5 ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{card.title}</h3>
+                  <h3 className={`text-sm font-bold mb-0.5 hidden sm:block ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{card.title}</h3>
                   <p className={`text-xs hidden sm:block ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{card.description}</p>
                 </div>
               );
@@ -201,7 +201,7 @@ const DashboardHome = () => {
               onClick={() => navigate('/analytics')}
               className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1"
             >
-              View all <ArrowRight className="h-3 w-3" />
+              <span className="hidden sm:inline">View all</span> <ArrowRight className="h-3 w-3" />
             </button>
           </div>
           <div className={`rounded-2xl border overflow-hidden ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>

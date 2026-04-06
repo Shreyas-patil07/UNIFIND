@@ -96,13 +96,13 @@ const NeedBoardPage = () => {
             >
               {loading ? (
                 <>
-                  <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mr-2" />
-                  AI analyzing...
+                  <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full sm:mr-2" />
+                  <span className="hidden sm:inline">AI analyzing...</span>
                 </>
               ) : (
                 <>
-                  <Search className="h-5 w-5 mr-2" />
-                  Find Matches
+                  <Search className="h-5 w-5 sm:mr-2" />
+                  <span className="hidden sm:inline">Find Matches</span>
                 </>
               )}
             </Button>

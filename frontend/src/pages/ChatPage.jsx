@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Header from '../components/Header';
-import { Send, MapPin, IndianRupee, ArrowLeft, Check, CheckCheck, Smile, Search, MoreVertical, Flag } from 'lucide-react';
+import { Send, MapPin, IndianRupee, ArrowLeft, Check, CheckCheck, Smile, Search, MoreVertical, Flag, UserPlus } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -29,6 +29,7 @@ const ChatPage = () => {
   const [reportDetails, setReportDetails] = useState('');
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [friendsOnly, setFriendsOnly] = useState(false);
   
   const messagesEndRef = useRef(null);
   const messageInputRef = useRef(null);
@@ -220,7 +221,7 @@ const ChatPage = () => {
 
     const loadChats = async () => {
       try {
-        const userChats = await getUserChats(currentUser.uid);
+        const userChats = await getUserChats(currentUser.uid, friendsOnly);
         setChats(userChats);
         
         // If there's a target user, create/get chat room
@@ -248,7 +249,7 @@ const ChatPage = () => {
     };
 
     loadChats();
-  }, [currentUser, targetUserId, productId, navigate]);
+  }, [currentUser, targetUserId, productId, navigate, friendsOnly]);
 
   // Load messages when chat is selected
   useEffect(() => {
@@ -330,7 +331,7 @@ const ChatPage = () => {
       messageInputRef.current?.focus();
       
       // Reload chats from backend to get updated last_message and timestamp
-      const updatedChats = await getUserChats(currentUser.uid);
+      const updatedChats = await getUserChats(currentUser.uid, friendsOnly);
       setChats(updatedChats);
       
       // Update selected chat to match the updated one from backend
@@ -469,6 +470,39 @@ const ChatPage = () => {
                 <Search className={`h-5 w-5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`} />
               </Button>
             </div>
+            
+            {/* Friends Filter Toggle */}
+            <div className={`flex gap-2 mb-3 p-1 rounded-lg ${darkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
+              <button
+                onClick={() => setFriendsOnly(false)}
+                className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                  !friendsOnly
+                    ? darkMode
+                      ? 'bg-slate-800 text-indigo-400 shadow-sm'
+                      : 'bg-white text-indigo-600 shadow-sm'
+                    : darkMode
+                      ? 'text-slate-400 hover:text-slate-300'
+                      : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                All Chats
+              </button>
+              <button
+                onClick={() => setFriendsOnly(true)}
+                className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                  friendsOnly
+                    ? darkMode
+                      ? 'bg-slate-800 text-indigo-400 shadow-sm'
+                      : 'bg-white text-indigo-600 shadow-sm'
+                    : darkMode
+                      ? 'text-slate-400 hover:text-slate-300'
+                      : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Friends Only
+              </button>
+            </div>
+            
             {showSearch && (
               <input
                 type="text"
@@ -897,6 +931,7 @@ const ChatListItem = ({ chat, currentUserId, isSelected, onClick, formatTime, se
   const [user, setUser] = useState(null);
   const [product, setProduct] = useState(null);
   const [isOnline, setIsOnline] = useState(false);
+  const isFriend = chat.is_friend || false;
 
   useEffect(() => {
     const loadData = async () => {
@@ -977,10 +1012,15 @@ const ChatListItem = ({ chat, currentUserId, isSelected, onClick, formatTime, se
           <img
             src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}`}
             alt={user.name}
-            className="h-11 w-11 sm:h-12 sm:w-12 rounded-full object-cover ring-2 ring-slate-100"
+            className={`h-11 w-11 sm:h-12 sm:w-12 rounded-full object-cover ${isFriend ? 'ring-2 ring-indigo-500' : 'ring-2 ring-slate-100'}`}
           />
           {isOnline && (
             <div className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-white"></div>
+          )}
+          {isFriend && (
+            <div className="absolute -top-1 -right-1 h-5 w-5 bg-indigo-600 rounded-full flex items-center justify-center border-2 border-white">
+              <UserPlus className="h-3 w-3 text-white" />
+            </div>
           )}
         </div>
         <div className="flex-1 min-w-0">

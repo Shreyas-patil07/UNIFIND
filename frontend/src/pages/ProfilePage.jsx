@@ -358,7 +358,7 @@ const ProfilePage = () => {
                   title="Edit Profile"
                 >
                   <Edit2 className="h-4 w-4" />
-                  <span className="text-sm font-medium">Edit Profile</span>
+                  <span className="text-sm font-medium hidden sm:inline">Edit Profile</span>
                 </button>
               )}
               {!isOwnProfile && authUser && (
@@ -389,7 +389,7 @@ const ProfilePage = () => {
                     ) : (
                       <UserPlus className="h-4 w-4" />
                     )}
-                    <span className="text-sm font-medium">
+                    <span className="text-sm font-medium hidden sm:inline">
                       {friendshipStatus === 'friends' ? 'Remove Friend' :
                        friendshipStatus === 'request_sent' ? 'Request Sent' :
                        friendshipStatus === 'request_received' ? 'Accept Request' :
@@ -402,7 +402,7 @@ const ProfilePage = () => {
                     title="Send Message"
                   >
                     <MessageCircle className="h-4 w-4" />
-                    <span className="text-sm font-medium">Message</span>
+                    <span className="text-sm font-medium hidden sm:inline">Message</span>
                   </button>
                   <button
                     onClick={() => setShowReportModal(true)}

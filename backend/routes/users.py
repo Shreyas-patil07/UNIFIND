@@ -207,11 +207,21 @@ async def get_user_profile(user_id: str, include_private: bool = False):
             'dark_mode': False
         }
     
+    # Extract avatar from photo_change_history if not already set
+    if not user_data.get('avatar') and not profile_data.get('avatar'):
+        photo_history = user_data.get('photo_change_history', [])
+        if photo_history and len(photo_history) > 0:
+            # Get the most recent photo
+            latest_photo = photo_history[-1]
+            if isinstance(latest_photo, dict) and 'url' in latest_photo:
+                user_data['avatar'] = latest_photo['url']
+    
     # Remove private fields if not requested
     if not include_private:
         private_fields = ['phone', 'hostel_room', 'branch_change_history', 'photo_change_history', 'dark_mode']
         for field in private_fields:
             profile_data.pop(field, None)
+            user_data.pop(field, None)
         # Also hide email from user data for public view
         user_data.pop('email', None)
     

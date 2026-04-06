@@ -58,19 +58,61 @@ async def send_message(message: MessageCreate):
 
 
 @router.get("/chats/{user_id}", response_model=List[ChatRoom])
-async def get_user_chats(user_id: str):
-    """Get all chat rooms for a user"""
+async def get_user_chats(user_id: str, friends_only: bool = False):
+    """Get all chat rooms for a user, optionally filtered to friends only"""
     db = get_db()
+    
+    print(f"[CHATS] Getting chats for user {user_id}, friends_only={friends_only}")
     
     # Get chat rooms where user is either user1 or user2
     chats1 = db.collection('chat_rooms').where('user1_id', '==', user_id).stream()
     chats2 = db.collection('chat_rooms').where('user2_id', '==', user_id).stream()
     
     chat_rooms = []
+    
+    # If friends_only, get list of friends first
+    friend_ids = set()
+    if friends_only:
+        friendships = db.collection('friendships').where('user_id', '==', user_id).where('status', '==', 'active').stream()
+        for friendship in friendships:
+            friend_data = friendship.to_dict()
+            friend_ids.add(friend_data.get('friend_id'))
+        print(f"[CHATS] Found {len(friend_ids)} friends: {friend_ids}")
+    
     for doc in list(chats1) + list(chats2):
         chat_data = doc.to_dict()
         chat_data['id'] = doc.id
+        
+        # Get the other user's ID
+        other_user_id = chat_data['user2_id'] if chat_data['user1_id'] == user_id else chat_data['user1_id']
+        
+        print(f"[CHATS] Processing chat with user {other_user_id}")
+        
+        # Check if other user is a friend
+        is_friend = False
+        if not friends_only:
+            # Check friendship status for all chats
+            friendships = list(db.collection('friendships')
+                             .where('user_id', '==', user_id)
+                             .where('friend_id', '==', other_user_id)
+                             .where('status', '==', 'active')
+                             .limit(1)
+                             .stream())
+            is_friend = len(friendships) > 0
+            print(f"[CHATS]   is_friend={is_friend} (checked database)")
+        else:
+            # If friends_only filter is on, only include friends
+            is_friend = other_user_id in friend_ids
+            print(f"[CHATS]   is_friend={is_friend} (checked friend_ids set)")
+            if not is_friend:
+                print(f"[CHATS]   Skipping non-friend")
+                continue
+        
+        chat_data['is_friend'] = is_friend
         chat_rooms.append(chat_data)
+        print(f"[CHATS]   Added to results")
+    
+    print(f"[CHATS] Returning {len(chat_rooms)} chats")
     
     # Sort by last message time
     chat_rooms.sort(key=lambda x: x.get('last_message_time', datetime.min), reverse=True)

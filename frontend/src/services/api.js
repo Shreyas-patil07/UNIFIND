@@ -149,8 +149,9 @@ export const deleteProduct = async (productId) => {
 }
 
 // Chat API calls via backend
-export const getUserChats = async (userId) => {
-  const response = await api.get(`/chats/${userId}`)
+export const getUserChats = async (userId, friendsOnly = false) => {
+  const params = friendsOnly ? { friends_only: true } : {}
+  const response = await api.get(`/chats/${userId}`, { params })
   return response.data
 }
 

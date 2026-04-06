@@ -37,7 +37,7 @@ function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
             <Route path="/home" element={<LandingPage />} />
             <Route path="/" element={<Navigate to="/home" replace />} />

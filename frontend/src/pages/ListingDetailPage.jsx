@@ -22,7 +22,7 @@ const ListingDetailPage = () => {
           data-testid="back-btn"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back
+          <span className="hidden sm:inline">Back</span>
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -98,8 +98,8 @@ const ListingDetailPage = () => {
                   className="flex-1 bg-blue-600 text-white font-medium px-6 py-3 rounded-xl hover:bg-blue-700 shadow-[0_0_0_1px_rgba(37,99,235,1)_inset] transition-all duration-200 active:scale-95"
                   data-testid="contact-seller-btn"
                 >
-                  <MessageCircle className="h-5 w-5 mr-2" />
-                  Contact Seller
+                  <MessageCircle className="h-5 w-5 sm:mr-2" />
+                  <span className="hidden sm:inline">Contact Seller</span>
                 </Button>
                 <Button
                   variant="outline"

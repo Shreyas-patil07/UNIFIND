@@ -31,7 +31,7 @@ const SellerPage = () => {
             data-testid="post-new-listing-btn"
           >
             <Plus className="h-4 w-4" />
-            New Listing
+            <span className="hidden sm:inline">New Listing</span>
           </button>
         </div>
 

@@ -92,11 +92,12 @@ const ProductCard = ({ product }) => {
         {/* Actions */}
         <div className="flex gap-2 mt-auto">
           <button
-            className="flex-1 border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 text-xs font-semibold py-2 rounded-xl transition-all duration-200 active:scale-95"
+            className="flex-1 border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 text-xs font-semibold py-2 rounded-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5"
             onClick={(e) => { e.stopPropagation(); navigate(`/listing/${product.id}`); }}
             data-testid="product-view-btn"
           >
-            View
+            <Eye className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">View</span>
           </button>
           <button
             className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2 rounded-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5"
@@ -104,7 +105,7 @@ const ProductCard = ({ product }) => {
             data-testid="product-chat-btn"
           >
             <MessageCircle className="h-3.5 w-3.5" />
-            Chat
+            <span className="hidden sm:inline">Chat</span>
           </button>
         </div>
       </div>

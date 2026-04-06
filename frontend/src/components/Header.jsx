@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Search, ShoppingBag, MessageCircle, User, Menu, X, LayoutDashboard, Sparkles, Package, UserPlus, Bell, CheckCircle, AlertCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
-import { getUserChats, searchUsers, getPendingFriendRequests, acceptFriendRequest, rejectFriendRequest } from '../services/api'
+import { getUserChats, searchUsers, getPendingFriendRequests, acceptFriendRequest, rejectFriendRequest, getFriends } from '../services/api'
 
 export default function Header({ hideSearch = false }) {
   const navigate = useNavigate()
@@ -19,6 +19,9 @@ export default function Header({ hideSearch = false }) {
   const [showNotifications, setShowNotifications] = useState(false)
   const [friendRequests, setFriendRequests] = useState([])
   const [requestsLoading, setRequestsLoading] = useState(false)
+  const [showFriends, setShowFriends] = useState(false)
+  const [friends, setFriends] = useState([])
+  const [friendsLoading, setFriendsLoading] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [showErrorModal, setShowErrorModal] = useState(false)
@@ -66,7 +69,7 @@ export default function Header({ hideSearch = false }) {
     
     if (query.trim().length < 2) {
       setSearchResults([])
-      setShowSearchResults(false)
+      // Don't close the dropdown, just clear results
       return
     }
 
@@ -74,7 +77,6 @@ export default function Header({ hideSearch = false }) {
     try {
       const results = await searchUsers(query.trim())
       setSearchResults(results)
-      setShowSearchResults(true)
     } catch (error) {
       console.error('Search failed:', error)
       setSearchResults([])
@@ -86,17 +88,32 @@ export default function Header({ hideSearch = false }) {
   // Close search results when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Don't close if clicking on the button itself (handled by button onClick)
+      if (
+        event.target.closest('[data-testid="mobile-find-users-btn"]') ||
+        event.target.closest('[data-testid="mobile-find-users-btn-chat"]') ||
+        event.target.closest('[data-testid="desktop-find-users-btn"]')
+      ) {
+        return;
+      }
+      // Close if clicking outside the search dropdown
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setShowSearchResults(false)
         setShowNotifications(false)
+        setShowFriends(false)
+        setSearchQuery('')
+        setSearchResults([])
       }
     }
 
     const handleKeyDown = (event) => {
-      // Don't close dropdown on Shift, Backspace, or any typing keys
+      // Only close on Escape key
       if (event.key === 'Escape') {
         setShowSearchResults(false)
         setShowNotifications(false)
+        setShowFriends(false)
+        setSearchQuery('')
+        setSearchResults([])
       }
     }
 
@@ -120,6 +137,22 @@ export default function Header({ hideSearch = false }) {
       setFriendRequests(requests)
     } catch (error) {
       console.error('Failed to fetch friend requests:', error)
+    }
+  }
+
+  // Fetch friends list
+  const fetchFriends = async () => {
+    if (!currentUser?.uid) return
+    
+    setFriendsLoading(true)
+    try {
+      const friendsList = await getFriends(currentUser.uid)
+      setFriends(friendsList)
+    } catch (error) {
+      console.error('Failed to fetch friends:', error)
+      setFriends([])
+    } finally {
+      setFriendsLoading(false)
     }
   }
 
@@ -174,6 +207,14 @@ export default function Header({ hideSearch = false }) {
     setSearchResults([])
   }
 
+  const handleCloseSearch = () => {
+    setShowSearchResults(false)
+    setShowNotifications(false)
+    setShowFriends(false)
+    setSearchQuery('')
+    setSearchResults([])
+  }
+
   const isActive = (path) => location.pathname === path || (path !== '/home' && location.pathname.startsWith(path))
   const isOnBuyerPage = location.pathname === '/buyer'
   const isOnSellerPage = location.pathname === '/seller'
@@ -212,8 +253,8 @@ export default function Header({ hideSearch = false }) {
               className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity flex-shrink-0"
               data-testid="header-logo"
             >
-              <img src="/UNIFIND.png" alt="UNIFIND Logo" className="h-10 sm:h-14 md:h-16 w-auto" />
-              <span className="font-['Outfit'] font-black text-2xl sm:text-3xl md:text-4xl tracking-tight">
+              <img src="/UNIFIND.png" alt="UNIFIND Logo" className="h-8 sm:h-10 md:h-12 lg:h-14 w-auto" />
+              <span className="font-['Outfit'] font-black text-xl sm:text-2xl md:text-3xl lg:text-4xl tracking-tight">
                 <span className="text-indigo-600">UNI</span>
                 <span className="text-violet-600">FIND</span>
               </span>
@@ -221,7 +262,7 @@ export default function Header({ hideSearch = false }) {
 
             {/* Search Bar - Desktop */}
             {!hideSearch && (
-              <div className="hidden lg:flex flex-1 max-w-sm lg:max-w-md mx-4">
+              <div className="hidden lg:flex flex-1 max-w-xs xl:max-w-md mx-2 lg:mx-4">
                 <div className="relative w-full">
                   <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
                   <input
@@ -235,21 +276,22 @@ export default function Header({ hideSearch = false }) {
             )}
 
             {/* Desktop Nav */}
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="flex items-center gap-1">
               {navLinks.map(({ label, path, icon: Icon, badge }) => {
                 const active = isActive(path)
                 return (
                   <button
                     key={path}
                     onClick={() => navigate(path)}
-                    className={`relative flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    className={`hidden md:flex relative items-center gap-1.5 px-2 lg:px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                       active
                         ? darkMode ? 'bg-indigo-900/50 text-indigo-300' : 'bg-indigo-50 text-indigo-600'
                         : darkMode ? 'text-slate-300 hover:bg-slate-700 hover:text-indigo-400' : 'text-slate-600 hover:bg-slate-100 hover:text-slateigo-600'
                     }`}
+                    title={label}
                   >
-                    <Icon className="h-4 w-4" />
-                    {label}
+                    <Icon className="h-4 w-4 flex-shrink-0" />
+                    <span className="hidden lg:inline">{label}</span>
                     {badge > 0 && !active && (
                       <span className="absolute -top-0.5 -right-0.5 bg-indigo-600 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold">
                         {badge}
@@ -262,46 +304,105 @@ export default function Header({ hideSearch = false }) {
               {/* Notifications Bell - Removed from here */}
 
               {/* User Search Button */}
-              <div className="relative ml-2" ref={searchRef}>
+              <div className="relative ml-1 lg:ml-2" ref={searchRef}>
                 <button
                   onClick={() => {
-                    setShowSearchResults(!showSearchResults)
-                    if (!showSearchResults) fetchFriendRequests()
+                    if (showSearchResults) {
+                      // Close the dropdown
+                      setShowSearchResults(false)
+                      setSearchQuery('')
+                      setSearchResults([])
+                      setShowFriends(false)
+                      setShowNotifications(false)
+                    } else {
+                      // Open the dropdown
+                      setShowSearchResults(true)
+                      fetchFriendRequests()
+                      fetchFriends()
+                    }
                   }}
-                  className={`relative flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                    darkMode ? 'text-slate-300 hover:bg-slate-700 hover:text-indigo-400' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'
+                  className={`hidden md:flex relative items-center gap-1.5 px-2 lg:px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    showSearchResults
+                      ? darkMode ? 'bg-indigo-900/50 text-indigo-300' : 'bg-indigo-50 text-indigo-600'
+                      : darkMode ? 'text-slate-300 hover:bg-slate-700 hover:text-indigo-400' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'
                   }`}
-                  title="Find Users & Notifications"
+                  title={showSearchResults ? "Close" : "Find Users & Notifications"}
+                  data-testid="desktop-find-users-btn"
                 >
-                  <UserPlus className="h-4 w-4" />
-                  <span className="hidden xl:inline">Find Users</span>
-                  {friendRequests.length > 0 && (
+                  {showSearchResults ? (
+                    <>
+                      <X className="h-4 w-4 flex-shrink-0" />
+                      <span className="hidden xl:inline">Close</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="h-4 w-4 flex-shrink-0" />
+                      <span className="hidden xl:inline">Find Users</span>
+                    </>
+                  )}
+                  {!showSearchResults && friendRequests.length > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 bg-red-600 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold">
                       {friendRequests.length}
                     </span>
                   )}
                 </button>
 
+                {/* Mobile Backdrop */}
+                {showSearchResults && (
+                  <div 
+                    className="fixed inset-0 bg-black/40 z-40 md:hidden"
+                    onClick={() => {
+                      setShowSearchResults(false)
+                      setSearchQuery('')
+                      setSearchResults([])
+                      setShowFriends(false)
+                      setShowNotifications(false)
+                    }}
+                  />
+                )}
+
                 {/* User Search & Notifications Dropdown */}
                 {showSearchResults && (
-                  <div className={`absolute top-full right-0 mt-2 w-96 rounded-xl shadow-xl border z-50 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                  <div className={`fixed md:absolute top-[72px] md:top-full left-2 right-2 md:left-auto md:right-0 mt-0 md:mt-2 w-auto md:w-96 max-w-none md:max-w-[384px] rounded-xl shadow-xl border z-50 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
                     {/* Tabs */}
                     <div className={`flex border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
                       <button
-                        onClick={() => setShowNotifications(false)}
-                        className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${
-                          !showNotifications
+                        onClick={() => {
+                          setShowNotifications(false)
+                          setShowFriends(false)
+                        }}
+                        className={`flex-1 px-2 sm:px-3 py-3 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
+                          !showNotifications && !showFriends
                             ? darkMode 
                               ? 'text-indigo-400 border-b-2 border-indigo-400' 
                               : 'text-indigo-600 border-b-2 border-indigo-600'
                             : darkMode ? 'text-slate-400 hover:text-slate-300' : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
-                        Search Users
+                        Search
                       </button>
                       <button
-                        onClick={() => setShowNotifications(true)}
-                        className={`relative flex-1 px-4 py-3 text-sm font-semibold transition-colors ${
+                        onClick={() => {
+                          setShowFriends(true)
+                          setShowNotifications(false)
+                          fetchFriends()
+                        }}
+                        className={`flex-1 px-2 sm:px-3 py-3 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
+                          showFriends
+                            ? darkMode 
+                              ? 'text-indigo-400 border-b-2 border-indigo-400' 
+                              : 'text-indigo-600 border-b-2 border-indigo-600'
+                            : darkMode ? 'text-slate-400 hover:text-slate-300' : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        Friends
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowNotifications(true)
+                          setShowFriends(false)
+                        }}
+                        className={`relative flex-1 px-2 sm:px-3 py-3 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
                           showNotifications
                             ? darkMode 
                               ? 'text-indigo-400 border-b-2 border-indigo-400' 
@@ -309,9 +410,9 @@ export default function Header({ hideSearch = false }) {
                             : darkMode ? 'text-slate-400 hover:text-slate-300' : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
-                        Notifications
+                        Requests
                         {friendRequests.length > 0 && (
-                          <span className="ml-1.5 bg-red-600 text-white text-[10px] rounded-full px-1.5 py-0.5 font-bold">
+                          <span className="ml-1 sm:ml-1.5 bg-red-600 text-white text-[10px] rounded-full px-1.5 py-0.5 font-bold">
                             {friendRequests.length}
                           </span>
                         )}
@@ -319,7 +420,7 @@ export default function Header({ hideSearch = false }) {
                     </div>
 
                     {/* Search Tab Content */}
-                    {!showNotifications && (
+                    {!showNotifications && !showFriends && (
                       <>
                         <div className={`p-3 border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
                           <div className="relative">
@@ -329,9 +430,8 @@ export default function Header({ hideSearch = false }) {
                               placeholder="Search users..."
                               value={searchQuery}
                               onChange={(e) => handleSearch(e.target.value)}
-                              onFocus={() => setShowSearchResults(true)}
                               autoFocus
-                              className={`w-full pl-9 pr-3 py-2 rounded-lg border outline-none text-sm ${
+                              className={`w-full pl-9 pr-3 py-2.5 rounded-lg border outline-none text-sm ${
                                 darkMode 
                                   ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-400 focus:border-indigo-500' 
                                   : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
@@ -339,7 +439,7 @@ export default function Header({ hideSearch = false }) {
                             />
                           </div>
                         </div>
-                        <div className="max-h-96 overflow-y-auto">
+                        <div className="max-h-[60vh] md:max-h-96 overflow-y-auto">
                           {searchLoading ? (
                             <div className="p-4 text-center">
                               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mx-auto"></div>
@@ -380,9 +480,47 @@ export default function Header({ hideSearch = false }) {
                       </>
                     )}
 
+                    {/* Friends Tab Content */}
+                    {showFriends && (
+                      <div className="max-h-[60vh] md:max-h-96 overflow-y-auto">
+                        {friendsLoading ? (
+                          <div className="p-4 text-center">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mx-auto"></div>
+                          </div>
+                        ) : friends.length > 0 ? (
+                          <div className="py-2">
+                            {friends.map((friend) => (
+                              <button
+                                key={friend.id}
+                                onClick={() => handleUserClick(friend.id)}
+                                className={`w-full px-4 py-3 flex items-center gap-3 transition-colors ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-50'}`}
+                              >
+                                <img
+                                  src={friend.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(friend.name || 'User')}`}
+                                  alt={friend.name}
+                                  className="h-10 w-10 rounded-full object-cover"
+                                />
+                                <div className="flex-1 text-left">
+                                  <p className={`font-semibold text-sm ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{friend.name}</p>
+                                  {friend.college && (
+                                    <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{friend.college}</p>
+                                  )}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="p-8 text-center">
+                            <User className={`h-12 w-12 mx-auto mb-3 ${darkMode ? 'text-slate-600' : 'text-slate-300'}`} />
+                            <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>No friends yet</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {/* Notifications Tab Content */}
                     {showNotifications && (
-                      <div className="max-h-96 overflow-y-auto">
+                      <div className="max-h-[60vh] md:max-h-96 overflow-y-auto">
                         {friendRequests.length > 0 ? (
                           <div className="py-2">
                             {friendRequests.map((request) => (
@@ -453,41 +591,104 @@ export default function Header({ hideSearch = false }) {
               {/* Profile Button */}
               <button
                 onClick={() => navigate(currentUser?.uid ? `/profile/${currentUser.uid}` : '/profile')}
-                className={`ml-2 relative flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                className={`hidden md:flex ml-1 lg:ml-2 relative items-center gap-1.5 px-2 lg:px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
                   isOnProfilePage
                     ? 'bg-indigo-600 text-white shadow-glow-indigo'
                     : 'btn-gradient'
                 }`}
                 data-testid="header-profile-btn"
+                title="Profile"
               >
                 {currentUser?.photoURL ? (
-                  <img src={currentUser.photoURL} alt="avatar" className="h-5 w-5 rounded-full object-cover" />
+                  <img src={currentUser.photoURL} alt="avatar" className="h-5 w-5 rounded-full object-cover flex-shrink-0" />
                 ) : (
-                  <User className="h-4 w-4" />
+                  <User className="h-4 w-4 flex-shrink-0" />
                 )}
-                Profile
+                <span className="hidden lg:inline">Profile</span>
               </button>
             </nav>
 
             {/* Mobile Top-Right Action */}
             {isOnChatPage ? (
-              <button
-                className={`md:hidden p-2 rounded-xl transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-100'}`}
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                data-testid="mobile-menu-btn"
-                aria-label="Toggle menu"
-              >
-                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </button>
+              <div className="md:hidden flex items-center gap-1">
+                <button
+                  className={`p-2 rounded-xl transition-colors relative ${
+                    showSearchResults
+                      ? darkMode ? 'bg-indigo-900/50 text-indigo-300' : 'bg-indigo-50 text-indigo-600'
+                      : darkMode ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                  onClick={() => {
+                    if (showSearchResults) {
+                      setShowSearchResults(false)
+                      setSearchQuery('')
+                      setSearchResults([])
+                      setShowFriends(false)
+                      setShowNotifications(false)
+                    } else {
+                      setShowSearchResults(true)
+                      fetchFriendRequests()
+                      fetchFriends()
+                    }
+                  }}
+                  data-testid="mobile-find-users-btn-chat"
+                  aria-label={showSearchResults ? "Close" : "Find Users"}
+                >
+                  {showSearchResults ? <X className="h-5 w-5" /> : <UserPlus className="h-5 w-5" />}
+                  {!showSearchResults && friendRequests.length > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 bg-red-600 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold">
+                      {friendRequests.length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  className={`p-2 rounded-xl transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-100'}`}
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  data-testid="mobile-menu-btn"
+                  aria-label="Toggle menu"
+                >
+                  {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                </button>
+              </div>
             ) : (
-              <button
-                className={`md:hidden p-2 rounded-xl transition-colors ${darkMode ? 'text-indigo-400 hover:bg-slate-700' : 'text-indigo-600 hover:bg-indigo-50'}`}
-                onClick={() => navigate('/dashboard')}
-                data-testid="mobile-dashboard-btn"
-                aria-label="Dashboard"
-              >
-                <LayoutDashboard className="h-5 w-5" />
-              </button>
+              <div className="md:hidden flex items-center gap-1">
+                <button
+                  className={`p-2 rounded-xl transition-colors relative ${
+                    showSearchResults
+                      ? darkMode ? 'bg-indigo-900/50 text-indigo-300' : 'bg-indigo-50 text-indigo-600'
+                      : darkMode ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                  onClick={() => {
+                    if (showSearchResults) {
+                      setShowSearchResults(false)
+                      setSearchQuery('')
+                      setSearchResults([])
+                      setShowFriends(false)
+                      setShowNotifications(false)
+                    } else {
+                      setShowSearchResults(true)
+                      fetchFriendRequests()
+                      fetchFriends()
+                    }
+                  }}
+                  data-testid="mobile-find-users-btn"
+                  aria-label={showSearchResults ? "Close" : "Find Users"}
+                >
+                  {showSearchResults ? <X className="h-5 w-5" /> : <UserPlus className="h-5 w-5" />}
+                  {!showSearchResults && friendRequests.length > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 bg-red-600 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold">
+                      {friendRequests.length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  className={`p-2 rounded-xl transition-colors ${darkMode ? 'text-indigo-400 hover:bg-slate-700' : 'text-indigo-600 hover:bg-indigo-50'}`}
+                  onClick={() => navigate('/dashboard')}
+                  data-testid="mobile-dashboard-btn"
+                  aria-label="Dashboard"
+                >
+                  <LayoutDashboard className="h-5 w-5" />
+                </button>
+              </div>
             )}
           </div>
 
@@ -540,79 +741,6 @@ export default function Header({ hideSearch = false }) {
                   )
                 })}
                 <div className={`pt-2 border-t ${darkMode ? 'border-slate-700' : 'border-slate-100'}`}>
-                  {/* User Search in Mobile */}
-                  <button
-                    onClick={() => setShowSearchResults(!showSearchResults)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 mb-2 ${
-                      darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    <UserPlus className={`h-5 w-5 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-                    Find Users
-                  </button>
-
-                  {/* Mobile User Search Dropdown */}
-                  {showSearchResults && (
-                    <div className={`mb-3 rounded-xl border ${darkMode ? 'bg-slate-700 border-slate-600' : 'bg-slate-50 border-slate-200'}`}>
-                      <div className="p-3">
-                        <div className="relative">
-                          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-                          <input
-                            type="text"
-                            placeholder="Search users..."
-                            value={searchQuery}
-                            onChange={(e) => handleSearch(e.target.value)}
-                            onFocus={() => setShowSearchResults(true)}
-                            className={`w-full pl-9 pr-3 py-2 rounded-lg border outline-none text-sm ${
-                              darkMode 
-                                ? 'bg-slate-800 border-slate-600 text-slate-200 placeholder-slate-400 focus:border-indigo-500' 
-                                : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
-                            }`}
-                          />
-                        </div>
-                      </div>
-                      <div className="max-h-60 overflow-y-auto">
-                        {searchLoading ? (
-                          <div className="p-4 text-center">
-                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mx-auto"></div>
-                          </div>
-                        ) : searchResults.length > 0 ? (
-                          <div className="pb-2">
-                            {searchResults.map((user) => (
-                              <button
-                                key={user.id}
-                                onClick={() => {
-                                  handleUserClick(user.id)
-                                  setMobileMenuOpen(false)
-                                }}
-                                className={`w-full px-4 py-3 flex items-center gap-3 transition-colors ${darkMode ? 'hover:bg-slate-600' : 'hover:bg-slate-100'}`}
-                              >
-                                <img
-                                  src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}`}
-                                  alt={user.name}
-                                  className="h-10 w-10 rounded-full object-cover"
-                                />
-                                <div className="flex-1 text-left">
-                                  <p className={`font-semibold text-sm ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{user.name}</p>
-                                  {user.college && (
-                                    <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{user.college}</p>
-                                  )}
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        ) : searchQuery.length >= 2 ? (
-                          <div className="p-4 text-center">
-                            <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>No users found</p>
-                          </div>
-                        ) : (
-                          <div className="p-4 text-center">
-                            <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Type to search users...</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
 
                   <button
                     onClick={handleProfileClick}
@@ -651,7 +779,7 @@ export default function Header({ hideSearch = false }) {
                     </span>
                   )}
                 </div>
-                <span className={`text-[10px] font-semibold leading-none transition-all duration-200 ${active ? 'text-indigo-600' : 'text-slate-400'}`}>
+                <span className={`text-[10px] font-semibold leading-none transition-all duration-200 hidden sm:inline ${active ? 'text-indigo-600' : 'text-slate-400'}`}>
                   {label}
                 </span>
                 {active && (
