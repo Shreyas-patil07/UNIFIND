@@ -50,33 +50,16 @@ app = FastAPI(
 
 # CORS Configuration
 origins = [origin.strip() for origin in settings.CORS_ORIGINS.split(",")]
+logger.info(f"CORS ORIGINS CONFIGURED: {origins}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
-    max_age=3600,  # Cache preflight requests for 1 hour
+    max_age=3600,
 )
-
-
-# Custom middleware to handle OPTIONS requests
-@app.middleware("http")
-async def options_middleware(request: Request, call_next):
-    """Handle OPTIONS requests for CORS preflight."""
-    if request.method == "OPTIONS":
-        return JSONResponse(
-            content={"status": "ok"},
-            status_code=200,
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-                "Access-Control-Allow-Headers": "*",
-                "Access-Control-Max-Age": "3600",
-            }
-        )
-    response = await call_next(request)
-    return response
 
 
 # Global exception handlers
@@ -124,6 +107,7 @@ app.include_router(need_board.router, tags=["need-board-fallback"])
 
 # Health check endpoints
 @app.get("/")
+@app.head("/")
 async def root():
     """Root endpoint with API information."""
     return {
