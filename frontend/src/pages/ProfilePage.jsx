@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
-import { Shield, Star, Award, Calendar, GraduationCap, LogOut, Mail, CheckCircle, AlertCircle, RefreshCw, Edit2, Lock, MessageCircle, Moon, Sun } from 'lucide-react';
+import { Shield, Star, Award, Calendar, GraduationCap, LogOut, Mail, CheckCircle, AlertCircle, RefreshCw, Edit2, Lock, MessageCircle, Moon, Sun, Flag } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -22,6 +22,10 @@ const ProfilePage = () => {
   const [viewedProfile, setViewedProfile] = React.useState(null);
   const [loadingProfile, setLoadingProfile] = React.useState(false);
   const [profileError, setProfileError] = React.useState(null);
+  const [showReportModal, setShowReportModal] = React.useState(false);
+  const [reportReason, setReportReason] = React.useState('');
+  const [reportDetails, setReportDetails] = React.useState('');
+  const [reportSubmitting, setReportSubmitting] = React.useState(false);
   
   // Fetch profile if viewing another user
   React.useEffect(() => {
@@ -175,6 +179,38 @@ const ProfilePage = () => {
     navigate(`/chat?user=${userId}`);
   };
 
+  const handleReportUser = async () => {
+    if (!reportReason) {
+      alert('Please select a reason for reporting');
+      return;
+    }
+
+    setReportSubmitting(true);
+    try {
+      // TODO: Implement actual report API call
+      console.log('Reporting user:', {
+        reportedUserId: userId,
+        reportedBy: authUser.uid,
+        reason: reportReason,
+        details: reportDetails,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      alert('Report submitted successfully. Our team will review it shortly.');
+      setShowReportModal(false);
+      setReportReason('');
+      setReportDetails('');
+    } catch (error) {
+      console.error('Failed to submit report:', error);
+      alert('Failed to submit report. Please try again.');
+    } finally {
+      setReportSubmitting(false);
+    }
+  };
+
   // Show loading state
   if (!isOwnProfile && loadingProfile) {
     return (
@@ -257,14 +293,24 @@ const ProfilePage = () => {
                 </button>
               )}
               {!isOwnProfile && authUser && (
-                <button
-                  onClick={handleStartChat}
-                  className="absolute top-4 right-4 bg-white/90 hover:bg-white text-indigo-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg hover:shadow-xl"
-                  title="Send Message"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  <span className="text-sm font-medium">Send Message</span>
-                </button>
+                <div className="absolute top-4 right-4 flex gap-2">
+                  <button
+                    onClick={handleStartChat}
+                    className="bg-white/90 hover:bg-white text-indigo-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg hover:shadow-xl"
+                    title="Send Message"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    <span className="text-sm font-medium">Send Message</span>
+                  </button>
+                  <button
+                    onClick={() => setShowReportModal(true)}
+                    className="bg-white/90 hover:bg-white text-red-600 px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg hover:shadow-xl"
+                    title="Report User"
+                  >
+                    <Flag className="h-4 w-4" />
+                    <span className="text-sm font-medium">Report</span>
+                  </button>
+                </div>
               )}
             </div>
             
@@ -654,6 +700,87 @@ const ProfilePage = () => {
               >
                 {branchLoading ? 'Updating...' : 'Update Branch'}
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className={`w-full max-w-md rounded-2xl shadow-xl ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
+            <div className={`px-6 py-4 border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+              <h3 className={`text-lg font-bold ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>Report User</h3>
+              <p className={`text-sm mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                Help us understand what's wrong
+              </p>
+            </div>
+            
+            <div className="px-6 py-4 space-y-4">
+              <div>
+                <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                  Reason for reporting <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  className={`w-full px-4 py-2.5 rounded-lg border outline-none transition-all ${
+                    darkMode 
+                      ? 'bg-slate-700 border-slate-600 text-slate-200 focus:border-indigo-500' 
+                      : 'bg-white border-slate-300 text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
+                  }`}
+                >
+                  <option value="">Select a reason...</option>
+                  <option value="spam">Spam or misleading</option>
+                  <option value="harassment">Harassment or bullying</option>
+                  <option value="inappropriate">Inappropriate content</option>
+                  <option value="scam">Scam or fraud</option>
+                  <option value="fake">Fake profile</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                  Additional details (optional)
+                </label>
+                <textarea
+                  value={reportDetails}
+                  onChange={(e) => setReportDetails(e.target.value)}
+                  placeholder="Provide more context about this report..."
+                  rows={4}
+                  className={`w-full px-4 py-2.5 rounded-lg border outline-none transition-all resize-none ${
+                    darkMode 
+                      ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-400 focus:border-indigo-500' 
+                      : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div className={`px-6 py-4 border-t flex gap-3 ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+              <button
+                onClick={() => {
+                  setShowReportModal(false);
+                  setReportReason('');
+                  setReportDetails('');
+                }}
+                disabled={reportSubmitting}
+                className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-all ${
+                  darkMode 
+                    ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' 
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReportUser}
+                disabled={reportSubmitting || !reportReason}
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {reportSubmitting ? 'Submitting...' : 'Submit Report'}
+              </button>
             </div>
           </div>
         </div>
