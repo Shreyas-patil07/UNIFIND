@@ -60,6 +60,25 @@ app.add_middleware(
 )
 
 
+# Custom middleware to handle OPTIONS requests
+@app.middleware("http")
+async def options_middleware(request: Request, call_next):
+    """Handle OPTIONS requests for CORS preflight."""
+    if request.method == "OPTIONS":
+        return JSONResponse(
+            content={"status": "ok"},
+            status_code=200,
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Max-Age": "3600",
+            }
+        )
+    response = await call_next(request)
+    return response
+
+
 # Global exception handlers
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -84,21 +103,6 @@ async def global_exception_handler(request: Request, exc: Exception):
         content={
             "error": "Internal Server Error",
             "detail": "An unexpected error occurred. Please try again later."
-        }
-    )
-
-
-# Add OPTIONS handler for CORS preflight BEFORE routers
-@app.options("/{full_path:path}")
-async def options_handler(full_path: str):
-    """Handle CORS preflight requests for all paths."""
-    return JSONResponse(
-        content={"status": "ok"}, 
-        status_code=200,
-        headers={
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "*",
         }
     )
 
