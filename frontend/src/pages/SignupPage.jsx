@@ -14,7 +14,9 @@ const SignupPage = () => {
   const prefilledPassword = location.state?.password || '';
 
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    middleName: '',
+    surname: '',
     email: prefilledEmail,
     college: '',
     branch: '',
@@ -70,7 +72,10 @@ const SignupPage = () => {
 
     setLoading(true);
     try {
-      await signup(formData.email, formData.password, formData.name, formData.college, formData.branch, formData.yearOfAdmission);
+      // Combine names into full name
+      const fullName = `${formData.firstName} ${formData.middleName} ${formData.surname}`.replace(/\s+/g, ' ').trim();
+      
+      await signup(formData.email, formData.password, fullName, formData.college, formData.branch, formData.yearOfAdmission);
       if (auth.currentUser) {
         await sendEmailVerification(auth.currentUser, actionCodeSettings);
       }
@@ -161,16 +166,51 @@ const SignupPage = () => {
 
           <form onSubmit={handleSignup} className="space-y-4">
 
-            {/* Full Name */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="name">Full Name</label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input
-                  id="name" type="text" placeholder="Arjun Sharma" required
-                  className="input-premium w-full pl-11 pr-4 py-3 text-sm"
-                  data-testid="signup-name-input" {...field('name')}
-                />
+            {/* Name Fields - First, Middle, Surname */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* First Name */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="firstName">
+                  First Name <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
+                    id="firstName" type="text" placeholder="Arjun" required
+                    className="input-premium w-full pl-11 pr-4 py-3 text-sm"
+                    data-testid="signup-firstname-input" {...field('firstName')}
+                  />
+                </div>
+              </div>
+
+              {/* Middle Name */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="middleName">
+                  Middle Name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
+                    id="middleName" type="text" placeholder="Kumar"
+                    className="input-premium w-full pl-11 pr-4 py-3 text-sm"
+                    data-testid="signup-middlename-input" {...field('middleName')}
+                  />
+                </div>
+              </div>
+
+              {/* Surname */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="surname">
+                  Surname <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
+                    id="surname" type="text" placeholder="Sharma" required
+                    className="input-premium w-full pl-11 pr-4 py-3 text-sm"
+                    data-testid="signup-surname-input" {...field('surname')}
+                  />
+                </div>
               </div>
             </div>
 
