@@ -48,7 +48,9 @@ async def search_users(query: str):
             profiles = db.collection('user_profiles').where('user_id', '==', doc.id).limit(1).stream()
             for profile_doc in profiles:
                 profile_data = profile_doc.to_dict()
-                user_data['avatar'] = profile_data.get('avatar')
+                # Only use profile avatar if user doesn't have one
+                if not user_data.get('avatar'):
+                    user_data['avatar'] = profile_data.get('avatar')
                 user_data['bio'] = profile_data.get('bio')
                 break
             
@@ -214,11 +216,15 @@ async def get_user_profile(user_id: str, include_private: bool = False):
         user_data.pop('email', None)
     
     # Combine user and profile data
-    return {
-        **user_data,
-        **profile_data,
+    # IMPORTANT: User data takes precedence over profile data for avatar
+    # because EditProfilePage saves avatar to users collection
+    combined_data = {
+        **profile_data,  # Profile data first (base)
+        **user_data,     # User data second (overrides profile)
         'user_id': user_id
     }
+    
+    return combined_data
 
 
 @router.put("/users/{user_id}/profile")
@@ -355,7 +361,9 @@ async def get_pending_friend_requests(user_id: str):
             profiles = db.collection('user_profiles').where('user_id', '==', requester_id).limit(1).stream()
             for profile_doc in profiles:
                 profile_data = profile_doc.to_dict()
-                requester_data['avatar'] = profile_data.get('avatar')
+                # Only use profile avatar if user doesn't have one
+                if not requester_data.get('avatar'):
+                    requester_data['avatar'] = profile_data.get('avatar')
                 requester_data['bio'] = profile_data.get('bio')
                 break
             
@@ -418,7 +426,9 @@ async def get_friends(user_id: str):
             profiles = db.collection('user_profiles').where('user_id', '==', friend_id).limit(1).stream()
             for profile_doc in profiles:
                 profile_data = profile_doc.to_dict()
-                friend_data['avatar'] = profile_data.get('avatar')
+                # Only use profile avatar if user doesn't have one
+                if not friend_data.get('avatar'):
+                    friend_data['avatar'] = profile_data.get('avatar')
                 friend_data['bio'] = profile_data.get('bio')
                 break
             
