@@ -25,6 +25,41 @@ async def get_users():
     return users
 
 
+@router.get("/users/search/{query}")
+async def search_users(query: str):
+    """Search users by name"""
+    db = get_db()
+    
+    if not query or len(query) < 2:
+        raise HTTPException(status_code=400, detail="Search query must be at least 2 characters")
+    
+    # Get all users and filter by name (case-insensitive)
+    users = []
+    query_lower = query.lower()
+    
+    for doc in db.collection('users').stream():
+        user_data = doc.to_dict()
+        user_name = user_data.get('name', '').lower()
+        
+        if query_lower in user_name:
+            user_data['id'] = doc.id
+            
+            # Get profile data for avatar
+            profiles = db.collection('user_profiles').where('user_id', '==', doc.id).limit(1).stream()
+            for profile_doc in profiles:
+                profile_data = profile_doc.to_dict()
+                user_data['avatar'] = profile_data.get('avatar')
+                user_data['bio'] = profile_data.get('bio')
+                break
+            
+            # Remove sensitive data
+            user_data.pop('email', None)
+            user_data.pop('firebase_uid', None)
+            users.append(user_data)
+    
+    return users[:20]  # Limit to 20 results
+
+
 @router.post("/users", response_model=Dict[str, Any])
 async def create_user(user: UserCreate):
     """Create a new user with profile"""
@@ -283,3 +318,110 @@ async def update_transaction(transaction_id: str, updates: Dict[str, Any]):
     transaction_data['id'] = transaction_id
     
     return transaction_data
+
+
+# ============= FRIEND MANAGEMENT ROUTES =============
+
+@router.post("/users/{user_id}/friends/{friend_id}")
+async def add_friend(user_id: str, friend_id: str):
+    """Add a friend"""
+    db = get_db()
+    
+    if user_id == friend_id:
+        raise HTTPException(status_code=400, detail="Cannot add yourself as a friend")
+    
+    # Verify both users exist
+    user_doc = db.collection('users').document(user_id).get()
+    friend_doc = db.collection('users').document(friend_id).get()
+    
+    if not user_doc.exists or not friend_doc.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if friendship already exists
+    existing = db.collection('friendships').where('user_id', '==', user_id).where('friend_id', '==', friend_id).limit(1).stream()
+    if any(existing):
+        raise HTTPException(status_code=400, detail="Already friends")
+    
+    # Create friendship record
+    friendship_data = {
+        'user_id': user_id,
+        'friend_id': friend_id,
+        'created_at': datetime.now(),
+        'status': 'active'
+    }
+    
+    doc_ref = db.collection('friendships').document()
+    doc_ref.set(friendship_data)
+    
+    return {"message": "Friend added successfully", "friendship_id": doc_ref.id}
+
+
+@router.delete("/users/{user_id}/friends/{friend_id}")
+async def remove_friend(user_id: str, friend_id: str):
+    """Remove a friend"""
+    db = get_db()
+    
+    # Find and delete friendship
+    friendships = db.collection('friendships').where('user_id', '==', user_id).where('friend_id', '==', friend_id).stream()
+    
+    deleted = False
+    for doc in friendships:
+        doc.reference.delete()
+        deleted = True
+    
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Friendship not found")
+    
+    return {"message": "Friend removed successfully"}
+
+
+@router.get("/users/{user_id}/friends")
+async def get_friends(user_id: str):
+    """Get user's friends list"""
+    db = get_db()
+    
+    # Verify user exists
+    user_doc = db.collection('users').document(user_id).get()
+    if not user_doc.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get friendships
+    friendships = db.collection('friendships').where('user_id', '==', user_id).where('status', '==', 'active').stream()
+    
+    friends = []
+    for doc in friendships:
+        friendship_data = doc.to_dict()
+        friend_id = friendship_data['friend_id']
+        
+        # Get friend's user data
+        friend_doc = db.collection('users').document(friend_id).get()
+        if friend_doc.exists:
+            friend_data = friend_doc.to_dict()
+            friend_data['id'] = friend_id
+            
+            # Get friend's profile for avatar
+            profiles = db.collection('user_profiles').where('user_id', '==', friend_id).limit(1).stream()
+            for profile_doc in profiles:
+                profile_data = profile_doc.to_dict()
+                friend_data['avatar'] = profile_data.get('avatar')
+                friend_data['bio'] = profile_data.get('bio')
+                break
+            
+            # Remove sensitive data
+            friend_data.pop('email', None)
+            friend_data.pop('firebase_uid', None)
+            friends.append(friend_data)
+    
+    return friends
+
+
+@router.get("/users/{user_id}/friends/check/{friend_id}")
+async def check_friendship(user_id: str, friend_id: str):
+    """Check if two users are friends"""
+    db = get_db()
+    
+    friendships = db.collection('friendships').where('user_id', '==', user_id).where('friend_id', '==', friend_id).where('status', '==', 'active').limit(1).stream()
+    
+    is_friend = any(friendships)
+    
+    return {"is_friend": is_friend}

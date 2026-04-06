@@ -58,6 +58,33 @@ export const getUsers = async (limitCount = 100) => {
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
 }
 
+// Search users by name
+export const searchUsers = async (searchQuery) => {
+  const response = await api.get(`/users/search/${encodeURIComponent(searchQuery)}`)
+  return response.data
+}
+
+// Friend management
+export const addFriend = async (userId, friendId) => {
+  const response = await api.post(`/users/${userId}/friends/${friendId}`)
+  return response.data
+}
+
+export const removeFriend = async (userId, friendId) => {
+  const response = await api.delete(`/users/${userId}/friends/${friendId}`)
+  return response.data
+}
+
+export const getFriends = async (userId) => {
+  const response = await api.get(`/users/${userId}/friends`)
+  return response.data
+}
+
+export const checkFriendship = async (userId, friendId) => {
+  const response = await api.get(`/users/${userId}/friends/check/${friendId}`)
+  return response.data
+}
+
 // Firebase direct calls - Products
 export const getProduct = async (productId) => {
   const docRef = doc(db, 'products', productId)

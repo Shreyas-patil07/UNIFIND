@@ -1,13 +1,14 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
-import { Shield, Star, Award, Calendar, GraduationCap, LogOut, Mail, CheckCircle, AlertCircle, RefreshCw, Edit2, Lock, MessageCircle, Moon, Sun, Flag } from 'lucide-react';
+import { Shield, Star, Award, Calendar, GraduationCap, LogOut, Mail, CheckCircle, AlertCircle, RefreshCw, Edit2, Lock, MessageCircle, Moon, Sun, Flag, UserPlus, UserMinus } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { sendEmailVerification } from 'firebase/auth';
 import { actionCodeSettings } from '../services/firebase';
 import { getPublicProfile } from '../services/api';
+import { addFriend, removeFriend, checkFriendship } from '../services/api';
 
 const ProfilePage = () => {
   const { userId } = useParams();
@@ -26,6 +27,8 @@ const ProfilePage = () => {
   const [reportReason, setReportReason] = React.useState('');
   const [reportDetails, setReportDetails] = React.useState('');
   const [reportSubmitting, setReportSubmitting] = React.useState(false);
+  const [isFriend, setIsFriend] = React.useState(false);
+  const [friendLoading, setFriendLoading] = React.useState(false);
   
   // Fetch profile if viewing another user
   React.useEffect(() => {
@@ -42,8 +45,15 @@ const ProfilePage = () => {
           setProfileError('Failed to load profile');
           setLoadingProfile(false);
         });
+      
+      // Check friendship status
+      if (authUser?.uid) {
+        checkFriendship(authUser.uid, userId)
+          .then(data => setIsFriend(data.is_friend))
+          .catch(err => console.error('Failed to check friendship:', err));
+      }
     }
-  }, [userId, isOwnProfile]);
+  }, [userId, isOwnProfile, authUser]);
   
   // Use appropriate profile data
   const profileData = isOwnProfile ? userProfile : viewedProfile;
@@ -211,6 +221,28 @@ const ProfilePage = () => {
     }
   };
 
+  const handleToggleFriend = async () => {
+    if (!authUser?.uid || !userId) return;
+
+    setFriendLoading(true);
+    try {
+      if (isFriend) {
+        await removeFriend(authUser.uid, userId);
+        setIsFriend(false);
+        alert('Friend removed successfully');
+      } else {
+        await addFriend(authUser.uid, userId);
+        setIsFriend(true);
+        alert('Friend added successfully');
+      }
+    } catch (error) {
+      console.error('Failed to toggle friend:', error);
+      alert(error.response?.data?.detail || 'Failed to update friend status');
+    } finally {
+      setFriendLoading(false);
+    }
+  };
+
   // Show loading state
   if (!isOwnProfile && loadingProfile) {
     return (
@@ -295,12 +327,31 @@ const ProfilePage = () => {
               {!isOwnProfile && authUser && (
                 <div className="absolute top-4 right-4 flex gap-2">
                   <button
+                    onClick={handleToggleFriend}
+                    disabled={friendLoading}
+                    className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg hover:shadow-xl ${
+                      isFriend 
+                        ? 'bg-white/90 hover:bg-white text-slate-700' 
+                        : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                    }`}
+                    title={isFriend ? 'Remove Friend' : 'Add Friend'}
+                  >
+                    {friendLoading ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
+                    ) : isFriend ? (
+                      <UserMinus className="h-4 w-4" />
+                    ) : (
+                      <UserPlus className="h-4 w-4" />
+                    )}
+                    <span className="text-sm font-medium">{isFriend ? 'Remove Friend' : 'Add Friend'}</span>
+                  </button>
+                  <button
                     onClick={handleStartChat}
                     className="bg-white/90 hover:bg-white text-indigo-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg hover:shadow-xl"
                     title="Send Message"
                   >
                     <MessageCircle className="h-4 w-4" />
-                    <span className="text-sm font-medium">Send Message</span>
+                    <span className="text-sm font-medium">Message</span>
                   </button>
                   <button
                     onClick={() => setShowReportModal(true)}
@@ -308,7 +359,6 @@ const ProfilePage = () => {
                     title="Report User"
                   >
                     <Flag className="h-4 w-4" />
-                    <span className="text-sm font-medium">Report</span>
                   </button>
                 </div>
               )}

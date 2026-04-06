@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Search, ShoppingBag, MessageCircle, User, Menu, X, LayoutDashboard, Sparkles, Package } from 'lucide-react'
+import { Search, ShoppingBag, MessageCircle, User, Menu, X, LayoutDashboard, Sparkles, Package, UserPlus } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
-import { getUserChats } from '../services/api'
+import { getUserChats, searchUsers } from '../services/api'
 
 export default function Header({ hideSearch = false }) {
   const navigate = useNavigate()
@@ -12,6 +12,11 @@ export default function Header({ hideSearch = false }) {
   const { darkMode } = useTheme()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState([])
+  const [showSearchResults, setShowSearchResults] = useState(false)
+  const [searchLoading, setSearchLoading] = useState(false)
+  const searchRef = useRef(null)
 
   // Fetch unread message count
   useEffect(() => {
@@ -46,6 +51,53 @@ export default function Header({ hideSearch = false }) {
       navigate('/profile')
     }
     setMobileMenuOpen(false)
+  }
+
+  // Handle user search
+  const handleSearch = async (query) => {
+    setSearchQuery(query)
+    
+    if (query.trim().length < 2) {
+      setSearchResults([])
+      setShowSearchResults(false)
+      return
+    }
+
+    setSearchLoading(true)
+    try {
+      const results = await searchUsers(query.trim())
+      setSearchResults(results)
+      setShowSearchResults(true)
+    } catch (error) {
+      console.error('Search failed:', error)
+      setSearchResults([])
+    } finally {
+      setSearchLoading(false)
+    }
+  }
+
+  // Close search results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowSearchResults(false)
+      }
+    }
+
+    if (showSearchResults) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showSearchResults])
+
+  const handleUserClick = (userId) => {
+    navigate(`/profile/${userId}`)
+    setShowSearchResults(false)
+    setSearchQuery('')
+    setSearchResults([])
   }
 
   const isActive = (path) => location.pathname === path || (path !== '/home' && location.pathname.startsWith(path))
@@ -132,6 +184,80 @@ export default function Header({ hideSearch = false }) {
                   </button>
                 )
               })}
+
+              {/* User Search Button */}
+              <div className="relative ml-2" ref={searchRef}>
+                <button
+                  onClick={() => setShowSearchResults(!showSearchResults)}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    darkMode ? 'text-slate-300 hover:bg-slate-700 hover:text-indigo-400' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'
+                  }`}
+                  title="Search Users"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  <span className="hidden xl:inline">Find Users</span>
+                </button>
+
+                {/* User Search Dropdown */}
+                {showSearchResults && (
+                  <div className={`absolute top-full right-0 mt-2 w-80 rounded-xl shadow-xl border z-50 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                    <div className="p-3 border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}">
+                      <div className="relative">
+                        <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                        <input
+                          type="text"
+                          placeholder="Search users..."
+                          value={searchQuery}
+                          onChange={(e) => handleSearch(e.target.value)}
+                          autoFocus
+                          className={`w-full pl-9 pr-3 py-2 rounded-lg border outline-none text-sm ${
+                            darkMode 
+                              ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-400 focus:border-indigo-500' 
+                              : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
+                          }`}
+                        />
+                      </div>
+                    </div>
+                    <div className="max-h-96 overflow-y-auto">
+                      {searchLoading ? (
+                        <div className="p-4 text-center">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mx-auto"></div>
+                        </div>
+                      ) : searchResults.length > 0 ? (
+                        <div className="py-2">
+                          {searchResults.map((user) => (
+                            <button
+                              key={user.id}
+                              onClick={() => handleUserClick(user.id)}
+                              className={`w-full px-4 py-3 flex items-center gap-3 transition-colors ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-50'}`}
+                            >
+                              <img
+                                src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}`}
+                                alt={user.name}
+                                className="h-10 w-10 rounded-full object-cover"
+                              />
+                              <div className="flex-1 text-left">
+                                <p className={`font-semibold text-sm ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{user.name}</p>
+                                {user.college && (
+                                  <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{user.college}</p>
+                                )}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      ) : searchQuery.length >= 2 ? (
+                        <div className="p-4 text-center">
+                          <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>No users found</p>
+                        </div>
+                      ) : (
+                        <div className="p-4 text-center">
+                          <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Type to search users...</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Profile Button */}
               <button
@@ -223,6 +349,79 @@ export default function Header({ hideSearch = false }) {
                   )
                 })}
                 <div className={`pt-2 border-t ${darkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+                  {/* User Search in Mobile */}
+                  <button
+                    onClick={() => setShowSearchResults(!showSearchResults)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 mb-2 ${
+                      darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    <UserPlus className={`h-5 w-5 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                    Find Users
+                  </button>
+
+                  {/* Mobile User Search Dropdown */}
+                  {showSearchResults && (
+                    <div className={`mb-3 rounded-xl border ${darkMode ? 'bg-slate-700 border-slate-600' : 'bg-slate-50 border-slate-200'}`}>
+                      <div className="p-3">
+                        <div className="relative">
+                          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                          <input
+                            type="text"
+                            placeholder="Search users..."
+                            value={searchQuery}
+                            onChange={(e) => handleSearch(e.target.value)}
+                            className={`w-full pl-9 pr-3 py-2 rounded-lg border outline-none text-sm ${
+                              darkMode 
+                                ? 'bg-slate-800 border-slate-600 text-slate-200 placeholder-slate-400 focus:border-indigo-500' 
+                                : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
+                            }`}
+                          />
+                        </div>
+                      </div>
+                      <div className="max-h-60 overflow-y-auto">
+                        {searchLoading ? (
+                          <div className="p-4 text-center">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mx-auto"></div>
+                          </div>
+                        ) : searchResults.length > 0 ? (
+                          <div className="pb-2">
+                            {searchResults.map((user) => (
+                              <button
+                                key={user.id}
+                                onClick={() => {
+                                  handleUserClick(user.id)
+                                  setMobileMenuOpen(false)
+                                }}
+                                className={`w-full px-4 py-3 flex items-center gap-3 transition-colors ${darkMode ? 'hover:bg-slate-600' : 'hover:bg-slate-100'}`}
+                              >
+                                <img
+                                  src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}`}
+                                  alt={user.name}
+                                  className="h-10 w-10 rounded-full object-cover"
+                                />
+                                <div className="flex-1 text-left">
+                                  <p className={`font-semibold text-sm ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{user.name}</p>
+                                  {user.college && (
+                                    <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{user.college}</p>
+                                  )}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        ) : searchQuery.length >= 2 ? (
+                          <div className="p-4 text-center">
+                            <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>No users found</p>
+                          </div>
+                        ) : (
+                          <div className="p-4 text-center">
+                            <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Type to search users...</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   <button
                     onClick={handleProfileClick}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold btn-gradient"
