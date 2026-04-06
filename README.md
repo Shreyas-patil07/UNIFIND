@@ -14,7 +14,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110.1-009688.svg)](https://fastapi.tiangolo.com/)
 [![Firebase](https://img.shields.io/badge/Firebase-10.7.1-FFCA28.svg)](https://firebase.google.com/)
 
-[🚀 Live Demo](https://unifind-dusky.vercel.app) • [📖 Documentation](DOCUMENTATION.md) • [🐛 Report Bug](https://github.com/Shreyas-patil07/UNIFIND/issues) • [✨ Request Feature](https://github.com/Shreyas-patil07/UNIFIND/issues) • [📧 Contact](mailto:systemrecord07@gmail.com)
+[🚀 Live Demo](https://unifind-dusky.vercel.app/home) • [📖 Documentation](DOCUMENTATION.md) • [🐛 Report Bug](https://github.com/Shreyas-patil07/UNIFIND/issues) • [✨ Request Feature](https://github.com/Shreyas-patil07/UNIFIND/issues) • [📧 Contact](mailto:systemrecord07@gmail.com)
 
 </div>
 
