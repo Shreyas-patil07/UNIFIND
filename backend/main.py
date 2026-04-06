@@ -88,6 +88,21 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
+# Add OPTIONS handler for CORS preflight BEFORE routers
+@app.options("/{full_path:path}")
+async def options_handler(full_path: str):
+    """Handle CORS preflight requests for all paths."""
+    return JSONResponse(
+        content={"status": "ok"}, 
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
+
+
 # Include routers with /api prefix (standard)
 app.include_router(products.router, prefix="/api", tags=["products"])
 app.include_router(users.router, prefix="/api", tags=["users"])
@@ -101,13 +116,6 @@ app.include_router(users.router, tags=["users-fallback"])
 app.include_router(chats.router, tags=["chats-fallback"])
 app.include_router(reviews.router, tags=["reviews-fallback"])
 app.include_router(need_board.router, tags=["need-board-fallback"])
-
-
-# Add OPTIONS handler for CORS preflight at root level
-@app.options("/{full_path:path}")
-async def options_handler(full_path: str):
-    """Handle CORS preflight requests for all paths."""
-    return JSONResponse(content={"status": "ok"}, status_code=200)
 
 
 # Health check endpoints
