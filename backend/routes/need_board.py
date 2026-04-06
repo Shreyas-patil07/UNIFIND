@@ -22,6 +22,21 @@ RATE_LIMIT_SECONDS = 10  # 1 request per 10 seconds per IP
 MAX_QUERY_LENGTH = 500  # Maximum query length
 
 
+# Explicit OPTIONS handler for need-board
+@router.api_route("/need-board", methods=["OPTIONS"])
+async def need_board_options():
+    """Handle CORS preflight for need-board endpoint."""
+    return JSONResponse(
+        content={"status": "ok"},
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
+
+
 @router.post("/need-board", response_model=NeedBoardResponse)
 async def need_board(request: NeedBoardRequest, req: Request):
     """
