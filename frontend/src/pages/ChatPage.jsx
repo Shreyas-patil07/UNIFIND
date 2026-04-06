@@ -157,7 +157,40 @@ const ChatPage = () => {
     const loadMessages = async () => {
       try {
         const chatMessages = await getChatMessages(selectedChat.id);
-        setMessages(chatMessages);
+        
+        // Check if there are new unread messages
+        const hasUnreadMessages = chatMessages.some(
+          msg => msg.receiver_id === currentUser.uid && !msg.is_read
+        );
+        
+        // If user is viewing the chat and there are unread messages, mark them as read
+        if (hasUnreadMessages) {
+          try {
+            await markChatAsRead(selectedChat.id, currentUser.uid);
+            
+            // Update local chat list to reflect read status
+            setChats(prevChats => 
+              prevChats.map(c => 
+                c.id === selectedChat.id 
+                  ? {
+                      ...c,
+                      unread_count_user1: c.user1_id === currentUser.uid ? 0 : c.unread_count_user1,
+                      unread_count_user2: c.user2_id === currentUser.uid ? 0 : c.unread_count_user2
+                    }
+                  : c
+              )
+            );
+            
+            // Reload messages to get updated is_read status
+            const updatedMessages = await getChatMessages(selectedChat.id);
+            setMessages(updatedMessages);
+          } catch (error) {
+            console.error('Failed to auto-mark messages as read:', error);
+            setMessages(chatMessages);
+          }
+        } else {
+          setMessages(chatMessages);
+        }
         
         // Load other user's profile if not already loaded
         if (!otherUser) {
