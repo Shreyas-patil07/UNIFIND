@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from typing import List
+from typing import List, Dict, Any
 from datetime import datetime, timezone
 from database import get_db
 from models import Message, MessageCreate, ChatRoom
