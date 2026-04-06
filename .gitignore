@@ -3,6 +3,7 @@
 .env.local
 .env.*.local
 .env.production
+.env.development
 backend/.env
 frontend/.env
 
@@ -24,6 +25,18 @@ env/
 .venv/
 ENV/
 .venv
+*.db
+*.sqlite
+*.sqlite3
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+.ipynb_checkpoints/
+*.pyo
+*.pyd
+pip-log.txt
+pip-delete-this-directory.txt
 
 # Node
 node_modules/
@@ -37,8 +50,14 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 *.local
-package-lock.json
-yarn.lock
+.cache/
+.parcel-cache/
+.next/
+out/
+.nuxt/
+.vuepress/dist
+.serverless/
+.turbo/
 
 # Editor directories and files
 .vscode/*
@@ -65,3 +84,16 @@ Thumbs.db
 .AppleDouble
 .LSOverride
 ._*
+Desktop.ini
+$RECYCLE.BIN/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*~
+
+# Git
+*.orig
+*.rej
