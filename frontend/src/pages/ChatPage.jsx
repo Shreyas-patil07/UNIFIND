@@ -34,6 +34,9 @@ const ChatPage = () => {
   const messageInputRef = useRef(null);
   const chatMenuRef = useRef(null);
   const emojiPickerRef = useRef(null);
+  const messageRefs = useRef({});
+  const observerRef = useRef(null);
+  const markedAsReadRef = useRef(new Set());
 
   // Emoji categories
   const emojis = {
@@ -112,6 +115,93 @@ const ChatPage = () => {
     return currentDate.toDateString() !== previousDate.toDateString();
   };
 
+  // Mark individual message as read
+  const markMessageAsRead = async (messageId) => {
+    if (!selectedChat || !currentUser || markedAsReadRef.current.has(messageId)) return;
+    
+    try {
+      markedAsReadRef.current.add(messageId);
+      
+      // Call backend to mark this specific message as read
+      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/chats/messages/${messageId}/read`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: currentUser.uid })
+      });
+      
+      // Update local state
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === messageId ? { ...msg, is_read: true } : msg
+        )
+      );
+      
+      // Update unread count in chat list
+      setChats(prevChats => 
+        prevChats.map(c => {
+          if (c.id === selectedChat.id) {
+            const unreadField = c.user1_id === currentUser.uid ? 'unread_count_user1' : 'unread_count_user2';
+            const currentCount = c.user1_id === currentUser.uid ? c.unread_count_user1 : c.unread_count_user2;
+            return {
+              ...c,
+              [unreadField]: Math.max(0, currentCount - 1)
+            };
+          }
+          return c;
+        })
+      );
+    } catch (error) {
+      console.error('Failed to mark message as read:', error);
+      markedAsReadRef.current.delete(messageId);
+    }
+  };
+
+  // Setup Intersection Observer to track visible messages
+  useEffect(() => {
+    if (!selectedChat || !currentUser) return;
+
+    // Clean up previous observer
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    // Create new observer
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const messageId = entry.target.dataset.messageId;
+            const senderId = entry.target.dataset.senderId;
+            const isRead = entry.target.dataset.isRead === 'true';
+            
+            // Only mark as read if it's from the other user and not already read
+            if (senderId !== currentUser.uid && !isRead && messageId) {
+              markMessageAsRead(messageId);
+            }
+          }
+        });
+      },
+      {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.5 // Message must be 50% visible
+      }
+    );
+
+    // Observe all message elements
+    Object.values(messageRefs.current).forEach((ref) => {
+      if (ref) {
+        observerRef.current.observe(ref);
+      }
+    });
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [messages, selectedChat, currentUser]);
+
   // Scroll to bottom of messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -137,13 +227,6 @@ const ChatPage = () => {
         if (targetUserId && targetUserId !== currentUser.uid) {
           const chatRoom = await getOrCreateChatRoom(currentUser.uid, targetUserId, productId);
           setSelectedChat(chatRoom);
-          
-          // Mark messages as read when opening chat from URL
-          try {
-            await markChatAsRead(chatRoom.id, currentUser.uid);
-          } catch (error) {
-            console.error('Failed to mark messages as read:', error);
-          }
           
           // Load other user's profile
           const profile = await getPublicProfile(targetUserId);
@@ -174,40 +257,10 @@ const ChatPage = () => {
     const loadMessages = async () => {
       try {
         const chatMessages = await getChatMessages(selectedChat.id);
+        setMessages(chatMessages);
         
-        // Check if there are new unread messages
-        const hasUnreadMessages = chatMessages.some(
-          msg => msg.receiver_id === currentUser.uid && !msg.is_read
-        );
-        
-        // If user is viewing the chat and there are unread messages, mark them as read
-        if (hasUnreadMessages) {
-          try {
-            await markChatAsRead(selectedChat.id, currentUser.uid);
-            
-            // Update local chat list to reflect read status
-            setChats(prevChats => 
-              prevChats.map(c => 
-                c.id === selectedChat.id 
-                  ? {
-                      ...c,
-                      unread_count_user1: c.user1_id === currentUser.uid ? 0 : c.unread_count_user1,
-                      unread_count_user2: c.user2_id === currentUser.uid ? 0 : c.unread_count_user2
-                    }
-                  : c
-              )
-            );
-            
-            // Reload messages to get updated is_read status
-            const updatedMessages = await getChatMessages(selectedChat.id);
-            setMessages(updatedMessages);
-          } catch (error) {
-            console.error('Failed to auto-mark messages as read:', error);
-            setMessages(chatMessages);
-          }
-        } else {
-          setMessages(chatMessages);
-        }
+        // Reset marked as read tracking when switching chats
+        markedAsReadRef.current.clear();
         
         // Load other user's profile if not already loaded
         if (!otherUser) {
@@ -319,26 +372,7 @@ const ChatPage = () => {
     setMessages([]);
     setOtherUser(null);
     setProduct(null);
-    
-    // Mark messages as read when chat is selected
-    try {
-      await markChatAsRead(chat.id, currentUser.uid);
-      
-      // Update the local chat list to reflect read status
-      setChats(prevChats => 
-        prevChats.map(c => 
-          c.id === chat.id 
-            ? {
-                ...c,
-                unread_count_user1: c.user1_id === currentUser.uid ? 0 : c.unread_count_user1,
-                unread_count_user2: c.user2_id === currentUser.uid ? 0 : c.unread_count_user2
-              }
-            : c
-        )
-      );
-    } catch (error) {
-      console.error('Failed to mark messages as read:', error);
-    }
+    markedAsReadRef.current.clear();
   };
 
   // Handle report user
@@ -601,6 +635,14 @@ const ChatPage = () => {
                           </div>
                         )}
                         <div
+                          ref={(el) => {
+                            if (el && msg.id) {
+                              messageRefs.current[msg.id] = el;
+                            }
+                          }}
+                          data-message-id={msg.id}
+                          data-sender-id={msg.sender_id}
+                          data-is-read={msg.is_read}
                           className={`flex gap-2 ${mtClass} ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
                           data-testid={`message-${msg.id}`}
                         >

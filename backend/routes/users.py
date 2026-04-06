@@ -322,20 +322,138 @@ async def update_transaction(transaction_id: str, updates: Dict[str, Any]):
 
 # ============= FRIEND MANAGEMENT ROUTES =============
 
+# IMPORTANT: More specific routes must come BEFORE generic parameterized routes
+# Otherwise FastAPI will match the wrong route
+
+@router.get("/users/{user_id}/friends/requests/pending")
+async def get_pending_friend_requests(user_id: str):
+    """Get pending friend requests for a user"""
+    db = get_db()
+    
+    # Verify user exists
+    user_doc = db.collection('users').document(user_id).get()
+    if not user_doc.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get pending requests where user is the recipient
+    requests = db.collection('friendships').where('friend_id', '==', user_id).where('status', '==', 'pending').stream()
+    
+    pending_requests = []
+    for doc in requests:
+        request_data = doc.to_dict()
+        requester_id = request_data['user_id']
+        
+        # Get requester's user data
+        requester_doc = db.collection('users').document(requester_id).get()
+        if requester_doc.exists:
+            requester_data = requester_doc.to_dict()
+            requester_data['id'] = requester_id
+            requester_data['request_id'] = doc.id
+            requester_data['created_at'] = request_data.get('created_at')
+            
+            # Get requester's profile for avatar
+            profiles = db.collection('user_profiles').where('user_id', '==', requester_id).limit(1).stream()
+            for profile_doc in profiles:
+                profile_data = profile_doc.to_dict()
+                requester_data['avatar'] = profile_data.get('avatar')
+                requester_data['bio'] = profile_data.get('bio')
+                break
+            
+            # Remove sensitive data
+            requester_data.pop('email', None)
+            requester_data.pop('firebase_uid', None)
+            pending_requests.append(requester_data)
+    
+    return pending_requests
+
+
+@router.get("/users/{user_id}/friends/check/{friend_id}")
+async def check_friendship(user_id: str, friend_id: str):
+    """Check friendship status between two users"""
+    db = get_db()
+    
+    # Check if they are friends (active)
+    active_friendship = db.collection('friendships').where('user_id', '==', user_id).where('friend_id', '==', friend_id).where('status', '==', 'active').limit(1).stream()
+    if any(active_friendship):
+        return {"status": "friends"}
+    
+    # Check if current user sent a pending request
+    sent_request = db.collection('friendships').where('user_id', '==', user_id).where('friend_id', '==', friend_id).where('status', '==', 'pending').limit(1).stream()
+    if any(sent_request):
+        return {"status": "request_sent"}
+    
+    # Check if current user received a pending request
+    received_request = db.collection('friendships').where('user_id', '==', friend_id).where('friend_id', '==', user_id).where('status', '==', 'pending').limit(1).stream()
+    if any(received_request):
+        return {"status": "request_received"}
+    
+    return {"status": "none"}
+
+
+@router.get("/users/{user_id}/friends")
+async def get_friends(user_id: str):
+    """Get user's friends list (only active friendships)"""
+    db = get_db()
+    
+    # Verify user exists
+    user_doc = db.collection('users').document(user_id).get()
+    if not user_doc.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get active friendships
+    friendships = db.collection('friendships').where('user_id', '==', user_id).where('status', '==', 'active').stream()
+    
+    friends = []
+    for doc in friendships:
+        friendship_data = doc.to_dict()
+        friend_id = friendship_data['friend_id']
+        
+        # Get friend's user data
+        friend_doc = db.collection('users').document(friend_id).get()
+        if friend_doc.exists:
+            friend_data = friend_doc.to_dict()
+            friend_data['id'] = friend_id
+            
+            # Get friend's profile for avatar
+            profiles = db.collection('user_profiles').where('user_id', '==', friend_id).limit(1).stream()
+            for profile_doc in profiles:
+                profile_data = profile_doc.to_dict()
+                friend_data['avatar'] = profile_data.get('avatar')
+                friend_data['bio'] = profile_data.get('bio')
+                break
+            
+            # Remove sensitive data
+            friend_data.pop('email', None)
+            friend_data.pop('firebase_uid', None)
+            friends.append(friend_data)
+    
+    return friends
+
+
 @router.post("/users/{user_id}/friends/{friend_id}")
 async def add_friend(user_id: str, friend_id: str):
     """Send a friend request"""
     db = get_db()
     
+    print(f"[ADD_FRIEND] Request: {user_id} -> {friend_id}")
+    
     if user_id == friend_id:
+        print(f"[ADD_FRIEND] Error: Same user")
         raise HTTPException(status_code=400, detail="Cannot add yourself as a friend")
     
     # Verify both users exist
     user_doc = db.collection('users').document(user_id).get()
     friend_doc = db.collection('users').document(friend_id).get()
     
-    if not user_doc.exists or not friend_doc.exists:
-        raise HTTPException(status_code=404, detail="User not found")
+    print(f"[ADD_FRIEND] User exists: {user_doc.exists}, Friend exists: {friend_doc.exists}")
+    
+    if not user_doc.exists:
+        print(f"[ADD_FRIEND] Error: User {user_id} not found")
+        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
+    
+    if not friend_doc.exists:
+        print(f"[ADD_FRIEND] Error: Friend {friend_id} not found")
+        raise HTTPException(status_code=404, detail=f"Friend {friend_id} not found")
     
     # Check if friendship already exists
     existing = db.collection('friendships').where('user_id', '==', user_id).where('friend_id', '==', friend_id).limit(1).stream()
@@ -451,106 +569,3 @@ async def remove_friend(user_id: str, friend_id: str):
     return {"message": "Friend removed successfully"}
 
 
-@router.get("/users/{user_id}/friends")
-async def get_friends(user_id: str):
-    """Get user's friends list (only active friendships)"""
-    db = get_db()
-    
-    # Verify user exists
-    user_doc = db.collection('users').document(user_id).get()
-    if not user_doc.exists:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    # Get active friendships
-    friendships = db.collection('friendships').where('user_id', '==', user_id).where('status', '==', 'active').stream()
-    
-    friends = []
-    for doc in friendships:
-        friendship_data = doc.to_dict()
-        friend_id = friendship_data['friend_id']
-        
-        # Get friend's user data
-        friend_doc = db.collection('users').document(friend_id).get()
-        if friend_doc.exists:
-            friend_data = friend_doc.to_dict()
-            friend_data['id'] = friend_id
-            
-            # Get friend's profile for avatar
-            profiles = db.collection('user_profiles').where('user_id', '==', friend_id).limit(1).stream()
-            for profile_doc in profiles:
-                profile_data = profile_doc.to_dict()
-                friend_data['avatar'] = profile_data.get('avatar')
-                friend_data['bio'] = profile_data.get('bio')
-                break
-            
-            # Remove sensitive data
-            friend_data.pop('email', None)
-            friend_data.pop('firebase_uid', None)
-            friends.append(friend_data)
-    
-    return friends
-
-
-@router.get("/users/{user_id}/friends/requests/pending")
-async def get_pending_friend_requests(user_id: str):
-    """Get pending friend requests for a user"""
-    db = get_db()
-    
-    # Verify user exists
-    user_doc = db.collection('users').document(user_id).get()
-    if not user_doc.exists:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    # Get pending requests where user is the recipient
-    requests = db.collection('friendships').where('friend_id', '==', user_id).where('status', '==', 'pending').stream()
-    
-    pending_requests = []
-    for doc in requests:
-        request_data = doc.to_dict()
-        requester_id = request_data['user_id']
-        
-        # Get requester's user data
-        requester_doc = db.collection('users').document(requester_id).get()
-        if requester_doc.exists:
-            requester_data = requester_doc.to_dict()
-            requester_data['id'] = requester_id
-            requester_data['request_id'] = doc.id
-            requester_data['created_at'] = request_data.get('created_at')
-            
-            # Get requester's profile for avatar
-            profiles = db.collection('user_profiles').where('user_id', '==', requester_id).limit(1).stream()
-            for profile_doc in profiles:
-                profile_data = profile_doc.to_dict()
-                requester_data['avatar'] = profile_data.get('avatar')
-                requester_data['bio'] = profile_data.get('bio')
-                break
-            
-            # Remove sensitive data
-            requester_data.pop('email', None)
-            requester_data.pop('firebase_uid', None)
-            pending_requests.append(requester_data)
-    
-    return pending_requests
-
-
-@router.get("/users/{user_id}/friends/check/{friend_id}")
-async def check_friendship(user_id: str, friend_id: str):
-    """Check friendship status between two users"""
-    db = get_db()
-    
-    # Check if they are friends (active)
-    active_friendship = db.collection('friendships').where('user_id', '==', user_id).where('friend_id', '==', friend_id).where('status', '==', 'active').limit(1).stream()
-    if any(active_friendship):
-        return {"status": "friends"}
-    
-    # Check if current user sent a pending request
-    sent_request = db.collection('friendships').where('user_id', '==', user_id).where('friend_id', '==', friend_id).where('status', '==', 'pending').limit(1).stream()
-    if any(sent_request):
-        return {"status": "request_sent"}
-    
-    # Check if current user received a pending request
-    received_request = db.collection('friendships').where('user_id', '==', friend_id).where('friend_id', '==', user_id).where('status', '==', 'pending').limit(1).stream()
-    if any(received_request):
-        return {"status": "request_received"}
-    
-    return {"status": "none"}

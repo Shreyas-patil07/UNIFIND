@@ -29,6 +29,7 @@ const SignupPage = () => {
   const [showCollegeDropdown, setShowCollegeDropdown] = useState(false);
   const [collegeSearch, setCollegeSearch] = useState('');
   const [collegeSelected, setCollegeSelected] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const colleges = ['Smt. Indira Gandhi College of Engineering (SIGCE)', 'Other'];
   const currentYear = new Date().getFullYear();
@@ -53,6 +54,10 @@ const SignupPage = () => {
     e.preventDefault();
     setError('');
 
+    if (!agreedToTerms) {
+      setError('You must agree to the Terms & Conditions and Privacy Policy to continue.');
+      return;
+    }
     if (!collegeSelected || !formData.college) {
       setError('Please select a college from the dropdown list.');
       return;
@@ -355,10 +360,33 @@ const SignupPage = () => {
               </div>
             </div>
 
+            {/* Terms & Conditions Checkbox */}
+            <div className="flex items-start gap-3 p-4 bg-slate-100 rounded-xl">
+              <input
+                type="checkbox"
+                id="terms"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-1 h-4 w-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                data-testid="terms-checkbox"
+              />
+              <label htmlFor="terms" className="text-sm text-slate-700 leading-relaxed">
+                I agree to the{' '}
+                <Link to="/terms" target="_blank" className="text-indigo-600 hover:text-indigo-700 font-semibold underline">
+                  Terms & Conditions
+                </Link>
+                {' '}and{' '}
+                <Link to="/privacy" target="_blank" className="text-indigo-600 hover:text-indigo-700 font-semibold underline">
+                  Privacy Policy
+                </Link>
+                . I understand that UNIFIND is a marketplace platform connecting buyers and sellers, and is not responsible for transactions between users.
+              </label>
+            </div>
+
             {/* Submit */}
             <button
               type="submit"
-              disabled={loading || !collegeSelected}
+              disabled={loading || !collegeSelected || !agreedToTerms}
               className="w-full btn-gradient py-3.5 text-sm mt-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:animate-none"
               data-testid="signup-submit-btn"
             >
@@ -380,6 +408,20 @@ const SignupPage = () => {
               Sign In
             </Link>
           </p>
+
+          <div className="mt-6 pt-6 border-t border-slate-200 flex flex-wrap justify-center gap-4 text-xs text-slate-500">
+            <Link to="/privacy" target="_blank" className="hover:text-indigo-600 transition-colors">
+              Privacy Policy
+            </Link>
+            <span>•</span>
+            <Link to="/terms" target="_blank" className="hover:text-indigo-600 transition-colors">
+              Terms & Conditions
+            </Link>
+            <span>•</span>
+            <a href="mailto:systemrecord07@gmail.com" className="hover:text-indigo-600 transition-colors">
+              Support
+            </a>
+          </div>
         </div>
       </div>
     </div>

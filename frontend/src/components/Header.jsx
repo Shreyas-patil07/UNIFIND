@@ -92,12 +92,22 @@ export default function Header({ hideSearch = false }) {
       }
     }
 
+    const handleKeyDown = (event) => {
+      // Don't close dropdown on Shift, Backspace, or any typing keys
+      if (event.key === 'Escape') {
+        setShowSearchResults(false)
+        setShowNotifications(false)
+      }
+    }
+
     if (showSearchResults) {
       document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('keydown', handleKeyDown)
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
     }
   }, [showSearchResults])
 
@@ -319,6 +329,7 @@ export default function Header({ hideSearch = false }) {
                               placeholder="Search users..."
                               value={searchQuery}
                               onChange={(e) => handleSearch(e.target.value)}
+                              onFocus={() => setShowSearchResults(true)}
                               autoFocus
                               className={`w-full pl-9 pr-3 py-2 rounded-lg border outline-none text-sm ${
                                 darkMode 
@@ -551,6 +562,7 @@ export default function Header({ hideSearch = false }) {
                             placeholder="Search users..."
                             value={searchQuery}
                             onChange={(e) => handleSearch(e.target.value)}
+                            onFocus={() => setShowSearchResults(true)}
                             className={`w-full pl-9 pr-3 py-2 rounded-lg border outline-none text-sm ${
                               darkMode 
                                 ? 'bg-slate-800 border-slate-600 text-slate-200 placeholder-slate-400 focus:border-indigo-500' 

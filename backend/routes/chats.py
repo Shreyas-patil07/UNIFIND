@@ -158,3 +158,49 @@ async def mark_messages_read(chat_room_id: str, user_id: str):
     batch.commit()
     
     return {"message": "Messages marked as read", "chat_room_id": chat_room_id}
+
+
+@router.put("/chats/messages/{message_id}/read")
+async def mark_single_message_read(message_id: str, user_data: Dict[str, Any]):
+    """Mark a single message as read"""
+    db = get_db()
+    user_id = user_data.get('user_id')
+    
+    if not user_id:
+        raise HTTPException(status_code=400, detail="user_id is required")
+    
+    # Get the message
+    message_ref = db.collection('messages').document(message_id)
+    message_doc = message_ref.get()
+    
+    if not message_doc.exists:
+        raise HTTPException(status_code=404, detail="Message not found")
+    
+    message_data = message_doc.to_dict()
+    
+    # Only mark as read if the user is the receiver and it's not already read
+    if message_data.get('receiver_id') != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to mark this message as read")
+    
+    if message_data.get('is_read'):
+        return {"message": "Message already marked as read", "message_id": message_id}
+    
+    # Mark message as read
+    message_ref.update({'is_read': True})
+    
+    # Decrement unread count in chat room
+    chat_room_id = message_data.get('chat_room_id')
+    if chat_room_id:
+        chat_room_ref = db.collection('chat_rooms').document(chat_room_id)
+        chat_room = chat_room_ref.get()
+        
+        if chat_room.exists:
+            chat_data = chat_room.to_dict()
+            unread_field = 'unread_count_user1' if user_id == chat_data['user1_id'] else 'unread_count_user2'
+            current_count = chat_data.get(unread_field, 0)
+            
+            if current_count > 0:
+                chat_room_ref.update({unread_field: current_count - 1})
+    
+    return {"message": "Message marked as read", "message_id": message_id}
+

@@ -249,6 +249,20 @@ const LoginPage = () => {
               Sign Up
             </Link>
           </p>
+
+          <div className="mt-6 pt-6 border-t border-slate-200 flex flex-wrap justify-center gap-4 text-xs text-slate-500">
+            <Link to="/privacy" target="_blank" className="hover:text-indigo-600 transition-colors">
+              Privacy Policy
+            </Link>
+            <span>•</span>
+            <Link to="/terms" target="_blank" className="hover:text-indigo-600 transition-colors">
+              Terms & Conditions
+            </Link>
+            <span>•</span>
+            <a href="mailto:systemrecord07@gmail.com" className="hover:text-indigo-600 transition-colors">
+              Support
+            </a>
+          </div>
         </div>
       </div>
     </div>
