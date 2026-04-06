@@ -70,6 +70,16 @@ export const addFriend = async (userId, friendId) => {
   return response.data
 }
 
+export const acceptFriendRequest = async (userId, friendId) => {
+  const response = await api.put(`/users/${userId}/friends/${friendId}/accept`)
+  return response.data
+}
+
+export const rejectFriendRequest = async (userId, friendId) => {
+  const response = await api.put(`/users/${userId}/friends/${friendId}/reject`)
+  return response.data
+}
+
 export const removeFriend = async (userId, friendId) => {
   const response = await api.delete(`/users/${userId}/friends/${friendId}`)
   return response.data
@@ -77,6 +87,11 @@ export const removeFriend = async (userId, friendId) => {
 
 export const getFriends = async (userId) => {
   const response = await api.get(`/users/${userId}/friends`)
+  return response.data
+}
+
+export const getPendingFriendRequests = async (userId) => {
+  const response = await api.get(`/users/${userId}/friends/requests/pending`)
   return response.data
 }
 

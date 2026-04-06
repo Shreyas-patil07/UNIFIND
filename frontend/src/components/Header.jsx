@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Search, ShoppingBag, MessageCircle, User, Menu, X, LayoutDashboard, Sparkles, Package, UserPlus } from 'lucide-react'
+import { Search, ShoppingBag, MessageCircle, User, Menu, X, LayoutDashboard, Sparkles, Package, UserPlus, Bell } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
-import { getUserChats, searchUsers } from '../services/api'
+import { getUserChats, searchUsers, getPendingFriendRequests, acceptFriendRequest, rejectFriendRequest } from '../services/api'
 
 export default function Header({ hideSearch = false }) {
   const navigate = useNavigate()
@@ -16,7 +16,11 @@ export default function Header({ hideSearch = false }) {
   const [searchResults, setSearchResults] = useState([])
   const [showSearchResults, setShowSearchResults] = useState(false)
   const [searchLoading, setSearchLoading] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [friendRequests, setFriendRequests] = useState([])
+  const [requestsLoading, setRequestsLoading] = useState(false)
   const searchRef = useRef(null)
+  const notificationsRef = useRef(null)
 
   // Fetch unread message count
   useEffect(() => {
@@ -82,16 +86,70 @@ export default function Header({ hideSearch = false }) {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setShowSearchResults(false)
       }
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
+        setShowNotifications(false)
+      }
     }
 
-    if (showSearchResults) {
+    if (showSearchResults || showNotifications) {
       document.addEventListener('mousedown', handleClickOutside)
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [showSearchResults])
+  }, [showSearchResults, showNotifications])
+
+  // Fetch friend requests
+  const fetchFriendRequests = async () => {
+    if (!currentUser?.uid) return
+    
+    try {
+      const requests = await getPendingFriendRequests(currentUser.uid)
+      setFriendRequests(requests)
+    } catch (error) {
+      console.error('Failed to fetch friend requests:', error)
+    }
+  }
+
+  useEffect(() => {
+    fetchFriendRequests()
+    
+    // Poll for new requests every 30 seconds
+    const interval = setInterval(fetchFriendRequests, 30000)
+    return () => clearInterval(interval)
+  }, [currentUser])
+
+  const handleAcceptRequest = async (friendId) => {
+    if (!currentUser?.uid) return
+    
+    setRequestsLoading(true)
+    try {
+      await acceptFriendRequest(currentUser.uid, friendId)
+      await fetchFriendRequests()
+      alert('Friend request accepted!')
+    } catch (error) {
+      console.error('Failed to accept request:', error)
+      alert('Failed to accept friend request')
+    } finally {
+      setRequestsLoading(false)
+    }
+  }
+
+  const handleRejectRequest = async (friendId) => {
+    if (!currentUser?.uid) return
+    
+    setRequestsLoading(true)
+    try {
+      await rejectFriendRequest(currentUser.uid, friendId)
+      await fetchFriendRequests()
+    } catch (error) {
+      console.error('Failed to reject request:', error)
+      alert('Failed to reject friend request')
+    } finally {
+      setRequestsLoading(false)
+    }
+  }
 
   const handleUserClick = (userId) => {
     navigate(`/profile/${userId}`)
@@ -184,6 +242,99 @@ export default function Header({ hideSearch = false }) {
                   </button>
                 )
               })}
+
+              {/* Notifications Bell */}
+              <div className="relative ml-2" ref={notificationsRef}>
+                <button
+                  onClick={() => {
+                    setShowNotifications(!showNotifications)
+                    if (!showNotifications) fetchFriendRequests()
+                  }}
+                  className={`relative flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    darkMode ? 'text-slate-300 hover:bg-slate-700 hover:text-indigo-400' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'
+                  }`}
+                  title="Friend Requests"
+                >
+                  <Bell className="h-4 w-4" />
+                  {friendRequests.length > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 bg-red-600 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold">
+                      {friendRequests.length}
+                    </span>
+                  )}
+                </button>
+
+                {/* Notifications Dropdown */}
+                {showNotifications && (
+                  <div className={`absolute top-full right-0 mt-2 w-96 rounded-xl shadow-xl border z-50 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                    <div className={`px-4 py-3 border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                      <h4 className={`text-sm font-semibold ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>Friend Requests</h4>
+                    </div>
+                    <div className="max-h-96 overflow-y-auto">
+                      {friendRequests.length > 0 ? (
+                        <div className="py-2">
+                          {friendRequests.map((request) => (
+                            <div
+                              key={request.id}
+                              className={`px-4 py-3 border-b last:border-b-0 ${darkMode ? 'border-slate-700' : 'border-slate-100'}`}
+                            >
+                              <div className="flex items-center gap-3 mb-3">
+                                <img
+                                  src={request.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(request.name || 'User')}`}
+                                  alt={request.name}
+                                  className="h-10 w-10 rounded-full object-cover cursor-pointer"
+                                  onClick={() => {
+                                    navigate(`/profile/${request.id}`)
+                                    setShowNotifications(false)
+                                  }}
+                                />
+                                <div className="flex-1">
+                                  <p 
+                                    className={`font-semibold text-sm cursor-pointer hover:text-indigo-600 ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}
+                                    onClick={() => {
+                                      navigate(`/profile/${request.id}`)
+                                      setShowNotifications(false)
+                                    }}
+                                  >
+                                    {request.name}
+                                  </p>
+                                  {request.college && (
+                                    <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{request.college}</p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleAcceptRequest(request.id)}
+                                  disabled={requestsLoading}
+                                  className="flex-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-all disabled:opacity-50"
+                                >
+                                  Accept
+                                </button>
+                                <button
+                                  onClick={() => handleRejectRequest(request.id)}
+                                  disabled={requestsLoading}
+                                  className={`flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all disabled:opacity-50 ${
+                                    darkMode 
+                                      ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' 
+                                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                                  }`}
+                                >
+                                  Decline
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-8 text-center">
+                          <Bell className={`h-12 w-12 mx-auto mb-3 ${darkMode ? 'text-slate-600' : 'text-slate-300'}`} />
+                          <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>No pending friend requests</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* User Search Button */}
               <div className="relative ml-2" ref={searchRef}>

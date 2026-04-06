@@ -8,7 +8,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { sendEmailVerification } from 'firebase/auth';
 import { actionCodeSettings } from '../services/firebase';
 import { getPublicProfile } from '../services/api';
-import { addFriend, removeFriend, checkFriendship } from '../services/api';
+import { addFriend, removeFriend, checkFriendship, acceptFriendRequest } from '../services/api';
 
 const ProfilePage = () => {
   const { userId } = useParams();
@@ -29,6 +29,8 @@ const ProfilePage = () => {
   const [reportSubmitting, setReportSubmitting] = React.useState(false);
   const [isFriend, setIsFriend] = React.useState(false);
   const [friendLoading, setFriendLoading] = React.useState(false);
+  const [friendshipStatus, setFriendshipStatus] = React.useState('none');
+  const [showFriendRequestModal, setShowFriendRequestModal] = React.useState(false);
   
   // Fetch profile if viewing another user
   React.useEffect(() => {
@@ -49,7 +51,10 @@ const ProfilePage = () => {
       // Check friendship status
       if (authUser?.uid) {
         checkFriendship(authUser.uid, userId)
-          .then(data => setIsFriend(data.is_friend))
+          .then(data => {
+            setFriendshipStatus(data.status)
+            setIsFriend(data.status === 'friends')
+          })
           .catch(err => console.error('Failed to check friendship:', err));
       }
     }
@@ -226,14 +231,34 @@ const ProfilePage = () => {
 
     setFriendLoading(true);
     try {
-      if (isFriend) {
+      if (friendshipStatus === 'friends') {
+        // Remove friend
         await removeFriend(authUser.uid, userId);
+        setFriendshipStatus('none');
         setIsFriend(false);
         alert('Friend removed successfully');
-      } else {
-        await addFriend(authUser.uid, userId);
+      } else if (friendshipStatus === 'request_sent') {
+        // Cancel request
+        await removeFriend(authUser.uid, userId);
+        setFriendshipStatus('none');
+        alert('Friend request cancelled');
+      } else if (friendshipStatus === 'request_received') {
+        // Accept request
+        await acceptFriendRequest(authUser.uid, userId);
+        setFriendshipStatus('friends');
         setIsFriend(true);
-        alert('Friend added successfully');
+        alert('Friend request accepted!');
+      } else {
+        // Send friend request
+        const result = await addFriend(authUser.uid, userId);
+        if (result.status === 'active') {
+          setFriendshipStatus('friends');
+          setIsFriend(true);
+          alert('Friend request accepted! You are now friends.');
+        } else {
+          setFriendshipStatus('request_sent');
+          setShowFriendRequestModal(true);
+        }
       }
     } catch (error) {
       console.error('Failed to toggle friend:', error);
@@ -330,20 +355,34 @@ const ProfilePage = () => {
                     onClick={handleToggleFriend}
                     disabled={friendLoading}
                     className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg hover:shadow-xl ${
-                      isFriend 
+                      friendshipStatus === 'friends'
                         ? 'bg-white/90 hover:bg-white text-slate-700' 
+                        : friendshipStatus === 'request_sent'
+                        ? 'bg-slate-400 text-white cursor-default'
+                        : friendshipStatus === 'request_received'
+                        ? 'bg-green-600 hover:bg-green-700 text-white'
                         : 'bg-indigo-600 hover:bg-indigo-700 text-white'
                     }`}
-                    title={isFriend ? 'Remove Friend' : 'Add Friend'}
+                    title={
+                      friendshipStatus === 'friends' ? 'Remove Friend' :
+                      friendshipStatus === 'request_sent' ? 'Request Sent' :
+                      friendshipStatus === 'request_received' ? 'Accept Request' :
+                      'Add Friend'
+                    }
                   >
                     {friendLoading ? (
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
-                    ) : isFriend ? (
+                    ) : friendshipStatus === 'friends' ? (
                       <UserMinus className="h-4 w-4" />
                     ) : (
                       <UserPlus className="h-4 w-4" />
                     )}
-                    <span className="text-sm font-medium">{isFriend ? 'Remove Friend' : 'Add Friend'}</span>
+                    <span className="text-sm font-medium">
+                      {friendshipStatus === 'friends' ? 'Remove Friend' :
+                       friendshipStatus === 'request_sent' ? 'Request Sent' :
+                       friendshipStatus === 'request_received' ? 'Accept Request' :
+                       'Add Friend'}
+                    </span>
                   </button>
                   <button
                     onClick={handleStartChat}
@@ -830,6 +869,31 @@ const ProfilePage = () => {
                 className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {reportSubmitting ? 'Submitting...' : 'Submit Report'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Friend Request Sent Modal */}
+      {showFriendRequestModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className={`w-full max-w-md rounded-2xl shadow-xl ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
+            <div className="p-6 text-center">
+              <div className="mx-auto w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+                <UserPlus className="h-8 w-8 text-indigo-600" />
+              </div>
+              <h3 className={`text-xl font-bold mb-2 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                Friend Request Sent!
+              </h3>
+              <p className={`text-sm mb-6 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                Your friend request has been sent. You'll be notified when they accept.
+              </p>
+              <button
+                onClick={() => setShowFriendRequestModal(false)}
+                className="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-all"
+              >
+                Got it!
               </button>
             </div>
           </div>
