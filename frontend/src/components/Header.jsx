@@ -20,7 +20,6 @@ export default function Header({ hideSearch = false }) {
   const [friendRequests, setFriendRequests] = useState([])
   const [requestsLoading, setRequestsLoading] = useState(false)
   const searchRef = useRef(null)
-  const notificationsRef = useRef(null)
 
   // Fetch unread message count
   useEffect(() => {
@@ -85,20 +84,18 @@ export default function Header({ hideSearch = false }) {
     const handleClickOutside = (event) => {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setShowSearchResults(false)
-      }
-      if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
         setShowNotifications(false)
       }
     }
 
-    if (showSearchResults || showNotifications) {
+    if (showSearchResults) {
       document.addEventListener('mousedown', handleClickOutside)
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [showSearchResults, showNotifications])
+  }, [showSearchResults])
 
   // Fetch friend requests
   const fetchFriendRequests = async () => {
@@ -243,19 +240,22 @@ export default function Header({ hideSearch = false }) {
                 )
               })}
 
-              {/* Notifications Bell */}
-              <div className="relative ml-2" ref={notificationsRef}>
+              {/* Notifications Bell - Removed from here */}
+
+              {/* User Search Button */}
+              <div className="relative ml-2" ref={searchRef}>
                 <button
                   onClick={() => {
-                    setShowNotifications(!showNotifications)
-                    if (!showNotifications) fetchFriendRequests()
+                    setShowSearchResults(!showSearchResults)
+                    if (!showSearchResults) fetchFriendRequests()
                   }}
                   className={`relative flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                     darkMode ? 'text-slate-300 hover:bg-slate-700 hover:text-indigo-400' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'
                   }`}
-                  title="Friend Requests"
+                  title="Find Users & Notifications"
                 >
-                  <Bell className="h-4 w-4" />
+                  <UserPlus className="h-4 w-4" />
+                  <span className="hidden xl:inline">Find Users</span>
                   {friendRequests.length > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 bg-red-600 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold">
                       {friendRequests.length}
@@ -263,149 +263,169 @@ export default function Header({ hideSearch = false }) {
                   )}
                 </button>
 
-                {/* Notifications Dropdown */}
-                {showNotifications && (
+                {/* User Search & Notifications Dropdown */}
+                {showSearchResults && (
                   <div className={`absolute top-full right-0 mt-2 w-96 rounded-xl shadow-xl border z-50 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
-                    <div className={`px-4 py-3 border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-                      <h4 className={`text-sm font-semibold ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>Friend Requests</h4>
+                    {/* Tabs */}
+                    <div className={`flex border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                      <button
+                        onClick={() => setShowNotifications(false)}
+                        className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${
+                          !showNotifications
+                            ? darkMode 
+                              ? 'text-indigo-400 border-b-2 border-indigo-400' 
+                              : 'text-indigo-600 border-b-2 border-indigo-600'
+                            : darkMode ? 'text-slate-400 hover:text-slate-300' : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        Search Users
+                      </button>
+                      <button
+                        onClick={() => setShowNotifications(true)}
+                        className={`relative flex-1 px-4 py-3 text-sm font-semibold transition-colors ${
+                          showNotifications
+                            ? darkMode 
+                              ? 'text-indigo-400 border-b-2 border-indigo-400' 
+                              : 'text-indigo-600 border-b-2 border-indigo-600'
+                            : darkMode ? 'text-slate-400 hover:text-slate-300' : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        Notifications
+                        {friendRequests.length > 0 && (
+                          <span className="ml-1.5 bg-red-600 text-white text-[10px] rounded-full px-1.5 py-0.5 font-bold">
+                            {friendRequests.length}
+                          </span>
+                        )}
+                      </button>
                     </div>
-                    <div className="max-h-96 overflow-y-auto">
-                      {friendRequests.length > 0 ? (
-                        <div className="py-2">
-                          {friendRequests.map((request) => (
-                            <div
-                              key={request.id}
-                              className={`px-4 py-3 border-b last:border-b-0 ${darkMode ? 'border-slate-700' : 'border-slate-100'}`}
-                            >
-                              <div className="flex items-center gap-3 mb-3">
-                                <img
-                                  src={request.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(request.name || 'User')}`}
-                                  alt={request.name}
-                                  className="h-10 w-10 rounded-full object-cover cursor-pointer"
-                                  onClick={() => {
-                                    navigate(`/profile/${request.id}`)
-                                    setShowNotifications(false)
-                                  }}
-                                />
-                                <div className="flex-1">
-                                  <p 
-                                    className={`font-semibold text-sm cursor-pointer hover:text-indigo-600 ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}
+
+                    {/* Search Tab Content */}
+                    {!showNotifications && (
+                      <>
+                        <div className={`p-3 border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                          <div className="relative">
+                            <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                            <input
+                              type="text"
+                              placeholder="Search users..."
+                              value={searchQuery}
+                              onChange={(e) => handleSearch(e.target.value)}
+                              autoFocus
+                              className={`w-full pl-9 pr-3 py-2 rounded-lg border outline-none text-sm ${
+                                darkMode 
+                                  ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-400 focus:border-indigo-500' 
+                                  : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
+                              }`}
+                            />
+                          </div>
+                        </div>
+                        <div className="max-h-96 overflow-y-auto">
+                          {searchLoading ? (
+                            <div className="p-4 text-center">
+                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mx-auto"></div>
+                            </div>
+                          ) : searchResults.length > 0 ? (
+                            <div className="py-2">
+                              {searchResults.map((user) => (
+                                <button
+                                  key={user.id}
+                                  onClick={() => handleUserClick(user.id)}
+                                  className={`w-full px-4 py-3 flex items-center gap-3 transition-colors ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-50'}`}
+                                >
+                                  <img
+                                    src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}`}
+                                    alt={user.name}
+                                    className="h-10 w-10 rounded-full object-cover"
+                                  />
+                                  <div className="flex-1 text-left">
+                                    <p className={`font-semibold text-sm ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{user.name}</p>
+                                    {user.college && (
+                                      <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{user.college}</p>
+                                    )}
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          ) : searchQuery.length >= 2 ? (
+                            <div className="p-4 text-center">
+                              <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>No users found</p>
+                            </div>
+                          ) : (
+                            <div className="p-8 text-center">
+                              <UserPlus className={`h-12 w-12 mx-auto mb-3 ${darkMode ? 'text-slate-600' : 'text-slate-300'}`} />
+                              <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Type to search users...</p>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+
+                    {/* Notifications Tab Content */}
+                    {showNotifications && (
+                      <div className="max-h-96 overflow-y-auto">
+                        {friendRequests.length > 0 ? (
+                          <div className="py-2">
+                            {friendRequests.map((request) => (
+                              <div
+                                key={request.id}
+                                className={`px-4 py-3 border-b last:border-b-0 ${darkMode ? 'border-slate-700' : 'border-slate-100'}`}
+                              >
+                                <div className="flex items-center gap-3 mb-3">
+                                  <img
+                                    src={request.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(request.name || 'User')}`}
+                                    alt={request.name}
+                                    className="h-10 w-10 rounded-full object-cover cursor-pointer"
                                     onClick={() => {
                                       navigate(`/profile/${request.id}`)
-                                      setShowNotifications(false)
+                                      setShowSearchResults(false)
                                     }}
+                                  />
+                                  <div className="flex-1">
+                                    <p 
+                                      className={`font-semibold text-sm cursor-pointer hover:text-indigo-600 ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}
+                                      onClick={() => {
+                                        navigate(`/profile/${request.id}`)
+                                        setShowSearchResults(false)
+                                      }}
+                                    >
+                                      {request.name}
+                                    </p>
+                                    {request.college && (
+                                      <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{request.college}</p>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleAcceptRequest(request.id)}
+                                    disabled={requestsLoading}
+                                    className="flex-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-all disabled:opacity-50"
                                   >
-                                    {request.name}
-                                  </p>
-                                  {request.college && (
-                                    <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{request.college}</p>
-                                  )}
+                                    Accept
+                                  </button>
+                                  <button
+                                    onClick={() => handleRejectRequest(request.id)}
+                                    disabled={requestsLoading}
+                                    className={`flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all disabled:opacity-50 ${
+                                      darkMode 
+                                        ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' 
+                                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                                    }`}
+                                  >
+                                    Decline
+                                  </button>
                                 </div>
                               </div>
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => handleAcceptRequest(request.id)}
-                                  disabled={requestsLoading}
-                                  className="flex-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-all disabled:opacity-50"
-                                >
-                                  Accept
-                                </button>
-                                <button
-                                  onClick={() => handleRejectRequest(request.id)}
-                                  disabled={requestsLoading}
-                                  className={`flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all disabled:opacity-50 ${
-                                    darkMode 
-                                      ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' 
-                                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                                  }`}
-                                >
-                                  Decline
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="p-8 text-center">
-                          <Bell className={`h-12 w-12 mx-auto mb-3 ${darkMode ? 'text-slate-600' : 'text-slate-300'}`} />
-                          <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>No pending friend requests</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* User Search Button */}
-              <div className="relative ml-2" ref={searchRef}>
-                <button
-                  onClick={() => setShowSearchResults(!showSearchResults)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                    darkMode ? 'text-slate-300 hover:bg-slate-700 hover:text-indigo-400' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'
-                  }`}
-                  title="Search Users"
-                >
-                  <UserPlus className="h-4 w-4" />
-                  <span className="hidden xl:inline">Find Users</span>
-                </button>
-
-                {/* User Search Dropdown */}
-                {showSearchResults && (
-                  <div className={`absolute top-full right-0 mt-2 w-80 rounded-xl shadow-xl border z-50 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
-                    <div className="p-3 border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}">
-                      <div className="relative">
-                        <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-                        <input
-                          type="text"
-                          placeholder="Search users..."
-                          value={searchQuery}
-                          onChange={(e) => handleSearch(e.target.value)}
-                          autoFocus
-                          className={`w-full pl-9 pr-3 py-2 rounded-lg border outline-none text-sm ${
-                            darkMode 
-                              ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-400 focus:border-indigo-500' 
-                              : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
-                          }`}
-                        />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="p-8 text-center">
+                            <Bell className={`h-12 w-12 mx-auto mb-3 ${darkMode ? 'text-slate-600' : 'text-slate-300'}`} />
+                            <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>No pending friend requests</p>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                    <div className="max-h-96 overflow-y-auto">
-                      {searchLoading ? (
-                        <div className="p-4 text-center">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mx-auto"></div>
-                        </div>
-                      ) : searchResults.length > 0 ? (
-                        <div className="py-2">
-                          {searchResults.map((user) => (
-                            <button
-                              key={user.id}
-                              onClick={() => handleUserClick(user.id)}
-                              className={`w-full px-4 py-3 flex items-center gap-3 transition-colors ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-50'}`}
-                            >
-                              <img
-                                src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}`}
-                                alt={user.name}
-                                className="h-10 w-10 rounded-full object-cover"
-                              />
-                              <div className="flex-1 text-left">
-                                <p className={`font-semibold text-sm ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{user.name}</p>
-                                {user.college && (
-                                  <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{user.college}</p>
-                                )}
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      ) : searchQuery.length >= 2 ? (
-                        <div className="p-4 text-center">
-                          <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>No users found</p>
-                        </div>
-                      ) : (
-                        <div className="p-4 text-center">
-                          <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Type to search users...</p>
-                        </div>
-                      )}
-                    </div>
+                    )}
                   </div>
                 )}
               </div>
