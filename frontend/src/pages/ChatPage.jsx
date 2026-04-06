@@ -28,10 +28,21 @@ const ChatPage = () => {
   const [reportReason, setReportReason] = useState('');
   const [reportDetails, setReportDetails] = useState('');
   const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   
   const messagesEndRef = useRef(null);
   const messageInputRef = useRef(null);
   const chatMenuRef = useRef(null);
+  const emojiPickerRef = useRef(null);
+
+  // Emoji categories
+  const emojis = {
+    'Smileys': ['😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🥸', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓'],
+    'Gestures': ['👋', '🤚', '🖐️', '✋', '🖖', '👌', '🤌', '🤏', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '🖕', '👇', '☝️', '👍', '👎', '✊', '👊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏'],
+    'Hearts': ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟'],
+    'Objects': ['⚽', '🏀', '🏈', '⚾', '🥎', '🎾', '🏐', '🏉', '🥏', '🎱', '🪀', '🏓', '🏸', '🏒', '🏑', '🥍', '🏏', '🪃', '🥅', '⛳', '🪁', '🏹', '🎣', '🤿', '🥊', '🥋', '🎽', '🛹', '🛼', '🛷', '⛸️', '🥌', '🎿', '⛷️', '🏂'],
+    'Food': ['🍎', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🫐', '🍈', '🍒', '🍑', '🥭', '🍍', '🥥', '🥝', '🍅', '🍆', '🥑', '🥦', '🥬', '🥒', '🌶️', '🫑', '🌽', '🥕', '🫒', '🧄', '🧅', '🥔', '🍠', '🥐', '🥯', '🍞', '🥖', '🥨', '🧀', '🥚', '🍳', '🧈', '🥞', '🧇', '🥓', '🥩', '🍗', '🍖', '🦴', '🌭', '🍔', '🍟', '🍕', '🫓', '🥪', '🥙', '🧆', '🌮', '🌯', '🫔', '🥗', '🥘', '🫕', '🥫', '🍝', '🍜', '🍲', '🍛', '🍣', '🍱', '🥟', '🦪', '🍤', '🍙', '🍚', '🍘', '🍥', '🥠', '🥮', '🍢', '🍡', '🍧', '🍨', '🍦', '🥧', '🧁', '🍰', '🎂', '🍮', '🍭', '🍬', '🍫', '🍿', '🍩', '🍪', '🌰', '🥜', '🍯'],
+  };
 
   // Get user ID from URL params (for starting new chat)
   const targetUserId = searchParams.get('user');
@@ -369,16 +380,25 @@ const ChatPage = () => {
       if (chatMenuRef.current && !chatMenuRef.current.contains(event.target)) {
         setShowChatMenu(false);
       }
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+        setShowEmojiPicker(false);
+      }
     };
 
-    if (showChatMenu) {
+    if (showChatMenu || showEmojiPicker) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showChatMenu]);
+  }, [showChatMenu, showEmojiPicker]);
+
+  // Handle emoji selection
+  const handleEmojiSelect = (emoji) => {
+    setMessage(prev => prev + emoji);
+    messageInputRef.current?.focus();
+  };
 
   if (loading) {
     return (
@@ -668,14 +688,45 @@ const ChatPage = () => {
               {/* Input Area */}
               <div className={`border-t p-2 sm:p-3 shadow-[0_-4px_10px_rgba(0,0,0,0.02)] flex-shrink-0 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:pb-3 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
                 <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                  <Button 
-                    type="button"
-                    variant="ghost" 
-                    size="sm" 
-                    className={`rounded-full p-2 flex-shrink-0 ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-100'}`}
-                  >
-                    <Smile className={`h-6 w-6 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                  </Button>
+                  <div className="relative" ref={emojiPickerRef}>
+                    <Button 
+                      type="button"
+                      variant="ghost" 
+                      size="sm" 
+                      className={`rounded-full p-2 flex-shrink-0 ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-100'}`}
+                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    >
+                      <Smile className={`h-6 w-6 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                    </Button>
+                    
+                    {/* Emoji Picker */}
+                    {showEmojiPicker && (
+                      <div className={`absolute bottom-full left-0 mb-2 w-80 max-h-96 rounded-2xl shadow-2xl border overflow-hidden z-50 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                        <div className={`px-4 py-3 border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                          <h4 className={`text-sm font-semibold ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>Pick an emoji</h4>
+                        </div>
+                        <div className="overflow-y-auto max-h-80 p-3">
+                          {Object.entries(emojis).map(([category, emojiList]) => (
+                            <div key={category} className="mb-4">
+                              <h5 className={`text-xs font-semibold mb-2 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{category}</h5>
+                              <div className="grid grid-cols-8 gap-1">
+                                {emojiList.map((emoji, idx) => (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    onClick={() => handleEmojiSelect(emoji)}
+                                    className={`text-2xl p-2 rounded-lg transition-all hover:scale-110 ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-100'}`}
+                                  >
+                                    {emoji}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <input
                     ref={messageInputRef}
                     type="text"
