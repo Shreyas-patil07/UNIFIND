@@ -32,7 +32,7 @@ def _get_configured_model():
     try:
         genai.configure(api_key=settings.GEMINI_API_KEY)
         return genai.GenerativeModel(
-            "gemini-1.5-flash",  # Using faster flash model
+            "gemma-3-27b-it",  
             generation_config={
                 "max_output_tokens": 500,
                 "temperature": 0.3,  # Lower for consistency
