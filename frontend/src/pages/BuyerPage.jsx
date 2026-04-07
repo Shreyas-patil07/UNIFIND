@@ -245,7 +245,7 @@ const BuyerPage = () => {
               placeholder="Search by title, description, or location..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={(e) => {
+              onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   handleSearch(searchQuery);
                 }
