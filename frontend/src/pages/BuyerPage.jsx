@@ -737,4 +737,3 @@ const BuyerPage = () => {
 };
 
 export default BuyerPage;
-
