@@ -7,6 +7,15 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { getUserChats, getChatMessages, sendChatMessage, getOrCreateChatRoom, getPublicProfile, getProduct, markChatAsRead } from '../services/api';
 
+// Static emoji data - moved outside component to avoid recreation on every render
+const EMOJIS = {
+  'Smileys': ['😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🥸', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓'],
+  'Gestures': ['👋', '🤚', '🖐️', '✋', '🖖', '👌', '🤌', '🤏', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '🖕', '👇', '☝️', '👍', '👎', '✊', '👊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏'],
+  'Hearts': ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟'],
+  'Objects': ['⚽', '🏀', '🏈', '⚾', '🥎', '🎾', '🏐', '🏉', '🥏', '🎱', '🪀', '🏓', '🏸', '🏒', '🏑', '🥍', '🏏', '🪃', '🥅', '⛳', '🪁', '🏹', '🎣', '🤿', '🥊', '🥋', '🎽', '🛹', '🛼', '🛷', '⛸️', '🥌', '🎿', '⛷️', '🏂'],
+  'Food': ['🍎', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🫐', '🍈', '🍒', '🍑', '🥭', '🍍', '🥥', '🥝', '🍅', '🍆', '🥑', '🥦', '🥬', '🥒', '🌶️', '🫑', '🌽', '🥕', '🫒', '🧄', '🧅', '🥔', '🍠', '🥐', '🥯', '🍞', '🥖', '🥨', '🧀', '🥚', '🍳', '🧈', '🥞', '🧇', '🥓', '🥩', '🍗', '🍖', '🦴', '🌭', '🍔', '🍟', '🍕', '🫓', '🥪', '🥙', '🧆', '🌮', '🌯', '🫔', '🥗', '🥘', '🫕', '🥫', '🍝', '🍜', '🍲', '🍛', '🍣', '🍱', '🥟', '🦪', '🍤', '🍙', '🍚', '🍘', '🍥', '🥠', '🥮', '🍢', '🍡', '🍧', '🍨', '🍦', '🥧', '🧁', '🍰', '🎂', '🍮', '🍭', '🍬', '🍫', '🍿', '🍩', '🍪', '🌰', '🥜', '🍯'],
+};
+
 const ChatPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -30,6 +39,7 @@ const ChatPage = () => {
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [friendsOnly, setFriendsOnly] = useState(false);
+  const [chatUserProfiles, setChatUserProfiles] = useState({}); // Cache user profiles for search
   
   const messagesEndRef = useRef(null);
   const messageInputRef = useRef(null);
@@ -38,15 +48,6 @@ const ChatPage = () => {
   const messageRefs = useRef({});
   const observerRef = useRef(null);
   const markedAsReadRef = useRef(new Set());
-
-  // Emoji categories
-  const emojis = {
-    'Smileys': ['😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🥸', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓'],
-    'Gestures': ['👋', '🤚', '🖐️', '✋', '🖖', '👌', '🤌', '🤏', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '🖕', '👇', '☝️', '👍', '👎', '✊', '👊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏'],
-    'Hearts': ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟'],
-    'Objects': ['⚽', '🏀', '🏈', '⚾', '🥎', '🎾', '🏐', '🏉', '🥏', '🎱', '🪀', '🏓', '🏸', '🏒', '🏑', '🥍', '🏏', '🪃', '🥅', '⛳', '🪁', '🏹', '🎣', '🤿', '🥊', '🥋', '🎽', '🛹', '🛼', '🛷', '⛸️', '🥌', '🎿', '⛷️', '🏂'],
-    'Food': ['🍎', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🫐', '🍈', '🍒', '🍑', '🥭', '🍍', '🥥', '🥝', '🍅', '🍆', '🥑', '🥦', '🥬', '🥒', '🌶️', '🫑', '🌽', '🥕', '🫒', '🧄', '🧅', '🥔', '🍠', '🥐', '🥯', '🍞', '🥖', '🥨', '🧀', '🥚', '🍳', '🧈', '🥞', '🧇', '🥓', '🥩', '🍗', '🍖', '🦴', '🌭', '🍔', '🍟', '🍕', '🫓', '🥪', '🥙', '🧆', '🌮', '🌯', '🫔', '🥗', '🥘', '🫕', '🥫', '🍝', '🍜', '🍲', '🍛', '🍣', '🍱', '🥟', '🦪', '🍤', '🍙', '🍚', '🍘', '🍥', '🥠', '🥮', '🍢', '🍡', '🍧', '🍨', '🍦', '🥧', '🧁', '🍰', '🎂', '🍮', '🍭', '🍬', '🍫', '🍿', '🍩', '🍪', '🌰', '🥜', '🍯'],
-  };
 
   // Get user ID from URL params (for starting new chat)
   const targetUserId = searchParams.get('user');
@@ -123,12 +124,8 @@ const ChatPage = () => {
     try {
       markedAsReadRef.current.add(messageId);
       
-      // Call backend to mark this specific message as read
-      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/chats/messages/${messageId}/read`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: currentUser.uid })
-      });
+      // Use markChatAsRead API from services
+      await markChatAsRead(selectedChat.id, currentUser.uid);
       
       // Update local state
       setMessages(prev => 
@@ -153,7 +150,7 @@ const ChatPage = () => {
       );
     } catch (error) {
       console.error('Failed to mark message as read:', error);
-      markedAsReadRef.current.delete(messageId);
+      // Don't delete from markedAsReadRef on error to prevent retry loops
     }
   };
 
@@ -253,41 +250,50 @@ const ChatPage = () => {
 
   // Load messages when chat is selected
   useEffect(() => {
-    if (!selectedChat) return;
+    if (!selectedChat || !currentUser) return;
+
+    const otherId = selectedChat.user1_id === currentUser.uid 
+      ? selectedChat.user2_id 
+      : selectedChat.user1_id;
 
     const loadMessages = async () => {
       try {
         const chatMessages = await getChatMessages(selectedChat.id);
         setMessages(chatMessages);
-        
-        // Reset marked as read tracking when switching chats
-        markedAsReadRef.current.clear();
-        
-        // Load other user's profile if not already loaded
-        if (!otherUser) {
-          const otherId = selectedChat.user1_id === currentUser.uid 
-            ? selectedChat.user2_id 
-            : selectedChat.user1_id;
-          const profile = await getPublicProfile(otherId);
-          setOtherUser(profile);
-        }
-        
-        // Load product if specified and not already loaded
-        if (selectedChat.product_id && !product) {
-          const prod = await getProduct(selectedChat.product_id);
-          setProduct(prod);
-        }
       } catch (error) {
         console.error('Failed to load messages:', error);
       }
     };
 
-    loadMessages();
+    // Load initial data
+    const loadInitialData = async () => {
+      try {
+        // Load other user's profile
+        const profile = await getPublicProfile(otherId);
+        setOtherUser(profile);
+        
+        // Load product if specified
+        if (selectedChat.product_id) {
+          const prod = await getProduct(selectedChat.product_id);
+          setProduct(prod);
+        }
+        
+        // Load messages
+        await loadMessages();
+        
+        // Reset marked as read tracking when switching chats
+        markedAsReadRef.current.clear();
+      } catch (error) {
+        console.error('Failed to load initial chat data:', error);
+      }
+    };
+
+    loadInitialData();
     
     // Poll for new messages every 3 seconds
     const interval = setInterval(loadMessages, 3000);
     return () => clearInterval(interval);
-  }, [selectedChat, currentUser, otherUser, product]);
+  }, [selectedChat?.id, currentUser?.uid]);
 
   // Helper function to check if other user is online
   const isOtherUserOnline = (messages, otherId) => {
@@ -307,6 +313,10 @@ const ChatPage = () => {
     
     return diffMinutes < 5;
   };
+
+  // Compute online status once per render
+  const otherUserId = otherUser?.user_id || otherUser?.id;
+  const isOnline = otherUserId ? isOtherUserOnline(messages, otherUserId) : false;
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -347,7 +357,7 @@ const ChatPage = () => {
     }
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage(e);
@@ -363,12 +373,15 @@ const ChatPage = () => {
     // Search in last message
     if (chat.last_message?.toLowerCase().includes(searchLower)) return true;
     
-    // The actual user name filtering happens in ChatListItem component
-    // So we return true here and let ChatListItem handle the filtering
-    return true;
+    // Search in user name (from cached profiles)
+    const otherId = chat.user1_id === currentUser?.uid ? chat.user2_id : chat.user1_id;
+    const userProfile = chatUserProfiles[otherId];
+    if (userProfile?.name?.toLowerCase().includes(searchLower)) return true;
+    
+    return false;
   });
 
-  const handleChatSelect = async (chat) => {
+  const handleChatSelect = (chat) => {
     setSelectedChat(chat);
     setMessages([]);
     setOtherUser(null);
@@ -385,17 +398,21 @@ const ChatPage = () => {
 
     setReportSubmitting(true);
     try {
-      // TODO: Implement actual report API call
-      console.log('Reporting user:', {
+      // TODO: Implement actual report API call when backend endpoint is ready
+      // await api.post('/reports/user', {
+      //   reported_user_id: otherUser?.user_id || otherUser?.id,
+      //   reported_by: currentUser.uid,
+      //   reason: reportReason,
+      //   details: reportDetails
+      // });
+      
+      console.log('Report submitted:', {
         reportedUserId: otherUser?.user_id || otherUser?.id,
         reportedBy: currentUser.uid,
         reason: reportReason,
         details: reportDetails,
         timestamp: new Date().toISOString()
       });
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
       
       alert('Report submitted successfully. Our team will review it shortly.');
       setShowReportModal(false);
@@ -537,6 +554,9 @@ const ChatPage = () => {
                   formatTime={formatChatTime}
                   searchQuery={searchQuery}
                   darkMode={darkMode}
+                  onUserProfileLoaded={(userId, profile) => {
+                    setChatUserProfiles(prev => ({ ...prev, [userId]: profile }));
+                  }}
                 />
               ))
             )}
@@ -565,7 +585,7 @@ const ChatPage = () => {
                       onClick={() => navigate(`/profile/${otherUser.user_id || otherUser.id}`)}
                     />
                     <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white ${
-                      isOtherUserOnline(messages, otherUser.user_id || otherUser.id) ? 'bg-green-500' : 'bg-slate-400'
+                      isOnline ? 'bg-green-500' : 'bg-slate-400'
                     }`}></div>
                   </div>
                   <div className="flex-1 min-w-0">
@@ -577,11 +597,11 @@ const ChatPage = () => {
                       {otherUser.name}
                     </h3>
                     <p className={`text-xs ${
-                      isOtherUserOnline(messages, otherUser.user_id || otherUser.id) 
+                      isOnline 
                         ? 'text-green-600' 
                         : darkMode ? 'text-slate-400' : 'text-slate-500'
                     }`}>
-                      {isOtherUserOnline(messages, otherUser.user_id || otherUser.id) ? 'online' : 'offline'}
+                      {isOnline ? 'online' : 'offline'}
                     </p>
                   </div>
                   <div className="relative" ref={chatMenuRef}>
@@ -782,7 +802,7 @@ const ChatPage = () => {
                           <h4 className={`text-sm font-semibold ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>Pick an emoji</h4>
                         </div>
                         <div className="overflow-y-auto max-h-80 p-3">
-                          {Object.entries(emojis).map(([category, emojiList]) => (
+                          {Object.entries(EMOJIS).map(([category, emojiList]) => (
                             <div key={category} className="mb-4">
                               <h5 className={`text-xs font-semibold mb-2 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{category}</h5>
                               <div className="grid grid-cols-8 gap-1">
@@ -808,7 +828,7 @@ const ChatPage = () => {
                     type="text"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
+                    onKeyDown={handleKeyDown}
                     placeholder="Message..."
                     className={`flex-1 px-4 py-2.5 sm:py-3 text-[16px] sm:text-sm rounded-full border outline-none transition-all ${
                       darkMode 
@@ -927,10 +947,9 @@ const ChatPage = () => {
 };
 
 // Chat List Item Component
-const ChatListItem = ({ chat, currentUserId, isSelected, onClick, formatTime, searchQuery, darkMode }) => {
+const ChatListItem = ({ chat, currentUserId, isSelected, onClick, formatTime, searchQuery, darkMode, onUserProfileLoaded }) => {
   const [user, setUser] = useState(null);
   const [product, setProduct] = useState(null);
-  const [isOnline, setIsOnline] = useState(false);
   const isFriend = chat.is_friend || false;
 
   useEffect(() => {
@@ -940,24 +959,14 @@ const ChatListItem = ({ chat, currentUserId, isSelected, onClick, formatTime, se
         const userProfile = await getPublicProfile(otherId);
         setUser(userProfile);
         
+        // Cache the profile for search filtering
+        if (onUserProfileLoaded) {
+          onUserProfileLoaded(otherId, userProfile);
+        }
+        
         if (chat.product_id) {
           const prod = await getProduct(chat.product_id);
           setProduct(prod);
-        }
-
-        // Check if other user is online by getting their last message
-        const messages = await getChatMessages(chat.id);
-        const otherUserMessages = messages.filter(msg => msg.sender_id === otherId);
-        
-        if (otherUserMessages.length > 0) {
-          const lastMessage = otherUserMessages[otherUserMessages.length - 1];
-          const lastMessageTime = lastMessage.timestamp?.seconds 
-            ? new Date(lastMessage.timestamp.seconds * 1000)
-            : new Date(lastMessage.timestamp);
-          
-          const now = new Date();
-          const diffMinutes = (now - lastMessageTime) / 60000;
-          setIsOnline(diffMinutes < 5);
         }
       } catch (error) {
         console.error('Failed to load chat data:', error);
@@ -965,7 +974,7 @@ const ChatListItem = ({ chat, currentUserId, isSelected, onClick, formatTime, se
     };
 
     loadData();
-  }, [chat, currentUserId]);
+  }, [chat.id, currentUserId, chat.product_id, onUserProfileLoaded]);
 
   // Filter based on search query
   if (searchQuery && user) {
@@ -1014,9 +1023,6 @@ const ChatListItem = ({ chat, currentUserId, isSelected, onClick, formatTime, se
             alt={user.name}
             className={`h-11 w-11 sm:h-12 sm:w-12 rounded-full object-cover ${isFriend ? 'ring-2 ring-indigo-500' : 'ring-2 ring-slate-100'}`}
           />
-          {isOnline && (
-            <div className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-white"></div>
-          )}
           {isFriend && (
             <div className="absolute -top-1 -right-1 h-5 w-5 bg-indigo-600 rounded-full flex items-center justify-center border-2 border-white">
               <UserPlus className="h-3 w-3 text-white" />

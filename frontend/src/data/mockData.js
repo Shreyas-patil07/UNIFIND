@@ -41,6 +41,7 @@ export const products = [
     condition: "Like New",
     conditionScore: 95,
     category: "Laptops",
+    negotiable: true,
     images: [
       "https://images.unsplash.com/photo-1592041275490-dcac548bad2e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA4Mzl8MHwxfHNlYXJjaHwzfHxsYXB0b3AlMjBzbWFydHBob25lJTIwaGVhZHBob25lcyUyMGNhbWVyYXxlbnwwfHx8fDE3NzQ2ODE0ODJ8MA&ixlib=rb-4.1.0&q=85",
       "https://images.unsplash.com/photo-1627691673558-cf76f304f273?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA4Mzl8MHwxfHNlYXJjaHwyfHxsYXB0b3AlMjBzbWFydHBob25lJTIwaGVhZHBob25lcyUyMGNhbWVyYXxlbnwwfHx8fDE3NzQ2ODE0ODJ8MA&ixlib=rb-4.1.0&q=85"
@@ -64,6 +65,7 @@ export const products = [
     condition: "Good",
     conditionScore: 85,
     category: "Phones",
+    negotiable: true,
     images: [
       "https://images.unsplash.com/photo-1759863639101-d1ad4923d655?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA4Mzl8MHwxfHNlYXJjaHwxfHxsYXB0b3AlMjBzbWFydHBob25lJTIwaGVhZHBob25lcyUyMGNhbWVyYXxlbnwwfHx8fDE3NzQ2ODE0ODJ8MA&ixlib=rb-4.1.0&q=85"
     ],
@@ -85,6 +87,7 @@ export const products = [
     condition: "Excellent",
     conditionScore: 92,
     category: "Accessories",
+    negotiable: false,
     images: [
       "https://images.unsplash.com/photo-1627691673558-cf76f304f273?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA4Mzl8MHwxfHNlYXJjaHwyfHxsYXB0b3AlMjBzbWFydHBob25lJTIwaGVhZHBob25lcyUyMGNhbWVyYXxlbnwwfHx8fDE3NzQ2ODE0ODJ8MA&ixlib=rb-4.1.0&q=85"
     ],
@@ -106,6 +109,7 @@ export const products = [
     condition: "Like New",
     conditionScore: 94,
     category: "Cameras",
+    negotiable: true,
     images: [
       "https://images.unsplash.com/photo-1592041275490-dcac548bad2e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA4Mzl8MHwxfHNlYXJjaHwzfHxsYXB0b3AlMjBzbWFydHBob25lJTIwaGVhZHBob25lcyUyMGNhbWVyYXxlbnwwfHx8fDE3NzQ2ODE0ODJ8MA&ixlib=rb-4.1.0&q=85"
     ],
@@ -127,6 +131,7 @@ export const products = [
     condition: "Good",
     conditionScore: 88,
     category: "Tablets",
+    negotiable: false,
     images: [
       "https://images.unsplash.com/photo-1759863639101-d1ad4923d655?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA4Mzl8MHwxfHNlYXJjaHwxfHxsYXB0b3AlMjBzbWFydHBob25lJTIwaGVhZHBob25lcyUyMGNhbWVyYXxlbnwwfHx8fDE3NzQ2ODE0ODJ8MA&ixlib=rb-4.1.0&q=85"
     ],
@@ -148,6 +153,7 @@ export const products = [
     condition: "Excellent",
     conditionScore: 90,
     category: "Laptops",
+    negotiable: true,
     images: [
       "https://images.unsplash.com/photo-1592041275490-dcac548bad2e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA4Mzl8MHwxfHNlYXJjaHwzfHxsYXB0b3AlMjBzbWFydHBob25lJTIwaGVhZHBob25lcyUyMGNhbWVyYXxlbnwwfHx8fDE3NzQ2ODE0ODJ8MA&ixlib=rb-4.1.0&q=85"
     ],

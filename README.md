@@ -52,10 +52,13 @@
 ### Core Marketplace
 - 🔐 **Secure Authentication** - Firebase Authentication with email verification
 - 🛍️ **Smart Listings** - Create detailed product listings with photos and condition assessment
-- 🔍 **Advanced Search** - Filter by category, price, condition, semester, and location
+- 🔍 **Advanced Search & Filtering** - Real-time search with history, nested category dropdowns, and smart sorting
 - 📱 **Responsive Design** - Seamless experience across all devices
 - ⚡ **Lightning Fast** - Built with Vite for instant hot module replacement (<1s startup)
 - 🌙 **Dark Mode** - Toggle between light and dark themes with persistent preference
+- 📋 **Recently Viewed** - Track and quickly access recently viewed products
+- 💬 **Quick Contact** - WhatsApp and Call buttons for instant seller communication
+- 🏷️ **Negotiable Badges** - Clear indicators for price negotiation availability
 
 ### AI-Powered Features
 - 🤖 **AI Need Board** - Post what you need in natural language, get smart matches
@@ -613,7 +616,16 @@ See [FOOTER_USAGE.md](frontend/FOOTER_USAGE.md) for implementation details and c
 
 ### Technical Documentation
 - **DOCUMENTATION.md** - Complete technical documentation
-- **MEGA_LOG.md** - Complete project history, changelog, and documentation index
+- **MEGA_LOG.md** - Complete project history and changelog
+
+### Documentation Index
+
+For comprehensive documentation navigation:
+
+**For New Users**: README.md → QUICKSTART.md  
+**For Developers**: DEVELOPER_GUIDE.md → DOCUMENTATION.md  
+**For Deployment**: DEPLOYMENT.md  
+**For History**: MEGA_LOG.md → CHANGELOG_v2.1.0.md
 
 For detailed documentation, see the files above or visit the `/docs` endpoint when running the backend.
 
@@ -629,6 +641,13 @@ For detailed documentation, see the files above or visit the `/docs` endpoint wh
 - [x] Analytics dashboard
 - [x] Trust score calculation
 - [x] Condition grading system
+- [x] Advanced search with history tracking
+- [x] Nested category filtering (Maths levels, Graphics Kit items)
+- [x] Recently viewed products tracking
+- [x] Quick contact buttons (WhatsApp, Call)
+- [x] Negotiable price indicators
+- [x] Seller dashboard with filtering and sorting
+- [x] Dark mode with persistent preference
 - [x] Documentation cleanup and optimization
 - [x] Comprehensive .gitignore configuration
 
@@ -650,6 +669,34 @@ For detailed documentation, see the files above or visit the `/docs` endpoint wh
 ---
 
 ## 📝 Recent Updates
+
+### April 7, 2026 - Enhanced Marketplace Features (v2.1.0)
+- **Advanced Search & Filtering**:
+  - Real-time search with search history (stores last 10 searches)
+  - Subject dropdown filters for Printed Notes category
+  - Nested Maths dropdown (Maths-1 to Maths-4 levels)
+  - Material type dropdown with Graphics Kit nested items
+  - Advanced sorting (newest, oldest, price, condition, most viewed)
+  - Performance optimization with useMemo for filtering
+  
+- **Enhanced Product Cards**:
+  - Negotiable badges (green indicator for negotiable items)
+  - Quick contact buttons (WhatsApp with pre-filled message, Call)
+  - Improved button layout with better UX
+  
+- **Recently Viewed Products**:
+  - Tracks up to 10 recently viewed items
+  - Horizontal scroll section on BuyerPage
+  - Persistent storage with localStorage
+  - Clear history option
+  
+- **Seller Dashboard Improvements**:
+  - Search functionality for own listings
+  - Category and status filtering (all, active, sold)
+  - Advanced sorting options
+  - Mark as sold/active functionality
+  - Delete confirmation modal
+  - Search history tracking
 
 ### April 6, 2026 - Version 2.0.0 - Production Ready Release
 - **Complete Refactoring**: Transformed from prototype to production-ready application
