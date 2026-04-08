@@ -85,7 +85,16 @@ const OTPVerificationPage = () => {
     setError('');
     setResendSuccess(false);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+      // Get API URL with proper fallback
+      let apiUrl = import.meta.env.VITE_API_URL;
+      if (!apiUrl || apiUrl.trim() === '') {
+        apiUrl = window.location.hostname === 'localhost' 
+          ? 'http://localhost:8000/api'
+          : 'https://unifind-backend.onrender.com/api';
+      }
+      // Remove trailing slash if present
+      apiUrl = apiUrl.replace(/\/$/, '');
+      
       const response = await fetch(`${apiUrl}/auth/resend-verification`, {
         method: 'POST',
         headers: {
