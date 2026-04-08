@@ -138,6 +138,45 @@ Maximum liability is limited to ₹1,000 or amount paid (if any)."
 **All Inquiries:** systemrecord07@gmail.com  
 **Address:** SIGCE, Navi Mumbai, Maharashtra, India
 
+## Backend API Compliance
+
+### Data Protection in API Routes
+**Location:** `backend/routes/`
+
+**Implemented Routes:**
+- `auth.py` - Authentication with secure password hashing
+- `users.py` - User profile management with privacy controls
+- `products.py` - Product listings with content moderation
+- `chats.py` - Secure messaging between users
+- `need_board.py` - Community need board with moderation
+- `reviews.py` - Review system with abuse prevention
+- `uploads.py` - Secure file upload with validation
+
+**Security Measures:**
+- Rate limiting on all endpoints
+- JWT-based authentication
+- Input validation and sanitization
+- CORS configuration for frontend-only access
+- Secure headers (HSTS, CSP, X-Frame-Options)
+
+### Email Service Compliance
+**Location:** `backend/services/email_service.py`
+
+**Features:**
+- OTP verification for account security
+- Email verification for authenticity
+- Transactional emails only (no marketing without consent)
+- Secure email templates
+
+### Image Upload Compliance
+**Location:** `backend/services/cloudinary_service.py`
+
+**Features:**
+- Cloudinary integration for secure image hosting
+- Image validation and size limits
+- Content moderation capabilities
+- HTTPS-only image delivery
+
 ## Next Steps (Recommended)
 
 1. **Legal Review:** Have a lawyer review these documents for your specific situation
@@ -155,6 +194,12 @@ Maximum liability is limited to ₹1,000 or amount paid (if any)."
 ⚠️ **Updates:** Laws change - stay informed about Indian data protection and e-commerce regulations.
 
 ⚠️ **Records:** Keep records of user consent (signup timestamps, IP addresses).
+
+⚠️ **Data Retention:** Implement data retention policies and automatic deletion of old data per DPDP Act 2023.
+
+⚠️ **Breach Notification:** Have a plan to notify users within 72 hours of any data breach.
+
+⚠️ **Third-Party Services:** Ensure all third-party services (Cloudinary, email providers) are GDPR/DPDP compliant.
 
 ## Testing
 
@@ -182,5 +227,59 @@ To test the implementation:
 
 ---
 
-**Last Updated:** April 7, 2026  
+**Last Updated:** April 9, 2026  
 **Compliance Status:** ✅ Ready for Review
+
+
+## Data Security Measures
+
+### Backend Security
+- HTTPS encryption for all API communications
+- Password hashing using bcrypt
+- JWT token-based authentication
+- Rate limiting on sensitive endpoints
+- Input validation and sanitization
+- CORS configuration for trusted origins only
+
+### Firebase Security
+- Firestore security rules enforced (see `DEPLOYMENT.md`)
+- Authentication required for write operations
+- User-specific data access controls
+- Firebase Admin SDK for server-side operations
+
+### Frontend Security
+- Environment variables for sensitive configs
+- Secure token storage
+- XSS protection via React
+- HTTPS-only in production
+
+## Data Retention Policy
+
+- User accounts: Retained until user requests deletion
+- Chat messages: Retained for 90 days after last activity
+- Product listings: Retained for 30 days after deletion
+- Transaction history: Retained for 1 year for dispute resolution
+- Logs: Retained for 30 days
+
+## User Data Rights (DPDP Act 2023 Compliance)
+
+Users have the right to:
+1. Access their personal data
+2. Correct inaccurate data
+3. Delete their account and data
+4. Withdraw consent
+5. Data portability
+6. Lodge complaints with Data Protection Authority
+
+## Compliance Monitoring
+
+- Regular security audits recommended
+- Policy review: Annually or when laws change
+- User consent tracking via signup timestamps
+- Incident response plan for data breaches
+
+---
+
+**Last Updated:** April 9, 2026  
+**Compliance Status:** ✅ Ready for Legal Review  
+**Next Review Date:** April 9, 2027

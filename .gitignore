@@ -4,10 +4,14 @@
 .env.*.local
 .env.production
 .env.development
-.vscode
-.kiro
 backend/.env
 frontend/.env
+
+# IDE and Editor
+.vscode/
+!.vscode/extensions.json
+.kiro/
+.idea/
 
 # Python
 **/__pycache__/
@@ -62,9 +66,6 @@ out/
 .turbo/
 
 # Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea/
 .DS_Store
 *.suo
 *.ntvs*
@@ -75,7 +76,12 @@ out/
 *.swo
 .project
 .settings/
+
+# Build artifacts and archives
 .backend.zip
+*.zip
+*.tar.gz
+*.rar
 
 # Firebase
 .firebaserc
@@ -100,3 +106,21 @@ $RECYCLE.BIN/
 # Git
 *.orig
 *.rej
+
+# Test coverage and reports
+coverage/
+.nyc_output/
+*.lcov
+
+# Lock files (optional - uncomment if you want to ignore)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Cloudinary and external service configs
+cloudinary_config.json
+
+# Local database files
+*.db-journal
+*.db-wal
+*.db-shm
