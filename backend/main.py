@@ -218,6 +218,7 @@ app.include_router(need_board.router, prefix="/api", tags=["need-board"])
 
 # Include routers without /api prefix (fallback for misconfigured clients)
 app.include_router(products.router, tags=["products-fallback"])
+app.include_router(uploads.router, tags=["uploads-fallback"])
 app.include_router(users.router, tags=["users-fallback"])
 app.include_router(chats.router, tags=["chats-fallback"])
 app.include_router(reviews.router, tags=["reviews-fallback"])
