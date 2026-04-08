@@ -1,13 +1,60 @@
 import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogIn, UserPlus, Mail } from 'lucide-react';
+import { LogIn, UserPlus, Mail, RefreshCw } from 'lucide-react';
 import { Button } from './ui/Button';
 import LandingPage from '../pages/LandingPage';
+import { useState, useEffect } from 'react';
+import { reload } from 'firebase/auth';
 
 const ProtectedRoute = ({ children }) => {
-  const { currentUser, loading } = useAuth();
+  const { currentUser, loading, syncEmailVerificationStatus } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [checking, setChecking] = useState(false);
+
+  // Auto-check verification status every 5 seconds if not verified
+  useEffect(() => {
+    if (!currentUser || currentUser.emailVerified) return;
+
+    const checkVerificationStatus = async () => {
+      try {
+        await reload(currentUser);
+        if (currentUser.emailVerified) {
+          await syncEmailVerificationStatus(currentUser);
+          window.location.reload(); // Force full page reload to update UI
+        }
+      } catch (err) {
+        console.error('Auto-check failed:', err);
+      }
+    };
+
+    // Check immediately
+    checkVerificationStatus();
+
+    // Then check every 5 seconds
+    const interval = setInterval(checkVerificationStatus, 5000);
+
+    return () => clearInterval(interval);
+  }, [currentUser, syncEmailVerificationStatus]);
+
+  const handleCheckVerification = async () => {
+    if (!currentUser) return;
+    setChecking(true);
+    try {
+      await reload(currentUser);
+      if (currentUser.emailVerified) {
+        await syncEmailVerificationStatus(currentUser);
+        window.location.reload();
+      } else {
+        alert('Email not verified yet. Please check your inbox and click the verification link.');
+      }
+    } catch (error) {
+      console.error('Failed to check verification:', error);
+      alert('Failed to check verification status. Please try again.');
+    } finally {
+      setChecking(false);
+    }
+  };
 
   // Show loading state while checking authentication
   if (loading) {
@@ -111,7 +158,18 @@ const ProtectedRoute = ({ children }) => {
             <p className="text-sm text-amber-600 font-medium text-center mb-8">
               ⚠️ Check in spam folder if you don't see the email
             </p>
+            <p className="text-xs text-blue-600 text-center mb-4 flex items-center justify-center gap-1">
+              <RefreshCw className="h-3 w-3 animate-spin" />
+              Auto-checking verification status...
+            </p>
             <div className="flex flex-col gap-3">
+              <Button
+                onClick={handleCheckVerification}
+                disabled={checking}
+                className="w-full rounded-xl bg-green-600 text-white hover:bg-green-700"
+              >
+                {checking ? 'Checking...' : "I've Verified My Email"}
+              </Button>
               <Button
                 onClick={() => navigate(`/profile/${currentUser.uid}`)}
                 className="w-full rounded-xl bg-blue-600 text-white hover:bg-blue-700"

@@ -50,7 +50,7 @@
 ## ✨ Key Features
 
 ### Core Marketplace
-- 🔐 **Secure Authentication** - Firebase Authentication with email verification
+- 🔐 **Secure Authentication** - Firebase Authentication with Gmail-based email verification
 - 🛍️ **Smart Listings** - Create detailed product listings with photos and condition assessment
 - 🔍 **Advanced Search & Filtering** - Real-time search with history, nested category dropdowns, and smart sorting
 - 📱 **Responsive Design** - Seamless experience across all devices
@@ -59,6 +59,7 @@
 - 📋 **Recently Viewed** - Track and quickly access recently viewed products
 - 💬 **Quick Contact** - WhatsApp and Call buttons for instant seller communication
 - 🏷️ **Negotiable Badges** - Clear indicators for price negotiation availability
+- ✉️ **Email Verification** - Custom Gmail SMTP integration for reliable email delivery
 
 ### AI-Powered Features
 - 🤖 **AI Need Board** - Post what you need in natural language, get smart matches
@@ -265,6 +266,13 @@ FIREBASE_CLIENT_CERT_URL=https://www.googleapis.com/robot/v1/metadata/x509/...
 
 # CORS Configuration
 CORS_ORIGINS=http://localhost:3000,http://localhost:5173
+
+# Email Configuration (Gmail SMTP)
+GMAIL_USER=your-gmail@gmail.com
+GMAIL_APP_PASSWORD=your-16-char-app-password
+
+# Gemini AI
+GEMINI_API_KEY=your-gemini-api-key
 ```
 
 ### Frontend Environment Variables
@@ -376,6 +384,11 @@ unifind/
 
 ### Main API Endpoints
 
+#### Authentication & Email API
+- `POST /api/auth/send-verification` - Send email verification link (Gmail SMTP)
+- `POST /api/auth/verify-email` - Verify email using token
+- `POST /api/auth/resend-verification` - Resend verification email
+
 #### Products API
 - `GET /api/products` - List all products (with filters: category, price, condition, seller_id)
 - `POST /api/products` - Create product (auth required)
@@ -474,13 +487,16 @@ The backend verifies tokens using Firebase Admin SDK and extracts the user ID fo
 
 ## 🔒 Security Features
 
-- ✅ Firebase Authentication with email verification
+- ✅ Firebase Authentication with Gmail-based email verification
+- ✅ Custom SMTP email delivery for reliable verification
 - ✅ Argon2 password hashing (via Firebase)
 - ✅ CORS configuration for API security
 - ✅ Environment variable protection
 - ✅ Input validation with Pydantic
 - ✅ Session-based authentication
 - ✅ Secure Firebase Admin SDK integration
+- ✅ Token-based email verification with 24-hour expiry
+- ✅ One-time use verification tokens
 
 ---
 
@@ -817,6 +833,29 @@ For detailed documentation, see the files above or visit the `/docs` endpoint wh
 ---
 
 ## 📝 Recent Updates
+
+### April 9, 2026 - Gmail-Based Email Verification (v2.1.3)
+- **Custom Email Verification System**:
+  - Replaced Firebase email verification with Gmail SMTP
+  - Professional HTML email templates
+  - 24-hour token expiry with one-time use
+  - Auto-sync between Firebase Auth and Firestore
+  - Resend verification from profile or OTP page
+  - Auto-check verification status every 5 seconds
+  - Prevents duplicate API calls in React StrictMode
+  - Email sent from systemrecord07@gmail.com
+  
+- **Backend Email Service**:
+  - `aiosmtplib` for async SMTP operations
+  - Token generation and validation
+  - Firestore and Firebase Auth synchronization
+  - Comprehensive error handling
+  
+- **Frontend Improvements**:
+  - VerifyEmailPage with success/error states
+  - Auto-redirect after verification
+  - Manual "I've Verified My Email" button
+  - Better error messages and user feedback
 
 ### April 7, 2026 - Enhanced Marketplace Features (v2.1.0)
 - **Advanced Search & Filtering**:

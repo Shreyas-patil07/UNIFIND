@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Mail, Lock, User, GraduationCap, Eye, EyeOff, Calendar, CheckCircle, Smartphone } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { sendEmailVerification } from 'firebase/auth';
-import { auth, actionCodeSettings, db } from '../services/firebase';
+import { auth, db } from '../services/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
 const SignupPage = () => {
@@ -76,11 +75,14 @@ const SignupPage = () => {
         return;
       }
       
-      // Check if user already exists
+      // Check if user already exists in Firestore
       setLoading(true);
       try {
-        const signInMethods = await fetchSignInMethodsForEmail(auth, formData.email);
-        if (signInMethods.length > 0) {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('email', '==', formData.email));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
           setError('An account with this email already exists. Please login instead.');
           setLoading(false);
           return;
@@ -139,10 +141,26 @@ const SignupPage = () => {
       // Combine names into full name
       const fullName = `${formData.firstName} ${formData.middleName} ${formData.surname}`.replace(/\s+/g, ' ').trim();
       
-      await signup(formData.email, formData.password, fullName, formData.college, formData.branch, formData.yearOfAdmission, formData.upiId);
-      if (auth.currentUser) {
-        await sendEmailVerification(auth.currentUser, actionCodeSettings);
+      const userCredential = await signup(formData.email, formData.password, fullName, formData.college, formData.branch, formData.yearOfAdmission, formData.upiId);
+      
+      // Send verification email via backend
+      if (userCredential && userCredential.user) {
+        try {
+          await fetch(`${import.meta.env.VITE_API_URL}/auth/send-verification`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: formData.email,
+              firebase_uid: userCredential.user.uid
+            }),
+          });
+        } catch (emailError) {
+          console.error('Failed to send verification email:', emailError);
+        }
       }
+      
       navigate('/otp-verification', { state: { email: formData.email } });
     } catch (err) {
       setError(getErrorMessage(err.code));

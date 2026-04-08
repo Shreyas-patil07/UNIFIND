@@ -2,6 +2,120 @@
 
 ## Recent Updates
 
+### April 9, 2026 - Gmail-Based Email Verification System (v2.1.3)
+
+**Major Feature**: Replaced Firebase email verification with custom Gmail SMTP integration
+
+**Why the Change**:
+- More control over email templates and branding
+- Better deliverability (direct SMTP vs Firebase relay)
+- Professional HTML email templates
+- Custom verification flow with token management
+
+**Implementation Details**:
+
+**Backend Changes**:
+1. **New Email Service** (`backend/services/email_service.py`):
+   - Async SMTP using `aiosmtplib`
+   - Token generation with 24-hour expiry
+   - One-time use tokens (invalidated after verification)
+   - Professional HTML email templates
+   - Token storage in memory (can be moved to Redis for production)
+
+2. **New Auth Routes** (`backend/routes/auth.py`):
+   - `POST /api/auth/send-verification` - Send verification email
+   - `POST /api/auth/verify-email` - Verify email with token
+   - `POST /api/auth/resend-verification` - Resend verification email
+   - Syncs verification status between Firestore and Firebase Auth
+
+3. **Updated Dependencies**:
+   - Added `aiosmtplib==3.0.1` for async SMTP
+   - Added `email-validator==2.1.0` for email validation
+
+4. **Configuration Updates**:
+   - Added `GMAIL_USER` and `GMAIL_APP_PASSWORD` to config
+   - Updated validation to require email credentials
+
+**Frontend Changes**:
+1. **New Verify Email Page** (`frontend/src/pages/VerifyEmailPage.jsx`):
+   - Handles token verification from email link
+   - Shows success/error states with icons
+   - Auto-redirects to login after 3 seconds
+   - Prevents duplicate API calls using useRef
+
+2. **Updated Signup Flow** (`frontend/src/pages/SignupPage.jsx`):
+   - Removed Firebase `sendEmailVerification`
+   - Calls backend API to send verification email
+   - Returns `userCredential` for accessing user.uid
+   - Added `firebase_uid` field to user document
+
+3. **Updated OTP Verification Page** (`frontend/src/pages/OTPVerificationPage.jsx`):
+   - Uses backend API for resending emails
+   - Removed Firebase email verification imports
+
+4. **Updated Profile Page** (`frontend/src/pages/ProfilePage.jsx`):
+   - Uses backend API for resending verification emails
+   - Better error handling and user feedback
+
+5. **Enhanced Protected Route** (`frontend/src/components/ProtectedRoute.jsx`):
+   - Auto-checks verification status every 5 seconds
+   - Manual "I've Verified My Email" button
+   - Auto-reloads page when verification detected
+
+**Security Features**:
+- 24-hour token expiry
+- One-time use tokens (invalidated after use)
+- Secure token generation using `secrets.token_urlsafe(32)`
+- Syncs verification between Firebase Auth and Firestore
+- SMTP over TLS for secure email delivery
+
+**User Experience**:
+- Professional HTML email templates with branding
+- Clear call-to-action buttons
+- Mobile-responsive email design
+- Auto-check verification status (no manual refresh needed)
+- Resend functionality from multiple pages
+
+**Deployment Considerations**:
+- Gmail App Password required (not regular password)
+- Environment variables: `GMAIL_USER`, `GMAIL_APP_PASSWORD`
+- Token storage in memory (consider Redis for multi-instance deployments)
+
+**Files Modified**:
+- `backend/services/email_service.py` - NEW
+- `backend/routes/auth.py` - NEW
+- `backend/config.py` - Added email config
+- `backend/main.py` - Added auth routes
+- `backend/requirements.txt` - Added email dependencies
+- `frontend/src/pages/VerifyEmailPage.jsx` - NEW
+- `frontend/src/pages/SignupPage.jsx` - Updated
+- `frontend/src/pages/OTPVerificationPage.jsx` - Updated
+- `frontend/src/pages/ProfilePage.jsx` - Updated
+- `frontend/src/components/ProtectedRoute.jsx` - Enhanced
+- `frontend/src/contexts/AuthContext.jsx` - Added firebase_uid field
+- `frontend/src/App.jsx` - Added verify-email route
+
+**Cleanup**:
+- Removed 4 utility/test scripts from backend:
+  - `migrate_database.py` - One-time migration (completed)
+  - `check_users.py` - Development utility
+  - `fix_existing_users.py` - One-time script (completed)
+  - `sync_firebase_auth.py` - Development utility
+
+**Documentation Updates**:
+- Updated README.md with email verification details
+- Updated DOCUMENTATION.md with authentication flow
+- Updated QUICKSTART.md with Gmail setup instructions
+- Updated DEPLOYMENT.md with production email config
+
+**Testing**:
+- Created `test_email.py` for testing email service
+- Verified token generation and validation
+- Tested email delivery to Gmail accounts
+- Confirmed Firestore and Firebase Auth sync
+
+---
+
 ### April 9, 2026 - Chat System Production Implementation (v2.1.2)
 
 **Critical Bug Fixed**: Messages disappearing after 2-3 seconds

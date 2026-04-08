@@ -281,6 +281,130 @@ const recentProducts = getRecentlyViewed();
 clearRecentlyViewed();
 ```
 
+### Email Verification System
+
+UNIFIND uses a custom Gmail-based email verification system instead of Firebase's built-in verification.
+
+**Architecture**:
+```
+User Signs Up → Backend Sends Email (Gmail SMTP) → User Clicks Link → 
+Backend Verifies Token → Updates Firestore + Firebase Auth → User Verified
+```
+
+**Backend Components**:
+
+1. **Email Service** (`backend/services/email_service.py`):
+```python
+from services.email_service import email_service
+
+# Generate verification token
+token = email_service.generate_verification_token(user_email)
+
+# Send verification email
+verification_url = f"{frontend_url}/verify-email?token={token}"
+await email_service.send_verification_email(user_email, verification_url)
+
+# Verify token
+email = email_service.verify_token(token)  # Returns email or None
+
+# Invalidate token after use
+email_service.invalidate_token(token)
+```
+
+2. **Auth Routes** (`backend/routes/auth.py`):
+- `POST /api/auth/send-verification` - Send verification email
+- `POST /api/auth/verify-email` - Verify email with token
+- `POST /api/auth/resend-verification` - Resend verification email
+
+**Frontend Components**:
+
+1. **Signup Flow** (`frontend/src/pages/SignupPage.jsx`):
+```javascript
+// After creating user with Firebase Auth
+const userCredential = await signup(email, password, ...);
+
+// Send verification email via backend
+await fetch(`${import.meta.env.VITE_API_URL}/auth/send-verification`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    email: email,
+    firebase_uid: userCredential.user.uid
+  })
+});
+```
+
+2. **Verify Email Page** (`frontend/src/pages/VerifyEmailPage.jsx`):
+```javascript
+// Extracts token from URL and verifies
+const token = searchParams.get('token');
+const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/verify-email`, {
+  method: 'POST',
+  body: JSON.stringify({ token })
+});
+```
+
+3. **Auto-Check Verification** (`frontend/src/components/ProtectedRoute.jsx`):
+```javascript
+// Checks verification status every 5 seconds
+useEffect(() => {
+  const checkVerificationStatus = async () => {
+    await reload(currentUser);
+    if (currentUser.emailVerified) {
+      await syncEmailVerificationStatus(currentUser);
+      window.location.reload();
+    }
+  };
+  const interval = setInterval(checkVerificationStatus, 5000);
+  return () => clearInterval(interval);
+}, [currentUser]);
+```
+
+**Configuration**:
+
+1. **Backend** (`backend/.env`):
+```env
+GMAIL_USER=your-gmail@gmail.com
+GMAIL_APP_PASSWORD=your-16-char-app-password
+```
+
+2. **Gmail App Password Setup**:
+   - Go to [Google Account Security](https://myaccount.google.com/security)
+   - Enable 2-Step Verification
+   - Go to [App Passwords](https://myaccount.google.com/apppasswords)
+   - Generate password for "Mail"
+   - Copy 16-character password (no spaces)
+
+**Security Features**:
+- 24-hour token expiry
+- One-time use tokens (invalidated after verification)
+- Secure token generation using `secrets.token_urlsafe(32)`
+- Syncs verification between Firebase Auth and Firestore
+- SMTP over TLS (port 587)
+
+**Testing**:
+```bash
+# Test email service
+cd backend
+python -c "from services.email_service import email_service; print(email_service.sender_email)"
+
+# Test sending email (update with your email)
+python -c "
+import asyncio
+from services.email_service import email_service
+asyncio.run(email_service.send_verification_email(
+    'test@example.com',
+    'http://localhost:5173/verify-email?token=test123'
+))
+"
+```
+
+**Troubleshooting**:
+- **Email not sending**: Check Gmail credentials, ensure App Password is used
+- **Token invalid**: Tokens expire after 24 hours, generate new one
+- **Verification not syncing**: Check backend logs for Firebase Auth update errors
+- **Emails in spam**: Add sender to contacts, check email template
+
 ### Implement Advanced Filtering
 ```javascript
 // Use useMemo for performance
@@ -745,11 +869,18 @@ test('message appears immediately', async () => {
    - Check .env has all Firebase variables
    - Verify FIREBASE_PRIVATE_KEY has \n for newlines
 
-2. **Gemini API errors**
+2. **Email verification not working**
+   - Check GMAIL_USER and GMAIL_APP_PASSWORD in .env
+   - Verify Gmail App Password is generated (not regular password)
+   - Test with: `python -c "from services.email_service import email_service; print(email_service.sender_email)"`
+   - Check backend logs for SMTP errors
+   - Verify emails aren't going to spam folder
+
+3. **Gemini API errors**
    - Check GEMINI_API_KEY is valid
    - Verify API quota not exceeded
 
-3. **CORS errors**
+4. **CORS errors**
    - Check CORS_ORIGINS includes frontend URL
    - Restart backend after changing .env
 
@@ -772,7 +903,14 @@ console.error('Error:', error)
    - Check all VITE_FIREBASE_* variables
    - Verify Firebase project is active
 
-3. **Build fails**
+3. **Email verification not detected**
+   - Wait 5 seconds for auto-check to run
+   - Click "I've Verified My Email" button manually
+   - Check browser console for errors
+   - Verify token hasn't expired (24 hours)
+   - Try logging out and back in
+
+4. **Build fails**
    - Delete node_modules and reinstall
    - Check for syntax errors
 

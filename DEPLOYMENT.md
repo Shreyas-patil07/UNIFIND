@@ -56,9 +56,17 @@ FIREBASE_CLIENT_CERT_URL=https://www.googleapis.com/robot/v1/metadata/x509/...
 # Gemini AI
 GEMINI_API_KEY=your-gemini-api-key
 
+# Email Configuration (Gmail SMTP)
+GMAIL_USER=your-gmail@gmail.com
+GMAIL_APP_PASSWORD=your-16-char-app-password
+
 # CORS (add your Vercel domain after frontend deployment)
 CORS_ORIGINS=https://your-app.vercel.app,http://localhost:3000
 ```
+
+**Important Notes:**
+- For `GMAIL_APP_PASSWORD`: Generate from [Google App Passwords](https://myaccount.google.com/apppasswords)
+- For `FIREBASE_PRIVATE_KEY`: Keep the `\n` characters for newlines
 
 ### Step 4: Deploy
 1. Click "Create Web Service"
@@ -226,6 +234,12 @@ Create these composite indexes in Firebase Console → Firestore → Indexes:
 **Issue: Firebase connection fails**
 - Solution: Verify all Firebase env vars are set correctly
 - Check: FIREBASE_PRIVATE_KEY has proper newlines (\n)
+
+**Issue: Email verification not working**
+- Solution: Verify GMAIL_USER and GMAIL_APP_PASSWORD are set
+- Check: Gmail App Password is generated (not regular password)
+- Test: Run `python backend/test_email.py` locally first
+- Verify: Check Render logs for SMTP errors
 
 **Issue: Gemini API errors**
 - Solution: Verify API key is valid

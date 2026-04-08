@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { ArrowLeft, Mail, RefreshCw } from 'lucide-react';
-import { sendEmailVerification, reload } from 'firebase/auth';
-import { auth, actionCodeSettings } from '../services/firebase';
+import { reload } from 'firebase/auth';
+import { auth } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 
 const OTPVerificationPage = () => {
@@ -85,15 +85,26 @@ const OTPVerificationPage = () => {
     setError('');
     setResendSuccess(false);
     try {
-      await sendEmailVerification(auth.currentUser, actionCodeSettings);
-      setResendSuccess(true);
-      setCountdown(60); // 60s cooldown
-    } catch (err) {
-      if (err.code === 'auth/too-many-requests') {
-        setError('Too many requests. Wait a moment before resending.');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/resend-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: auth.currentUser.email,
+          firebase_uid: auth.currentUser.uid
+        }),
+      });
+      
+      if (response.ok) {
+        setResendSuccess(true);
+        setCountdown(60); // 60s cooldown
       } else {
-        setError('Failed to resend. Please try again.');
+        const data = await response.json();
+        setError(data.detail || 'Failed to resend. Please try again.');
       }
+    } catch (err) {
+      setError('Failed to resend. Please try again.');
     } finally {
       setResending(false);
     }

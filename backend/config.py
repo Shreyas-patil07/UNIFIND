@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     CLOUDINARY_API_SECRET: str
     CLOUDINARY_UPLOAD_PRESET: str = "unifind_products"
     
+    # Email Configuration
+    GMAIL_USER: str
+    GMAIL_APP_PASSWORD: str
+    
     # Environment
     ENVIRONMENT: str = "development"  # development, staging, production
     
@@ -58,7 +62,9 @@ def get_settings() -> Settings:
         'GEMINI_API_KEY',
         'CLOUDINARY_CLOUD_NAME',
         'CLOUDINARY_API_KEY',
-        'CLOUDINARY_API_SECRET'
+        'CLOUDINARY_API_SECRET',
+        'GMAIL_USER',
+        'GMAIL_APP_PASSWORD'
     ]
     
     missing_vars = []

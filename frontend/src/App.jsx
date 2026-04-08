@@ -10,6 +10,7 @@ import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import OTPVerificationPage from './pages/OTPVerificationPage'
+import VerifyEmailPage from './pages/VerifyEmailPage'
 import DashboardHome from './pages/DashboardHome'
 import BuyerPage from './pages/BuyerPage'
 import ListingDetailPage from './pages/ListingDetailPage'
@@ -48,6 +49,7 @@ function App() {
             <Route path="/terms" element={<TermsConditionsPage />} />
             <Route path="/community-guidelines" element={<CommunityGuidelinesPage />} />
             <Route path="/otp-verification" element={<OTPVerificationPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/dashboard" element={<ProtectedRoute><DashboardHome /></ProtectedRoute>} />
             <Route path="/buyer" element={<ProtectedRoute><BuyerPage /></ProtectedRoute>} />
             <Route path="/listing/:id" element={<ProtectedRoute><ListingDetailPage /></ProtectedRoute>} />

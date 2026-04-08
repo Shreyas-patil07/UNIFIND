@@ -100,7 +100,22 @@ FIREBASE_CLIENT_CERT_URL=https://www.googleapis.com/robot/v1/metadata/x509/fireb
 
 # CORS Configuration
 CORS_ORIGINS=http://localhost:3000,http://localhost:5173
+
+# Email Configuration (Gmail SMTP)
+GMAIL_USER=your-gmail@gmail.com
+GMAIL_APP_PASSWORD=your-16-char-app-password
+
+# Gemini AI (Optional - for AI Need Board feature)
+GEMINI_API_KEY=your-gemini-api-key
 ```
+
+**💡 Gmail App Password Setup:**
+1. Go to [Google Account Security](https://myaccount.google.com/security)
+2. Enable 2-Step Verification
+3. Go to [App Passwords](https://myaccount.google.com/apppasswords)
+4. Generate a new app password for "Mail"
+5. Copy the 16-character password (no spaces)
+6. Paste it as `GMAIL_APP_PASSWORD`
 
 **💡 Tip:** Copy values from the downloaded JSON file:
 - `type` → `FIREBASE_TYPE`
@@ -221,8 +236,11 @@ You should see the UNIFIND landing page!
 
 1. Click **"Get Started"** or **"Sign Up"**
 2. Create a new account with your email
-3. Verify your email (check Firebase Console → Authentication)
-4. Log in and explore the platform!
+3. **Check your email** for verification link (check spam folder too!)
+4. Click the verification link to verify your email
+5. Log in and explore the platform!
+
+**Note**: Email verification uses Gmail SMTP. Make sure you've configured `GMAIL_USER` and `GMAIL_APP_PASSWORD` in `backend/.env`.
 
 ---
 
@@ -286,6 +304,14 @@ npm install
 - Ensure Firestore is enabled in Firebase Console
 - Ensure Authentication is enabled
 - Check for typos in environment variables
+
+### Issue: "Email verification not sending"
+**Solution:**
+- Verify `GMAIL_USER` and `GMAIL_APP_PASSWORD` in `backend/.env`
+- Ensure Gmail App Password is generated (not regular password)
+- Check backend logs for SMTP errors
+- Verify email isn't in spam folder
+- Test with: `python backend/test_email.py`
 
 ### Issue: "CORS error" in browser console
 **Solution:**
@@ -518,7 +544,18 @@ Before asking for help, verify:
 
 ## 🎉 What's New
 
-### Latest Features (April 7, 2026)
+### Latest Features (April 9, 2026)
+
+**Gmail-Based Email Verification (v2.1.3)**:
+- **Custom Email System**: Replaced Firebase email verification with Gmail SMTP
+- **Professional Emails**: Beautiful HTML templates sent from your Gmail account
+- **Reliable Delivery**: Direct SMTP ensures emails reach inbox (not spam)
+- **24-Hour Tokens**: Secure one-time use verification links
+- **Auto-Sync**: Syncs verification status between Firebase Auth and Firestore
+- **Resend Feature**: Easy resend from profile or OTP page
+- **Auto-Check**: Automatically detects verification every 5 seconds
+
+### Previous Features (April 7, 2026)
 
 **Enhanced Marketplace Experience (v2.1.0)**:
 - **Advanced Search & Filtering**: Real-time search with history, nested category dropdowns (Maths levels, Graphics Kit items), and 6 sorting options

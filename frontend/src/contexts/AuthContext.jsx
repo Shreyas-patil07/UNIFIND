@@ -33,6 +33,7 @@ export const AuthProvider = ({ children }) => {
 
     const userProfile = {
       id: user.uid,
+      firebase_uid: user.uid,  // Add firebase_uid field for backend compatibility
       name,
       email,
       college,
@@ -50,7 +51,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     await setDoc(doc(db, 'users', user.uid), userProfile)
-    return user
+    return userCredential
   }
 
   const login = async (email, password) => {

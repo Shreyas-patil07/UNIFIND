@@ -5,8 +5,6 @@ import { Shield, Star, Award, Calendar, GraduationCap, LogOut, Mail, CheckCircle
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { sendEmailVerification } from 'firebase/auth';
-import { actionCodeSettings } from '../services/firebase';
 import { getPublicProfile } from '../services/api';
 import { addFriend, removeFriend, checkFriendship, acceptFriendRequest } from '../services/api';
 
@@ -137,11 +135,29 @@ const ProfilePage = () => {
     setResendingEmail(true);
     setResendSuccess(false);
     try {
-      await sendEmailVerification(authUser, actionCodeSettings);
-      setResendSuccess(true);
-      setTimeout(() => setResendSuccess(false), 5000);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/resend-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: authUser.email,
+          firebase_uid: authUser.uid
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        setResendSuccess(true);
+        setTimeout(() => setResendSuccess(false), 5000);
+      } else {
+        console.error('Failed to resend verification email:', data);
+        alert(`Failed to send verification email: ${data.detail || 'Unknown error'}`);
+      }
     } catch (error) {
       console.error('Failed to resend verification email:', error);
+      alert('Failed to send verification email. Please try again.');
     } finally {
       setResendingEmail(false);
     }
