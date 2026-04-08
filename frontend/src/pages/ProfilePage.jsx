@@ -135,7 +135,8 @@ const ProfilePage = () => {
     setResendingEmail(true);
     setResendSuccess(false);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/resend-verification`, {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+      const response = await fetch(`${apiUrl}/auth/resend-verification`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
