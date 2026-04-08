@@ -100,6 +100,7 @@ class EmailService:
         message.attach(html_part)
         
         try:
+            # Add timeout to prevent hanging
             await aiosmtplib.send(
                 message,
                 hostname=self.smtp_host,
@@ -107,7 +108,12 @@ class EmailService:
                 start_tls=True,
                 username=self.sender_email,
                 password=self.sender_password,
+                timeout=30,  # 30 second timeout
             )
+        except aiosmtplib.SMTPException as e:
+            raise Exception(f"SMTP error: {str(e)}")
+        except TimeoutError:
+            raise Exception("Email service timeout - please check SMTP configuration")
         except Exception as e:
             raise Exception(f"Failed to send email: {str(e)}")
 

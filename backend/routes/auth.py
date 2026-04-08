@@ -40,6 +40,13 @@ async def send_verification_email(request: SendVerificationRequest):
     if user_data.get('email_verified', False):
         return {"message": "Email already verified"}
     
+    # Validate email service configuration
+    if not settings.GMAIL_USER or not settings.GMAIL_APP_PASSWORD:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Email service not configured"
+        )
+    
     # Generate verification token
     token = email_service.generate_verification_token(request.email)
     
@@ -52,9 +59,11 @@ async def send_verification_email(request: SendVerificationRequest):
         await email_service.send_verification_email(request.email, verification_url)
         return {"message": "Verification email sent successfully"}
     except Exception as e:
+        import logging
+        logging.error(f"Failed to send verification email: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to send verification email: {str(e)}"
+            detail=f"Failed to send verification email. Please try again later."
         )
 
 
