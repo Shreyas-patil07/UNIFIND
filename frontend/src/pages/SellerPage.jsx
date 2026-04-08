@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import { categories } from '../data/categories';
@@ -18,25 +18,37 @@ const SellerPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Load user's products
+  // Load user's products with caching
   useEffect(() => {
+    let isMounted = true;
+    
     const loadMyListings = async () => {
       if (!currentUser) return;
 
       try {
         const userProducts = await getProducts({ seller_id: currentUser.uid });
-        setMyListings(Array.isArray(userProducts) ? userProducts : []);
-        console.log('Seller products loaded:', Array.isArray(userProducts) ? userProducts.length : 0);
+        if (isMounted) {
+          setMyListings(Array.isArray(userProducts) ? userProducts : []);
+          console.log('Seller products loaded:', Array.isArray(userProducts) ? userProducts.length : 0);
+        }
       } catch (error) {
         console.error('Failed to load listings:', error);
         console.error('Error details:', error.response?.data || error.message);
-        setMyListings([]);
+        if (isMounted) {
+          setMyListings([]);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadMyListings();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [currentUser]);
   const [searchHistory, setSearchHistory] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -131,45 +143,48 @@ const SellerPage = () => {
     }
   }, [sortDropdownOpen]);
 
-  // Handle search
-  const handleSearch = (query) => {
-    const historyArray = Array.isArray(searchHistory) ? searchHistory : [];
-    if (query.trim() && !historyArray.includes(query.trim())) {
-      const updated = [query.trim(), ...historyArray].slice(0, 10);
-      setSearchHistory(updated);
-      localStorage.setItem('unifind_seller_search_history', JSON.stringify(updated));
-    }
-  };
+  // Handle search (memoized)
+  const handleSearch = useCallback((query) => {
+    setSearchHistory(prev => {
+      const historyArray = Array.isArray(prev) ? prev : [];
+      if (query.trim() && !historyArray.includes(query.trim())) {
+        const updated = [query.trim(), ...historyArray].slice(0, 10);
+        localStorage.setItem('unifind_seller_search_history', JSON.stringify(updated));
+        return updated;
+      }
+      return prev;
+    });
+  }, []);
 
-  // Clear search history
-  const clearSearchHistory = () => {
+  // Clear search history (memoized)
+  const clearSearchHistory = useCallback(() => {
     setSearchHistory([]);
     localStorage.removeItem('unifind_seller_search_history');
-  };
+  }, []);
 
-  // Handle edit
-  const handleEdit = (productId) => {
+  // Handle edit (memoized)
+  const handleEdit = useCallback((productId) => {
     navigate(`/edit-listing/${productId}`);
-  };
+  }, [navigate]);
 
-  // Handle delete
-  const handleDelete = (productId) => {
+  // Handle delete (memoized)
+  const handleDelete = useCallback((productId) => {
     setDeleteProductId(productId);
     setShowDeleteModal(true);
-  };
+  }, []);
 
-  const confirmDelete = () => {
-    setMyListings((Array.isArray(myListings) ? myListings : []).filter(p => p.id !== deleteProductId));
+  const confirmDelete = useCallback(() => {
+    setMyListings(prev => (Array.isArray(prev) ? prev : []).filter(p => p.id !== deleteProductId));
     setShowDeleteModal(false);
     setDeleteProductId(null);
-  };
+  }, [deleteProductId]);
 
-  // Handle mark as sold
-  const handleMarkAsSold = (productId) => {
-    setMyListings((Array.isArray(myListings) ? myListings : []).map(p => 
+  // Handle mark as sold (memoized)
+  const handleMarkAsSold = useCallback((productId) => {
+    setMyListings(prev => (Array.isArray(prev) ? prev : []).map(p => 
       p.id === productId ? { ...p, status: p.status === 'sold' ? 'active' : 'sold' } : p
     ));
-  };
+  }, []);
 
   // Filter and sort listings
   const filteredAndSortedListings = useMemo(() => {

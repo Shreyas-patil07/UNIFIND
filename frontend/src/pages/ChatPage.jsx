@@ -347,11 +347,52 @@ const ChatPage = () => {
     let pollInterval = null;
 
     const loadMessages = async () => {
-      if (!isActive || document.hidden) return; // Don't load if page is hidden
+      if (!isActive || document.hidden) return;
       try {
         const chatMessages = await getChatMessages(selectedChat.id);
         if (isActive) {
-          setMessages(chatMessages);
+          // CRITICAL: Merge logic - never blindly overwrite
+          setMessages(prev => {
+            // Create map with existing messages (preserves optimistic)
+            const messageMap = new Map();
+            
+            // Add existing messages first
+            prev.forEach(msg => {
+              messageMap.set(msg.id, msg);
+            });
+            
+            // Merge backend messages (replaces optimistic if ID matches)
+            chatMessages.forEach(msg => {
+              // If this is a real message from backend, it replaces any optimistic version
+              messageMap.set(msg.id, { ...msg, status: 'sent' });
+            });
+            
+            // Remove optimistic messages that have been confirmed
+            // (Check if backend has a message with same content/sender/time)
+            const optimisticMessages = prev.filter(m => m._optimistic);
+            optimisticMessages.forEach(optMsg => {
+              const isConfirmed = chatMessages.some(backendMsg => 
+                backendMsg.text === optMsg.text &&
+                backendMsg.sender_id === optMsg.sender_id &&
+                Math.abs(new Date(backendMsg.timestamp).getTime() - new Date(optMsg.timestamp).getTime()) < 5000
+              );
+              
+              if (isConfirmed) {
+                messageMap.delete(optMsg.id); // Remove optimistic, keep backend version
+              }
+            });
+            
+            // Convert map to sorted array
+            return Array.from(messageMap.values()).sort((a, b) => {
+              const timeA = a.timestamp?.seconds 
+                ? new Date(a.timestamp.seconds * 1000).getTime()
+                : new Date(a.timestamp).getTime();
+              const timeB = b.timestamp?.seconds 
+                ? new Date(b.timestamp.seconds * 1000).getTime()
+                : new Date(b.timestamp).getTime();
+              return timeA - timeB;
+            });
+          });
         }
       } catch (error) {
         console.error('Failed to load messages:', error);
@@ -462,6 +503,25 @@ const ChatPage = () => {
 
     setSending(true);
     const messageText = message.trim(); // Capture message before clearing
+    
+    // Create optimistic message with temporary ID
+    const optimisticMessage = {
+      id: `temp-${Date.now()}`,
+      text: messageText,
+      sender_id: currentUser.uid,
+      receiver_id: otherId,
+      product_id: selectedChat.product_id || null,
+      chat_room_id: selectedChat.id,
+      timestamp: new Date(),
+      is_read: false,
+      _optimistic: true // Flag to identify optimistic messages
+    };
+    
+    // Add optimistic message immediately
+    setMessages(prev => [...prev, optimisticMessage]);
+    setMessage('');
+    messageInputRef.current?.focus();
+    
     try {
       const newMessage = await sendChatMessage({
         text: messageText,
@@ -470,9 +530,12 @@ const ChatPage = () => {
         product_id: selectedChat.product_id || null
       });
       
-      setMessages(prev => [...prev, newMessage]);
-      setMessage('');
-      messageInputRef.current?.focus();
+      // Replace optimistic message with real message from backend
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === optimisticMessage.id ? newMessage : msg
+        )
+      );
       
       // Update chat list locally instead of reloading from backend
       setChats(prevChats => 
@@ -496,7 +559,11 @@ const ChatPage = () => {
       }));
     } catch (error) {
       console.error('Failed to send message:', error);
+      // Remove optimistic message on error
+      setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
       alert('Failed to send message. Please try again.');
+      // Restore message text so user can retry
+      setMessage(messageText);
     } finally {
       setSending(false);
     }
@@ -829,9 +896,12 @@ const ChatPage = () => {
                     const status = getMessageStatus(msg);
                     
                     const mtClass = showDateSeparator ? 'mt-0' : (isSameSenderAsPrev ? 'mt-[2px]' : 'mt-4');
+                    
+                    // Use msg.id or temporary ID for optimistic messages
+                    const messageKey = msg.id || `temp-${index}`;
 
                     return (
-                      <React.Fragment key={msg.id}>
+                      <React.Fragment key={messageKey}>
                         {showDateSeparator && (
                           <div className={`flex justify-center ${index === 0 ? 'mt-0 mb-4' : 'my-4'}`}>
                             <span className={`text-xs px-4 py-1.5 rounded-full shadow-sm font-medium ${darkMode ? 'bg-slate-800 text-slate-400' : 'bg-white text-slate-600'}`}>
@@ -841,14 +911,14 @@ const ChatPage = () => {
                         )}
                         <div
                           ref={(el) => {
-                            if (el && msg.id) {
+                            if (el && msg.id && !msg._optimistic) {
                               messageRefs.current[msg.id] = el;
                             }
                           }}
                           data-message-id={msg.id}
                           data-sender-id={msg.sender_id}
                           data-is-read={msg.is_read}
-                          className={`flex gap-2 ${mtClass} ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
+                          className={`flex gap-2 ${mtClass} ${isCurrentUser ? 'justify-end' : 'justify-start'} ${msg._optimistic ? 'opacity-70' : ''}`}
                           data-testid={`message-${msg.id}`}
                         >
                           {!isCurrentUser && showAvatar && (

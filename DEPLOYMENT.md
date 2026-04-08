@@ -231,6 +231,21 @@ Create these composite indexes in Firebase Console → Firestore → Indexes:
 - Solution: Verify API key is valid
 - Check: API quota not exceeded
 
+**Issue: Chat messages disappearing**
+- Solution: Ensure frontend is using latest ChatPage.jsx with Map-based merge
+- Check: Backend logs show correct chat_room_id generation
+- Verify: No ad blockers blocking Firebase API calls (ERR_BLOCKED_BY_CLIENT)
+
+**Issue: Duplicate chat messages**
+- Solution: Verify Map-based deduplication is working
+- Check: Message IDs are unique from backend
+- Debug: Console log message IDs to verify uniqueness
+
+**Issue: Chat room ID mismatch**
+- Solution: Backend generates deterministic ID using min/max logic
+- Check: Frontend uses selectedChat.id from backend
+- Verify: Both send and fetch use same chat_room_id format
+
 ---
 
 ## Part 5: Scaling Considerations

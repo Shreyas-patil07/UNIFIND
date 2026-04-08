@@ -17,6 +17,9 @@ async def send_message(message: MessageCreate):
     if message.product_id:
         chat_room_id += f"_{message.product_id}"
     
+    print(f"[SEND_MESSAGE] Generated chat_room_id: {chat_room_id}")
+    print(f"[SEND_MESSAGE] Message: sender={message.sender_id}, receiver={message.receiver_id}, product={message.product_id}")
+    
     chat_room_ref = db.collection('chat_rooms').document(chat_room_id)
     chat_room = chat_room_ref.get()
     
@@ -33,6 +36,7 @@ async def send_message(message: MessageCreate):
             'created_at': datetime.now(timezone.utc)
         }
         chat_room_ref.set(chat_room_data)
+        print(f"[SEND_MESSAGE] Created new chat room: {chat_room_id}")
     else:
         # Update existing chat room
         chat_data = chat_room.to_dict()
@@ -42,6 +46,7 @@ async def send_message(message: MessageCreate):
             'last_message_time': datetime.now(timezone.utc),
             unread_field: chat_data.get(unread_field, 0) + 1
         })
+        print(f"[SEND_MESSAGE] Updated existing chat room: {chat_room_id}")
     
     # Create message with chat_room_id
     message_data = message.model_dump()
@@ -54,6 +59,8 @@ async def send_message(message: MessageCreate):
     message_ref.set(message_data)
     
     message_data['id'] = message_ref.id
+    print(f"[SEND_MESSAGE] Created message with id: {message_ref.id}, chat_room_id: {chat_room_id}")
+    
     return message_data
 
 
@@ -125,6 +132,8 @@ async def get_chat_messages(chat_room_id: str):
     """Get all messages in a chat room"""
     db = get_db()
     
+    print(f"[GET_MESSAGES] Fetching messages for chat_room_id: {chat_room_id}")
+    
     messages = []
     for doc in db.collection('messages').where('chat_room_id', '==', chat_room_id).stream():
         message_data = doc.to_dict()
@@ -133,6 +142,8 @@ async def get_chat_messages(chat_room_id: str):
     
     # Sort by timestamp in Python instead of Firestore to avoid index requirement
     messages.sort(key=lambda x: x.get('timestamp', datetime.min))
+    
+    print(f"[GET_MESSAGES] Found {len(messages)} messages for chat_room_id: {chat_room_id}")
     
     return messages
 

@@ -763,6 +763,7 @@ See [FOOTER_USAGE.md](frontend/FOOTER_USAGE.md) for implementation details and c
 ### Technical Documentation
 - **DOCUMENTATION.md** - Complete technical documentation
 - **MEGA_LOG.md** - Complete project history and changelog
+- **UPDATES.md** - Latest updates and changes (includes chat system details)
 
 ### Documentation Index
 
@@ -770,8 +771,9 @@ For comprehensive documentation navigation:
 
 **For New Users**: README.md → QUICKSTART.md  
 **For Developers**: DEVELOPER_GUIDE.md → DOCUMENTATION.md  
+**For Chat System**: UPDATES.md (v2.1.2 section)  
 **For Deployment**: DEPLOYMENT.md  
-**For History**: MEGA_LOG.md → CHANGELOG_v2.1.0.md
+**For History**: MEGA_LOG.md → UPDATES.md
 
 For detailed documentation, see the files above or visit the `/docs` endpoint when running the backend.
 

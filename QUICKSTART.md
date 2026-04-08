@@ -348,6 +348,108 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 
 ## 📚 Next Steps
 
+### Learn More
+- 📖 [Complete Documentation](DOCUMENTATION.md) - Full technical docs
+- 👨‍💻 [Developer Guide](DEVELOPER_GUIDE.md) - Best practices and patterns
+- 🚀 [Deployment Guide](DEPLOYMENT.md) - Deploy to production
+- 📝 [Updates Log](UPDATES.md) - Latest changes and features
+
+### Key Features to Explore
+1. **AI Need Board** - Try natural language product search
+2. **Chat System** - Message sellers about products
+3. **Trust Scores** - Build your reputation
+4. **Dark Mode** - Toggle in profile settings
+5. **Analytics** - Track your listings performance
+
+---
+
+## 🐛 Troubleshooting
+
+### Backend Issues
+
+**"Module not found" errors**
+```bash
+cd backend
+pip install -r requirements.txt
+```
+
+**"Firebase not initialized"**
+- Check `.env` file exists in backend folder
+- Verify all Firebase variables are set
+- Ensure FIREBASE_PRIVATE_KEY has `\n` for newlines
+
+**"Port 8000 already in use"**
+```bash
+# Windows
+netstat -ano | findstr :8000
+taskkill /PID <PID> /F
+
+# Mac/Linux
+lsof -ti:8000 | xargs kill -9
+```
+
+### Frontend Issues
+
+**"Cannot find module" errors**
+```bash
+cd frontend
+rm -rf node_modules package-lock.json
+npm install
+```
+
+**"VITE_API_URL not defined"**
+- Check `.env` file exists in frontend folder
+- Ensure it starts with `VITE_`
+- Restart dev server after changes
+
+### Chat Issues
+
+**Messages disappearing after sending**
+- Ensure you're using latest code (v2.1.2+)
+- Check browser console for errors
+- Disable ad blockers (may block Firebase API)
+- Verify backend logs show correct chat_room_id
+
+**Duplicate messages appearing**
+- Clear browser cache
+- Check Map-based deduplication is working
+- Verify message IDs are unique
+
+**ERR_BLOCKED_BY_CLIENT error**
+- Disable ad blocker for localhost
+- Whitelist Firebase domains:
+  - `*.googleapis.com`
+  - `*.firebaseapp.com`
+  - `*.firebasestorage.app`
+
+### Database Issues
+
+**"Permission denied" in Firestore**
+- Go to Firebase Console → Firestore → Rules
+- Ensure rules allow read/write for authenticated users
+- Default test mode rules expire after 30 days
+
+**"Index required" error**
+- Firebase will show a link to create the index
+- Click the link and wait for index to build (1-2 minutes)
+
+### General Tips
+
+1. **Check logs first** - Most issues show clear error messages
+2. **Restart servers** - After environment variable changes
+3. **Clear cache** - Browser cache can cause stale data issues
+4. **Check versions** - Ensure Node 18+ and Python 3.11+
+5. **Read error messages** - They usually tell you exactly what's wrong
+
+### Still Having Issues?
+
+1. Check [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) for detailed debugging
+2. Review [UPDATES.md](UPDATES.md) for known issues
+3. Open an issue on [GitHub](https://github.com/Shreyas-patil07/UNIFIND/issues)
+4. Contact: systemrecord07@gmail.com
+
+---
+
 - 📖 Read the [Complete Documentation](DOCUMENTATION.md)
 - 🔍 Explore the [API Documentation](http://localhost:8000/docs)
 - 🎨 Check out the [Project Structure](README.md#-project-structure)

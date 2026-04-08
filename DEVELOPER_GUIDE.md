@@ -534,6 +534,202 @@ useEffect(() => {
 
 ---
 
+## Chat System Architecture
+
+### Core Principles
+
+1. **Single Source of Truth = Backend**
+   - All data originates from backend
+   - Frontend is temporary state only
+   - Never trust frontend for chat_room_id
+
+2. **Deterministic IDs**
+   - chat_room_id: `{min_user}_{max_user}_{product_id?}`
+   - Guarantees same users → same room
+   - No duplicates, no mismatch bugs
+
+3. **Never Blindly Overwrite State**
+   - Use Map-based merge logic
+   - Preserve optimistic messages
+   - Deduplicate by message ID
+
+### Message State Model
+
+```typescript
+type Message = {
+  id: string                    // Backend ID or temp-{timestamp}
+  text: string
+  sender_id: string
+  receiver_id: string
+  chat_room_id: string
+  timestamp: Date | Firestore.Timestamp
+  is_read: boolean
+  status?: "pending" | "sent"   // For UI feedback
+  _optimistic?: boolean         // Flag for temporary messages
+}
+```
+
+### Optimistic UI Pattern
+
+```javascript
+const handleSendMessage = async (e) => {
+  e.preventDefault();
+  
+  // 1. Create optimistic message
+  const optimisticMessage = {
+    id: `temp-${Date.now()}`,
+    text: messageText,
+    sender_id: currentUser.uid,
+    receiver_id: otherId,
+    chat_room_id: selectedChat.id,
+    timestamp: new Date(),
+    is_read: false,
+    _optimistic: true
+  };
+  
+  // 2. Add to UI immediately
+  setMessages(prev => [...prev, optimisticMessage]);
+  setMessage('');
+  
+  // 3. Send to backend
+  try {
+    const newMessage = await sendChatMessage({...});
+    
+    // 4. Replace optimistic with real message
+    setMessages(prev => 
+      prev.map(msg => 
+        msg.id === optimisticMessage.id ? newMessage : msg
+      )
+    );
+  } catch (error) {
+    // 5. Remove optimistic on failure
+    setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
+    setMessage(messageText); // Restore for retry
+  }
+};
+```
+
+### Map-Based Merge Logic (CRITICAL)
+
+```javascript
+// ❌ WRONG - Blindly overwrites state
+setMessages(fetchedMessages);
+
+// ✅ CORRECT - Map-based merge
+const loadMessages = async () => {
+  const chatMessages = await getChatMessages(selectedChat.id);
+  
+  setMessages(prev => {
+    // Create map with existing messages
+    const messageMap = new Map();
+    
+    // Add existing messages (preserves optimistic)
+    prev.forEach(msg => messageMap.set(msg.id, msg));
+    
+    // Merge backend messages (replaces optimistic if confirmed)
+    chatMessages.forEach(msg => {
+      messageMap.set(msg.id, { ...msg, status: 'sent' });
+    });
+    
+    // Remove optimistic messages that have been confirmed
+    const optimisticMessages = prev.filter(m => m._optimistic);
+    optimisticMessages.forEach(optMsg => {
+      const isConfirmed = chatMessages.some(backendMsg => 
+        backendMsg.text === optMsg.text &&
+        backendMsg.sender_id === optMsg.sender_id &&
+        Math.abs(new Date(backendMsg.timestamp) - new Date(optMsg.timestamp)) < 5000
+      );
+      
+      if (isConfirmed) {
+        messageMap.delete(optMsg.id);
+      }
+    });
+    
+    // Convert to sorted array
+    return Array.from(messageMap.values()).sort((a, b) => 
+      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+  });
+};
+```
+
+### Why This Works
+
+1. **No Overwrites**: Map preserves existing messages
+2. **No Duplicates**: Map dedup by ID (O(1) lookup)
+3. **Optimistic Survives**: Kept until confirmed by backend
+4. **Correct Order**: Sorted by timestamp after merge
+5. **Error Recovery**: Failed messages removed, text restored
+
+### Common Mistakes to Avoid
+
+```javascript
+// ❌ Generating chat_room_id in frontend
+const chatRoomId = `${user1}_${user2}`; // Order-dependent!
+
+// ✅ Let backend generate deterministic ID
+const chatRoom = await getOrCreateChatRoom(user1, user2);
+
+// ❌ Overwriting state on polling
+setMessages(fetchedMessages);
+
+// ✅ Merge with existing state
+setMessages(prev => mergeMessages(prev, fetchedMessages));
+
+// ❌ No message status
+<div>{message.text}</div>
+
+// ✅ Show status for feedback
+<div>
+  {message.text}
+  {message._optimistic && <span>Sending...</span>}
+</div>
+
+// ❌ No deduplication
+messages.push(newMessage);
+
+// ✅ Deduplicate by ID
+const map = new Map(messages.map(m => [m.id, m]));
+map.set(newMessage.id, newMessage);
+```
+
+### Testing Chat System
+
+```javascript
+// Test 1: Message persistence
+test('message persists after polling', async () => {
+  await sendMessage('Hello');
+  await waitFor(() => expect(screen.getByText('Hello')).toBeInTheDocument());
+  
+  // Simulate polling
+  await act(() => pollMessages());
+  
+  // Message should still be there
+  expect(screen.getByText('Hello')).toBeInTheDocument();
+});
+
+// Test 2: No duplicates
+test('no duplicate messages', async () => {
+  await sendMessage('Hello');
+  await act(() => pollMessages());
+  
+  const messages = screen.getAllByText('Hello');
+  expect(messages).toHaveLength(1);
+});
+
+// Test 3: Optimistic UI
+test('message appears immediately', async () => {
+  const promise = sendMessage('Hello');
+  
+  // Should appear before promise resolves
+  expect(screen.getByText('Hello')).toBeInTheDocument();
+  
+  await promise;
+});
+```
+
+---
+
 ## Debugging
 
 ### Backend Issues

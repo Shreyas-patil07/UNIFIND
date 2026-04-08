@@ -336,25 +336,63 @@ Currently using Firebase Authentication. Backend validates Firebase tokens.
 - Description: Send message
 - Request Body: MessageCreate object
 - Side Effects: Creates chat room if needed, updates unread count
-- Response: Message object
+- Response: Message object with deterministic chat_room_id
+- Implementation: Uses min/max logic for consistent chat_room_id generation
 
 **GET /api/chats/{user_id}**
 - Description: Get all chat rooms for user
-- Response: Array of ChatRoom objects
+- Query Parameters:
+  - `friends_only` (optional): Filter to friends only
+- Response: Array of ChatRoom objects with is_friend flag
+- Performance: Optimized with friendship status caching
 
 **GET /api/chats/room/{chat_room_id}/messages**
 - Description: Get messages in chat room
-- Response: Array of Message objects
+- Response: Array of Message objects sorted by timestamp ASC
+- Implementation: Sorted in Python to avoid Firestore index requirement
+- Note: Returns all messages for client-side merge logic
 
 **GET /api/chats/between/{user1_id}/{user2_id}**
 - Description: Get or create chat room between two users
 - Query Parameters:
   - `product_id` (optional): Associate chat with product
-- Response: ChatRoom object
+- Response: ChatRoom object with deterministic ID
+- Implementation: ID format: `{min_user}_{max_user}_{product_id?}`
+- Guarantees: Same users always get same chat room
 
 **PUT /api/chats/{chat_room_id}/mark-read/{user_id}**
 - Description: Mark messages as read
+- Side Effects: Resets unread count, updates is_read flag
 - Response: Success message
+- Implementation: Batch update for performance
+
+### Chat System Architecture
+
+**Core Principles**:
+1. Single source of truth = Backend
+2. Deterministic chat_room_id generation
+3. Frontend uses Map-based merge (never blindly overwrites)
+4. Optimistic UI for instant feedback
+
+**Message Flow**:
+1. User sends message → Optimistic UI (temp ID)
+2. Backend saves with deterministic chat_room_id
+3. Backend returns message with real ID
+4. Frontend replaces optimistic with real message
+5. Polling merges backend data (preserves optimistic)
+
+**Key Features**:
+- ✅ No message disappearing (Map-based merge)
+- ✅ No duplicates (Map deduplication by ID)
+- ✅ Instant feedback (optimistic UI)
+- ✅ Error recovery (failed messages removed)
+- ✅ Proper ordering (sorted by timestamp)
+
+**Implementation Details**:
+- Backend: `backend/routes/chats.py` with debug logging
+- Frontend: `frontend/src/pages/ChatPage.jsx` with Map-based merge
+- Polling: 5 seconds for messages, 10 seconds for chat list
+- State: Message status (pending/sent/delivered/read)
 
 #### Reviews API
 

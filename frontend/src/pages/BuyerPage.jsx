@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Header from '../components/Header';
 import ProductCard from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/SkeletonLoader';
@@ -110,60 +110,77 @@ const BuyerPage = () => {
     }
   }, [sortDropdownOpen]);
 
-  // Load products from API
+  // Load products from API with caching
   useEffect(() => {
+    let isMounted = true;
+    
     const loadProducts = async () => {
       try {
         setLoading(true);
         const fetchedProducts = await getProducts({
           category: selectedCategory !== 'All' ? selectedCategory : undefined
         });
-        setProducts(Array.isArray(fetchedProducts) ? fetchedProducts : []);
-        console.log('Products loaded:', Array.isArray(fetchedProducts) ? fetchedProducts.length : 0);
+        if (isMounted) {
+          setProducts(Array.isArray(fetchedProducts) ? fetchedProducts : []);
+          console.log('Products loaded:', Array.isArray(fetchedProducts) ? fetchedProducts.length : 0);
+        }
       } catch (error) {
         console.error('Failed to load products:', error);
         console.error('Error details:', error.response?.data || error.message);
-        setProducts([]);
+        if (isMounted) {
+          setProducts([]);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadProducts();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [selectedCategory]);
 
-  // Debug: Log condition changes
+  // Debug: Log condition changes (remove in production)
   useEffect(() => {
-    console.log('Condition filter changed to:', condition);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Condition filter changed to:', condition);
+    }
   }, [condition]);
 
-  // Handle product view
-  const handleProductView = (product) => {
+  // Handle product view (memoized)
+  const handleProductView = useCallback((product) => {
     addToRecentlyViewed(product);
     setRecentlyViewed(getRecentlyViewed());
-  };
+  }, []);
 
-  // Handle search submission
-  const handleSearch = (query) => {
-    const historyArray = Array.isArray(searchHistory) ? searchHistory : [];
-    if (query.trim() && !historyArray.includes(query.trim())) {
-      const updated = [query.trim(), ...historyArray].slice(0, 10);
-      setSearchHistory(updated);
-      localStorage.setItem('unifind_search_history', JSON.stringify(updated));
-    }
-  };
+  // Handle search submission (memoized)
+  const handleSearch = useCallback((query) => {
+    setSearchHistory(prev => {
+      const historyArray = Array.isArray(prev) ? prev : [];
+      if (query.trim() && !historyArray.includes(query.trim())) {
+        const updated = [query.trim(), ...historyArray].slice(0, 10);
+        localStorage.setItem('unifind_search_history', JSON.stringify(updated));
+        return updated;
+      }
+      return prev;
+    });
+  }, []);
 
-  // Clear search history
-  const clearSearchHistory = () => {
+  // Clear search history (memoized)
+  const clearSearchHistory = useCallback(() => {
     setSearchHistory([]);
     localStorage.removeItem('unifind_search_history');
-  };
+  }, []);
 
-  // Clear recently viewed
-  const handleClearRecentlyViewed = () => {
+  // Clear recently viewed (memoized)
+  const handleClearRecentlyViewed = useCallback(() => {
     clearRecentlyViewed();
     setRecentlyViewed([]);
-  };
+  }, []);
 
   // Memoize filtered and sorted products for better performance
   const sortedProducts = useMemo(() => {
