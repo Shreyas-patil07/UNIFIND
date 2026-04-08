@@ -206,6 +206,21 @@ curl -X POST http://localhost:8000/api/your-endpoint \
 
 ---
 
+## Performance Optimization
+
+### Chat Polling Optimization
+The chat system uses smart visibility-based polling:
+- **When visible**: Polls every 5-10 seconds for real-time updates
+- **When hidden**: Stops completely to save resources
+- **On return**: Immediate refresh + resume polling
+- **Benefits**: 90% reduction in API calls when page is hidden
+
+### Request Optimization
+- Request deduplication for concurrent identical GET calls
+- Auto-retry with exponential backoff for failed requests
+- React Query caching (5-minute stale time)
+- AbortController support for request cancellation
+
 ## Common Tasks
 
 ### Add New Pydantic Model
@@ -353,6 +368,168 @@ const ChatList = ({ chats, messagesCache }) => {
     return <ChatItem messages={messages} />
   })
 }
+```
+
+---
+
+## React Best Practices
+
+### Preventing Memory Leaks
+Always clean up effects that set state or create subscriptions:
+
+```javascript
+// ✅ GOOD: Proper cleanup with isActive flag
+useEffect(() => {
+  let isActive = true;
+  
+  const loadData = async () => {
+    const data = await fetchData();
+    if (isActive) {
+      setState(data); // Only update if component is still mounted
+    }
+  };
+  
+  loadData();
+  
+  return () => {
+    isActive = false; // Prevent state updates after unmount
+  };
+}, []);
+
+// ✅ GOOD: Cleanup intervals
+useEffect(() => {
+  const interval = setInterval(() => {
+    fetchUpdates();
+  }, 5000);
+  
+  return () => {
+    clearInterval(interval); // Always clear intervals
+  };
+}, []);
+```
+
+### Avoiding Race Conditions
+Prevent stale closures in async operations:
+
+```javascript
+// ❌ BAD: Stale closure in interval
+useEffect(() => {
+  const interval = setInterval(() => {
+    loadChats(friendsOnly); // friendsOnly is stale!
+  }, 10000);
+  
+  return () => clearInterval(interval);
+}, []); // Missing friendsOnly dependency
+
+// ✅ GOOD: Use inline arrow function
+useEffect(() => {
+  const interval = setInterval(() => {
+    loadChats(friendsOnly); // Always uses current value
+  }, 10000);
+  
+  return () => clearInterval(interval);
+}, [friendsOnly]); // Include dependency
+
+// ✅ BETTER: Use ref for mutable values
+const friendsOnlyRef = useRef(friendsOnly);
+friendsOnlyRef.current = friendsOnly;
+
+useEffect(() => {
+  const interval = setInterval(() => {
+    loadChats(friendsOnlyRef.current); // Always current
+  }, 10000);
+  
+  return () => clearInterval(interval);
+}, []); // No dependency needed
+```
+
+### Preventing Infinite Loops
+Be careful with useEffect dependencies:
+
+```javascript
+// ❌ BAD: Callback in dependency array
+const ChatItem = ({ onProfileLoaded }) => {
+  useEffect(() => {
+    loadProfile();
+    onProfileLoaded(profile); // Triggers parent re-render
+  }, [onProfileLoaded]); // Parent recreates this every render!
+}
+
+// ✅ GOOD: Wrap callback in useCallback
+const ParentComponent = () => {
+  const handleProfileLoaded = useCallback((profile) => {
+    setProfiles(prev => ({ ...prev, [profile.id]: profile }));
+  }, []); // Stable reference
+  
+  return <ChatItem onProfileLoaded={handleProfileLoaded} />
+}
+
+// ✅ BETTER: Remove callback from dependencies if not needed
+const ChatItem = ({ onProfileLoaded }) => {
+  useEffect(() => {
+    loadProfile();
+    onProfileLoaded(profile);
+  }, []); // Only run once
+}
+```
+
+### Optimizing Re-renders
+Use React.memo and useMemo strategically:
+
+```javascript
+// ✅ Memoize expensive components
+const ChatListItem = React.memo(({ chat, onClick }) => {
+  return <div onClick={onClick}>{chat.name}</div>
+}, (prevProps, nextProps) => {
+  // Only re-render if chat.id changed
+  return prevProps.chat.id === nextProps.chat.id;
+});
+
+// ✅ Memoize expensive computations
+const filteredChats = useMemo(() => {
+  return chats.filter(chat => 
+    chat.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+}, [chats, searchQuery]); // Only recompute when these change
+
+// ✅ Memoize callbacks passed to children
+const handleChatClick = useCallback((chatId) => {
+  setSelectedChat(chatId);
+}, []); // Stable reference
+```
+
+### Proper Cleanup Patterns
+```javascript
+// ✅ Complete cleanup example
+useEffect(() => {
+  let isActive = true;
+  const controller = new AbortController();
+  
+  const loadData = async () => {
+    try {
+      const data = await fetch('/api/data', {
+        signal: controller.signal
+      });
+      
+      if (isActive) {
+        setState(data);
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError' && isActive) {
+        setError(error);
+      }
+    }
+  };
+  
+  const interval = setInterval(loadData, 5000);
+  loadData(); // Initial load
+  
+  return () => {
+    isActive = false;
+    controller.abort(); // Cancel pending requests
+    clearInterval(interval); // Clear interval
+  };
+}, []);
 ```
 
 ---

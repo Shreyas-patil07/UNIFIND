@@ -368,47 +368,73 @@ unifind/
 
 ---
 
-## 🔌 API Endpoints
+## 🔌 API Documentation
 
-### Products
-- `GET /api/products` - Get all products with filters
-- `POST /api/products` - Create new product
-- `GET /api/products/{id}` - Get product details
-- `PUT /api/products/{id}` - Update product
-- `DELETE /api/products/{id}` - Delete product
+### Interactive Documentation
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
 
-### Users (Core Data)
-- `GET /api/users` - Get all users
-- `POST /api/users` - Create new user (also creates profile)
+### Main API Endpoints
+
+#### Products API
+- `GET /api/products` - List all products (with filters: category, price, condition, seller_id)
+- `POST /api/products` - Create product (auth required)
+- `GET /api/products/{id}` - Get product details (increments view count)
+- `PATCH /api/products/{id}` - Update product (auth required, owner only)
+- `DELETE /api/products/{id}` - Soft delete product (auth required, owner only)
+- `GET /api/products/seller/me` - Get seller's products (auth required)
+
+#### Users API (Core Data)
+- `GET /api/users` - List all users
+- `POST /api/users` - Create user (also creates profile automatically)
 - `GET /api/users/{id}` - Get user core data
 - `GET /api/users/firebase/{uid}` - Get user by Firebase UID
-- `PUT /api/users/{id}` - Update user core data
+- `PUT /api/users/{id}` - Update user core data (name, email, college)
 
-### User Profiles
-- `GET /api/users/{id}/profile` - Get user profile (public)
+#### User Profiles API
+- `GET /api/users/{id}/profile` - Get user profile (public data by default)
 - `GET /api/users/{id}/profile?include_private=true` - Get profile with private data
-- `PUT /api/users/{id}/profile` - Update user profile
+- `PUT /api/users/{id}/profile` - Update user profile (auth required)
 
-### Transaction History
+#### Transaction History API
 - `GET /api/users/{id}/transactions` - Get all transactions
 - `GET /api/users/{id}/transactions?transaction_type=buy` - Get buy history
 - `GET /api/users/{id}/transactions?transaction_type=sell` - Get sell history
 - `POST /api/users/{id}/transactions` - Create transaction record
 - `PUT /api/transactions/{id}` - Update transaction status
 
-### Chats
+#### Chats API
 - `POST /api/chats/messages` - Send message (auto-creates chat room)
 - `GET /api/chats/{user_id}` - Get user's chat rooms
-- `GET /api/chats/room/{chat_room_id}/messages` - Get chat messages
+- `GET /api/chats/room/{room_id}/messages` - Get messages in chat room
 - `GET /api/chats/between/{user1_id}/{user2_id}` - Get or create chat room
-- `PUT /api/chats/{chat_room_id}/mark-read/{user_id}` - Mark as read
+- `PUT /api/chats/{room_id}/mark-read/{user_id}` - Mark messages as read
 
-### Reviews
-- `POST /api/reviews` - Create review
+#### Reviews API
+- `POST /api/reviews` - Create review (updates user rating automatically)
 - `GET /api/reviews/user/{user_id}` - Get user reviews
 - `GET /api/reviews/product/{product_id}` - Get product reviews
 
-**Interactive API Documentation**: `http://localhost:8000/docs`
+#### Uploads API
+- `POST /api/upload/product-image` - Upload single image (auth required)
+- `POST /api/upload/product-images` - Upload multiple images (auth required, max 5)
+
+#### Need Board API (AI-Powered)
+- `POST /api/need-board` - AI-powered search (auth required, rate limited: 3/12hrs)
+- `GET /api/need-board/history` - Get search history (auth required)
+
+#### Health Check
+- `GET /health` - Simple health check
+- `GET /api/health` - API health check with version info
+
+### Authentication
+
+All protected endpoints require Firebase ID token in Authorization header:
+```
+Authorization: Bearer <firebase-id-token>
+```
+
+The backend verifies tokens using Firebase Admin SDK and extracts the user ID for authorization checks.
 
 ---
 
@@ -497,10 +523,109 @@ npm test
 ```
 
 ### Backend Testing
+
+The backend uses manual testing through the interactive API documentation:
+
+**Interactive API Testing**:
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+**Manual Testing Procedures**:
+1. Start the backend server: `python main.py`
+2. Open http://localhost:8000/docs
+3. Test each endpoint using the interactive interface
+4. Verify responses and error handling
+
+### Manual Testing Checklist
+See [DOCUMENTATION.md](DOCUMENTATION.md#testing) for comprehensive manual testing procedures.
+
+---
+
+## 🔧 Backend Development
+
+### Project Structure
+
+```
+backend/
+├── routes/                    # API route modules
+│   ├── products.py           # Product CRUD operations
+│   ├── users.py              # User management
+│   ├── chats.py              # Messaging system
+│   ├── reviews.py            # Review system
+│   ├── uploads.py            # Image upload handling
+│   └── need_board.py         # AI-powered search
+├── services/                  # Business logic services
+│   ├── cloudinary_service.py # Image upload to Cloudinary
+│   ├── gemini_client.py      # Google Gemini AI client
+│   ├── intent_extractor.py   # AI intent extraction
+│   └── semantic_ranker.py    # AI semantic ranking
+├── auth.py                    # Authentication middleware
+├── config.py                  # Configuration management
+├── database.py                # Firebase Firestore initialization
+├── main.py                    # FastAPI application entry point
+├── models.py                  # Pydantic data models
+└── requirements.txt           # Python dependencies
+```
+
+### Key Backend Features
+
+#### Authentication Middleware
+Protected endpoints use Firebase ID token verification:
+```python
+@router.post("/products")
+async def create_product(
+    product: ProductCreate,
+    user_id: str = Depends(get_current_user)
+):
+    # user_id is the authenticated user's Firebase UID
+    pass
+```
+
+#### AI Services
+- **Gemini AI Integration**: Intent extraction and semantic ranking
+- **Rate Limiting**: 3 searches per 12 hours per user
+- **Response Caching**: Improved performance and reduced costs
+- **Token Optimization**: 45% reduction in token usage
+
+#### Database Collections
+1. **users** - Core authentication data
+2. **user_profiles** - Extended user information (public/private)
+3. **products** - Product listings
+4. **chat_rooms** - Chat metadata
+5. **messages** - Chat messages
+6. **reviews** - User reviews
+7. **transaction_history** - Buy/sell records
+
+### Code Quality Tools
+
+#### Linting
 ```bash
 cd backend
-pytest
+ruff check .
 ```
+
+#### Formatting
+```bash
+ruff format .
+```
+
+Configuration in `.ruff.toml` and `pyproject.toml`.
+
+### Adding New Endpoints
+
+1. **Create route** in appropriate file (e.g., `routes/products.py`)
+2. **Define Pydantic models** in `models.py`
+3. **Add authentication** if needed (`Depends(get_current_user)`)
+4. **Write tests** in `test_*.py`
+5. **Documentation** updates automatically via FastAPI
+
+### Development Guidelines
+- Follow PEP 8 style guide
+- Use type hints for all functions
+- Document functions with docstrings
+- Use async/await for I/O operations
+- Write tests for all new endpoints
+- Mock Firebase and external services in tests
 
 ---
 
@@ -522,21 +647,42 @@ We welcome contributions! Please follow these steps:
 - Check Node.js version (18+)
 - Delete `node_modules` and reinstall
 - Verify `.env` file exists with Firebase config
+- Clear Vite cache: `rm -rf node_modules/.vite`
 
 ### Backend won't start
 - Check Python version (3.11+)
 - Verify Firebase credentials in `.env`
 - Ensure port 8000 is available
+- Check for syntax errors: `python -m py_compile backend/main.py`
 
 ### API connection fails
 - Verify backend is running at `http://localhost:8000`
-- Check CORS configuration
+- Check CORS configuration in `backend/config.py`
 - Verify `VITE_API_URL` in frontend `.env`
+- Check browser console for specific error codes
 
 ### Firebase connection fails
 - Verify Firebase project exists
 - Check credentials in both `.env` files
 - Ensure Firestore database is created
+- Verify Firebase Admin SDK credentials are correct
+
+### Need Board Issues
+- **401 Unauthorized**: Ensure user is logged in and token is being passed
+- **No results**: Check if products exist in Firestore with `is_active: true`
+- **Images not showing**: Verify products have `images` array with Cloudinary URLs
+- **Rate limit**: Wait 12 hours or check `need_board_searches` in user profile
+
+### Chat Issues
+- **Messages not loading**: Check browser console for errors
+- **Polling not working**: Verify page visibility API is supported
+- **Messages not sending**: Ensure user is authenticated
+- **Unread counts wrong**: Try marking chat as read manually
+
+### Image Upload Issues
+- **Upload fails**: Check file size (max 5MB) and type (images only)
+- **Cloudinary errors**: Verify Cloudinary credentials in backend `.env`
+- **Images not displaying**: Check Cloudinary URLs are accessible
 
 ---
 

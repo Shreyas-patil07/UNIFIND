@@ -12,24 +12,44 @@ This document tracks all project updates in reverse chronological order (newest 
 **Type**: Bug Fixes & Performance Improvements  
 **Version**: 2.1.0 (Patch)
 
-### Performance Improvements
+### Memory Leak Fixes
+- ✅ Fixed state updates after component unmount
+- ✅ Added `isActive` flag in all useEffect hooks
+- ✅ Proper cleanup functions for all effects
+- ✅ Prevented stale state updates
+
+### Race Condition Fixes
 - ✅ Fixed polling stale closure bug causing race conditions on chat switch
+- ✅ Proper cleanup in all intervals
+- ✅ Separated initial load from polling logic
+- ✅ Used `isActive` flag to prevent stale updates
+
+### Infinite Re-render Fixes
+- ✅ Wrapped callbacks in `useCallback` hook
+- ✅ Memoized `handleUserProfileLoaded` function
+- ✅ Removed callback from ChatListItem dependency array
+- ✅ Fixed dependency array issues
+
+### Performance Improvements
 - ✅ Eliminated N+1 query pattern (20x faster with 20 chats)
 - ✅ Reduced online status calculations by 80% (3 calls → 1 per render)
 - ✅ Added user profile caching for instant search filtering
 - ✅ Moved static emoji data outside component (prevents recreation on every render)
+- ✅ Optimized polling intervals (chat list: 10s, messages: 5s)
 
 ### Bug Fixes
 - ✅ Fixed broken search filtering (now properly filters by user names)
 - ✅ Fixed inconsistent API usage (now uses centralized api.js)
 - ✅ Replaced deprecated onKeyPress with onKeyDown
 - ✅ Fixed race condition in message loading on chat switch
+- ✅ Fixed stale closures in interval callbacks
 
 ### Code Quality
 - ✅ Refactored useEffect dependencies to prevent stale closures
 - ✅ Improved error handling in markMessageAsRead
 - ✅ Added proper cleanup for intervals and observers
 - ✅ Clarified TODO comments for report functionality
+- ✅ Wrapped components in React.memo() for optimization
 
 ### Files Modified
 - `frontend/src/pages/ChatPage.jsx` - Complete refactoring with performance optimizations
@@ -38,6 +58,7 @@ This document tracks all project updates in reverse chronological order (newest 
 - Chat list loads 20x faster with 20 chats
 - Search now works correctly
 - No more race conditions when switching chats
+- No memory leaks or infinite loops
 - Better code maintainability
 
 ---

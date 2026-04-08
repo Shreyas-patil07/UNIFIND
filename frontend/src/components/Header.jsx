@@ -243,9 +243,9 @@ export default function Header({ hideSearch = false }) {
   return (
     <>
       {/* ===== TOP HEADER ===== */}
-      <header className={`sticky top-0 z-50 backdrop-blur-md border-b ${darkMode ? 'bg-slate-800/95 border-slate-700/80' : 'bg-white/95 border-slate-200/80'}`}>
-        <div className="px-4 sm:px-6 md:px-10 lg:px-20 py-2 sm:py-3">
-          <div className="flex items-center justify-between gap-4">
+      <header className={`sticky top-0 z-50 h-16 sm:h-[72px] backdrop-blur-md border-b ${darkMode ? 'bg-slate-800/95 border-slate-700/80' : 'bg-white/95 border-slate-200/80'}`}>
+        <div className="h-full px-4 sm:px-6 md:px-10 lg:px-20 flex items-center">
+          <div className="flex items-center justify-between gap-4 w-full">
 
             {/* Logo */}
             <Link
@@ -259,21 +259,6 @@ export default function Header({ hideSearch = false }) {
                 <span className="text-violet-600">FIND</span>
               </span>
             </Link>
-
-            {/* Search Bar - Desktop */}
-            {!hideSearch && (
-              <div className="hidden lg:flex flex-1 max-w-xs xl:max-w-md mx-2 lg:mx-4">
-                <div className="relative w-full">
-                  <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-                  <input
-                    type="text"
-                    placeholder="Search products..."
-                    className={`input-premium w-full pl-10 pr-4 py-2.5 text-[16px] sm:text-sm ${darkMode ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-400' : ''}`}
-                    data-testid="header-search-input"
-                  />
-                </div>
-              </div>
-            )}
 
             {/* Desktop Nav */}
             <nav className="flex items-center gap-1">
@@ -691,20 +676,6 @@ export default function Header({ hideSearch = false }) {
               </div>
             )}
           </div>
-
-          {/* Mobile Search */}
-          {!hideSearch && (
-            <div className="lg:hidden mt-2.5">
-              <div className="relative w-full">
-                <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  className={`input-premium w-full pl-10 pr-4 py-2.5 text-[16px] sm:text-sm ${darkMode ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-400' : ''}`}
-                />
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Mobile Drawer Menu */}
@@ -758,7 +729,7 @@ export default function Header({ hideSearch = false }) {
 
       {/* ===== MOBILE BOTTOM NAV ===== */}
       {!isOnChatPage && (
-        <nav className="mobile-bottom-nav" data-testid="mobile-bottom-nav">
+        <nav className="mobile-bottom-nav pb-[env(safe-area-inset-bottom)]" data-testid="mobile-bottom-nav">
           {bottomNavItems.map(({ label, path, icon: Icon, badge, action }) => {
             const active = path ? isActive(path) : isOnProfilePage
             return (

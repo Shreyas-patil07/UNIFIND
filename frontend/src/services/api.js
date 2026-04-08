@@ -100,52 +100,73 @@ export const checkFriendship = async (userId, friendId) => {
   return response.data
 }
 
-// Firebase direct calls - Products
-export const getProduct = async (productId) => {
-  const docRef = doc(db, 'products', productId)
-  const docSnap = await getDoc(docRef)
-  if (docSnap.exists()) {
-    return { id: docSnap.id, ...docSnap.data() }
+// Backend API calls - Products
+export const getProduct = async (productId, idToken = null) => {
+  const config = {};
+  
+  // Only add Authorization header if token is provided
+  if (idToken) {
+    config.headers = { 'Authorization': `Bearer ${idToken}` };
   }
-  throw new Error('Product not found')
+  
+  const response = await api.get(`/products/${productId}`, config);
+  return response.data;
 }
 
 export const getProducts = async (filters = {}) => {
-  let q = collection(db, 'products')
+  const params = {}
   
   if (filters.category && filters.category !== 'All') {
-    q = query(q, where('category', '==', filters.category))
+    params.category = filters.category
   }
   
   if (filters.seller_id) {
-    q = query(q, where('seller_id', '==', filters.seller_id))
+    params.seller_id = filters.seller_id
   }
   
-  q = query(q, orderBy('created_at', 'desc'), limit(filters.limit || 100))
+  if (filters.min_price) {
+    params.min_price = filters.min_price
+  }
   
-  const querySnapshot = await getDocs(q)
-  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+  if (filters.max_price) {
+    params.max_price = filters.max_price
+  }
+  
+  if (filters.condition) {
+    params.condition = filters.condition
+  }
+  
+  const response = await api.get('/products', { params })
+  // Backend returns paginated response: { items: [], total, page, page_size, pages }
+  // Extract the items array for frontend compatibility
+  return response.data.items || []
 }
 
-export const createProduct = async (productData) => {
-  const docRef = await addDoc(collection(db, 'products'), {
-    ...productData,
-    created_at: new Date().toISOString(),
-    views: 0
+export const createProduct = async (productData, idToken) => {
+  const response = await api.post('/products', productData, {
+    headers: {
+      'Authorization': `Bearer ${idToken}`
+    }
   })
-  return { id: docRef.id, ...productData }
+  return response.data
 }
 
-export const updateProduct = async (productId, productData) => {
-  const docRef = doc(db, 'products', productId)
-  await updateDoc(docRef, productData)
-  return { id: productId, ...productData }
+export const updateProduct = async (productId, productData, idToken) => {
+  const response = await api.patch(`/products/${productId}`, productData, {
+    headers: {
+      'Authorization': `Bearer ${idToken}`
+    }
+  })
+  return response.data
 }
 
-export const deleteProduct = async (productId) => {
-  const docRef = doc(db, 'products', productId)
-  await deleteDoc(docRef)
-  return { id: productId }
+export const deleteProduct = async (productId, idToken) => {
+  const response = await api.delete(`/products/${productId}`, {
+    headers: {
+      'Authorization': `Bearer ${idToken}`
+    }
+  })
+  return response.data
 }
 
 // Chat API calls via backend
@@ -180,7 +201,21 @@ export default api
 
 
 // AI Need Board
-export const searchNeedBoard = async (query) => {
-  const response = await api.post('/need-board', { query })
+export const searchNeedBoard = async (query, idToken) => {
+  const response = await api.post('/need-board', { query }, {
+    headers: {
+      'Authorization': `Bearer ${idToken}`
+    }
+  })
   return response.data // { extracted, rankedResults }
+}
+
+// Get Need Board search history
+export const getNeedBoardHistory = async (idToken) => {
+  const response = await api.get('/need-board/history', {
+    headers: {
+      'Authorization': `Bearer ${idToken}`
+    }
+  })
+  return response.data // { searches, searches_remaining }
 }

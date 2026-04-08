@@ -642,7 +642,7 @@ const ProfilePage = () => {
           </div>
 
           {/* Reviews - Only show if there are reviews */}
-          {userReviews && userReviews.length > 0 && (
+          {Array.isArray(userReviews) && userReviews.length > 0 && (
             <div className={`rounded-2xl border p-8 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
               <h2 className={`text-xl font-bold mb-6 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>Recent Reviews</h2>
               <div className="space-y-6">

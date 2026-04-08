@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import ImageCropModal from '../components/ImageCropModal';
-import { GraduationCap, Lock, ArrowLeft, Save, Upload, X, AlertCircle } from 'lucide-react';
+import { GraduationCap, Lock, ArrowLeft, Save, Upload, X, AlertCircle, Smartphone } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';

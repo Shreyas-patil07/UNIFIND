@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Header from '../components/Header';
 import { Send, MapPin, IndianRupee, ArrowLeft, Check, CheckCheck, Smile, Search, MoreVertical, Flag, UserPlus } from 'lucide-react';
@@ -52,6 +52,44 @@ const ChatPage = () => {
   // Get user ID from URL params (for starting new chat)
   const targetUserId = searchParams.get('user');
   const productId = searchParams.get('product');
+
+  // Handle initial chat creation from URL params
+  useEffect(() => {
+    if (!currentUser || !targetUserId || targetUserId === currentUser.uid) return;
+
+    let isActive = true;
+
+    const initializeChat = async () => {
+      try {
+        const chatRoom = await getOrCreateChatRoom(currentUser.uid, targetUserId, productId);
+        if (isActive) {
+          setSelectedChat(chatRoom);
+        }
+        
+        // Load other user's profile
+        const profile = await getPublicProfile(targetUserId);
+        if (isActive) {
+          setOtherUser(profile);
+        }
+        
+        // Load product if specified
+        if (productId) {
+          const prod = await getProduct(productId);
+          if (isActive) {
+            setProduct(prod);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to initialize chat:', error);
+      }
+    };
+
+    initializeChat();
+
+    return () => {
+      isActive = false;
+    };
+  }, [targetUserId, productId, currentUser?.uid]);
 
   // Get message status for read receipts
   const getMessageStatus = (msg) => {
@@ -209,46 +247,95 @@ const ChatPage = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Load user's chats
+  // Track page visibility to pause/resume polling
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        console.log('Chat page hidden - pausing updates');
+      } else {
+        console.log('Chat page visible - resuming updates');
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  // Load user's chats with smart polling
   useEffect(() => {
     if (!currentUser) {
       navigate('/login');
       return;
     }
 
+    let isActive = true;
+    let pollInterval = null;
+
     const loadChats = async () => {
+      if (!isActive || document.hidden) return; // Don't load if page is hidden
       try {
         const userChats = await getUserChats(currentUser.uid, friendsOnly);
-        setChats(userChats);
-        
-        // If there's a target user, create/get chat room
-        if (targetUserId && targetUserId !== currentUser.uid) {
-          const chatRoom = await getOrCreateChatRoom(currentUser.uid, targetUserId, productId);
-          setSelectedChat(chatRoom);
-          
-          // Load other user's profile
-          const profile = await getPublicProfile(targetUserId);
-          setOtherUser(profile);
-          
-          // Load product if specified
-          if (productId) {
-            const prod = await getProduct(productId);
-            setProduct(prod);
-          }
+        if (isActive) {
+          setChats(userChats);
+          setLoading(false);
         }
-        // Don't auto-select first chat - let user choose
-        
-        setLoading(false);
       } catch (error) {
         console.error('Failed to load chats:', error);
-        setLoading(false);
+        if (isActive) {
+          setLoading(false);
+        }
       }
     };
 
+    // Initial load
     loadChats();
-  }, [currentUser, targetUserId, productId, navigate, friendsOnly]);
+    
+    // Start polling only when page is visible
+    const startPolling = () => {
+      if (pollInterval) return; // Already polling
+      
+      pollInterval = setInterval(() => {
+        if (!document.hidden && isActive) {
+          loadChats();
+        }
+      }, 10000); // Poll every 10 seconds when visible
+    };
 
-  // Load messages when chat is selected
+    const stopPolling = () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+    };
+
+    // Handle visibility changes
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        loadChats(); // Refresh immediately when page becomes visible
+        startPolling();
+      }
+    };
+
+    // Start initial polling if page is visible
+    if (!document.hidden) {
+      startPolling();
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      isActive = false;
+      stopPolling();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [currentUser?.uid, friendsOnly, navigate]);
+
+  // Load messages when chat is selected with smart polling
   useEffect(() => {
     if (!selectedChat || !currentUser) return;
 
@@ -256,10 +343,16 @@ const ChatPage = () => {
       ? selectedChat.user2_id 
       : selectedChat.user1_id;
 
+    let isActive = true;
+    let pollInterval = null;
+
     const loadMessages = async () => {
+      if (!isActive || document.hidden) return; // Don't load if page is hidden
       try {
         const chatMessages = await getChatMessages(selectedChat.id);
-        setMessages(chatMessages);
+        if (isActive) {
+          setMessages(chatMessages);
+        }
       } catch (error) {
         console.error('Failed to load messages:', error);
       }
@@ -270,12 +363,16 @@ const ChatPage = () => {
       try {
         // Load other user's profile
         const profile = await getPublicProfile(otherId);
-        setOtherUser(profile);
+        if (isActive) {
+          setOtherUser(profile);
+        }
         
         // Load product if specified
         if (selectedChat.product_id) {
           const prod = await getProduct(selectedChat.product_id);
-          setProduct(prod);
+          if (isActive) {
+            setProduct(prod);
+          }
         }
         
         // Load messages
@@ -290,9 +387,46 @@ const ChatPage = () => {
 
     loadInitialData();
     
-    // Poll for new messages every 3 seconds
-    const interval = setInterval(loadMessages, 3000);
-    return () => clearInterval(interval);
+    // Start polling only when page is visible
+    const startPolling = () => {
+      if (pollInterval) return; // Already polling
+      
+      pollInterval = setInterval(() => {
+        if (!document.hidden && isActive) {
+          loadMessages();
+        }
+      }, 5000); // Poll every 5 seconds when visible
+    };
+
+    const stopPolling = () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+    };
+
+    // Handle visibility changes
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        loadMessages(); // Refresh immediately when page becomes visible
+        startPolling();
+      }
+    };
+
+    // Start initial polling if page is visible
+    if (!document.hidden) {
+      startPolling();
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      isActive = false;
+      stopPolling();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [selectedChat?.id, currentUser?.uid]);
 
   // Helper function to check if other user is online
@@ -340,15 +474,26 @@ const ChatPage = () => {
       setMessage('');
       messageInputRef.current?.focus();
       
-      // Reload chats from backend to get updated last_message and timestamp
-      const updatedChats = await getUserChats(currentUser.uid, friendsOnly);
-      setChats(updatedChats);
+      // Update chat list locally instead of reloading from backend
+      setChats(prevChats => 
+        prevChats.map(c => {
+          if (c.id === selectedChat.id) {
+            return {
+              ...c,
+              last_message: messageText,
+              last_message_time: new Date().toISOString()
+            };
+          }
+          return c;
+        })
+      );
       
-      // Update selected chat to match the updated one from backend
-      const updatedSelectedChat = updatedChats.find(chat => chat.id === selectedChat.id);
-      if (updatedSelectedChat) {
-        setSelectedChat(updatedSelectedChat);
-      }
+      // Update selected chat
+      setSelectedChat(prev => ({
+        ...prev,
+        last_message: messageText,
+        last_message_time: new Date().toISOString()
+      }));
     } catch (error) {
       console.error('Failed to send message:', error);
       alert('Failed to send message. Please try again.');
@@ -365,7 +510,7 @@ const ChatPage = () => {
   };
 
   // Filter chats based on search
-  const filteredChats = chats.filter(chat => {
+  const filteredChats = (Array.isArray(chats) ? chats : []).filter(chat => {
     if (!searchQuery) return true;
     
     const searchLower = searchQuery.toLowerCase();
@@ -381,13 +526,21 @@ const ChatPage = () => {
     return false;
   });
 
-  const handleChatSelect = (chat) => {
-    setSelectedChat(chat);
+  const handleChatSelect = useCallback((chat) => {
+    // Clear previous chat data
     setMessages([]);
     setOtherUser(null);
     setProduct(null);
     markedAsReadRef.current.clear();
-  };
+    
+    // Set new chat
+    setSelectedChat(chat);
+  }, []);
+
+  // Memoize the profile loaded callback
+  const handleUserProfileLoaded = useCallback((userId, profile) => {
+    setChatUserProfiles(prev => ({ ...prev, [userId]: profile }));
+  }, []);
 
   // Handle report user
   const handleReportUser = async () => {
@@ -554,9 +707,7 @@ const ChatPage = () => {
                   formatTime={formatChatTime}
                   searchQuery={searchQuery}
                   darkMode={darkMode}
-                  onUserProfileLoaded={(userId, profile) => {
-                    setChatUserProfiles(prev => ({ ...prev, [userId]: profile }));
-                  }}
+                  onUserProfileLoaded={handleUserProfileLoaded}
                 />
               ))
             )}
@@ -669,7 +820,7 @@ const ChatPage = () => {
                     </div>
                   </div>
                 ) : (
-                  messages.map((msg, index) => {
+                  (Array.isArray(messages) ? messages : []).map((msg, index) => {
                     const isCurrentUser = msg.sender_id === currentUser.uid;
                     const showDateSeparator = shouldShowDateSeparator(msg, messages[index - 1]);
                     // Only group messages that are from the same sender and same day
@@ -756,7 +907,7 @@ const ChatPage = () => {
                 )}
                 
                 {/* Read Receipt Indicator */}
-                {messages.length > 0 && (() => {
+                {Array.isArray(messages) && messages.length > 0 && (() => {
                   const lastMessage = messages[messages.length - 1];
                   const isMyMessage = lastMessage.sender_id === currentUser.uid;
                   const isRead = lastMessage.is_read;
@@ -830,6 +981,7 @@ const ChatPage = () => {
                     onChange={(e) => setMessage(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Message..."
+                    maxLength={5000}
                     className={`flex-1 px-4 py-2.5 sm:py-3 text-[16px] sm:text-sm rounded-full border outline-none transition-all ${
                       darkMode 
                         ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-400 focus:border-indigo-500 focus:bg-slate-700'
@@ -906,12 +1058,16 @@ const ChatPage = () => {
                   onChange={(e) => setReportDetails(e.target.value)}
                   placeholder="Provide more context about this report..."
                   rows={4}
+                  maxLength={1000}
                   className={`w-full px-4 py-2.5 rounded-lg border outline-none transition-all resize-none ${
                     darkMode 
                       ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-400 focus:border-indigo-500' 
                       : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
                   }`}
                 />
+                <p className={`text-xs mt-1 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                  {reportDetails.length}/1000 characters
+                </p>
               </div>
             </div>
 
@@ -946,27 +1102,34 @@ const ChatPage = () => {
   );
 };
 
-// Chat List Item Component
-const ChatListItem = ({ chat, currentUserId, isSelected, onClick, formatTime, searchQuery, darkMode, onUserProfileLoaded }) => {
+// Chat List Item Component - Memoized to prevent unnecessary re-renders
+const ChatListItem = React.memo(({ chat, currentUserId, isSelected, onClick, formatTime, searchQuery, darkMode, onUserProfileLoaded }) => {
   const [user, setUser] = useState(null);
   const [product, setProduct] = useState(null);
   const isFriend = chat.is_friend || false;
 
   useEffect(() => {
+    let isActive = true;
+
     const loadData = async () => {
       try {
         const otherId = chat.user1_id === currentUserId ? chat.user2_id : chat.user1_id;
         const userProfile = await getPublicProfile(otherId);
-        setUser(userProfile);
         
-        // Cache the profile for search filtering
-        if (onUserProfileLoaded) {
-          onUserProfileLoaded(otherId, userProfile);
+        if (isActive) {
+          setUser(userProfile);
+          
+          // Cache the profile for search filtering
+          if (onUserProfileLoaded) {
+            onUserProfileLoaded(otherId, userProfile);
+          }
         }
         
-        if (chat.product_id) {
+        if (chat.product_id && isActive) {
           const prod = await getProduct(chat.product_id);
-          setProduct(prod);
+          if (isActive) {
+            setProduct(prod);
+          }
         }
       } catch (error) {
         console.error('Failed to load chat data:', error);
@@ -974,7 +1137,11 @@ const ChatListItem = ({ chat, currentUserId, isSelected, onClick, formatTime, se
     };
 
     loadData();
-  }, [chat.id, currentUserId, chat.product_id, onUserProfileLoaded]);
+
+    return () => {
+      isActive = false;
+    };
+  }, [chat.id, currentUserId, chat.product_id]);
 
   // Filter based on search query
   if (searchQuery && user) {
@@ -1056,6 +1223,6 @@ const ChatListItem = ({ chat, currentUserId, isSelected, onClick, formatTime, se
       )}
     </div>
   );
-};
+});
 
-export default ChatPage;
+export default React.memo(ChatPage);

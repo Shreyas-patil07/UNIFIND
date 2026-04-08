@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { Mail, Lock, User, GraduationCap, Eye, EyeOff, Calendar, CheckCircle } from 'lucide-react';
+import { Mail, Lock, User, GraduationCap, Eye, EyeOff, Calendar, CheckCircle, Smartphone } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { sendEmailVerification } from 'firebase/auth';
-import { auth, actionCodeSettings } from '../services/firebase';
+import { auth, actionCodeSettings, db } from '../services/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 const SignupPage = () => {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ const SignupPage = () => {
   const prefilledEmail = location.state?.email || '';
   const prefilledPassword = location.state?.password || '';
 
+  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     firstName: '',
     middleName: '',
@@ -21,6 +23,7 @@ const SignupPage = () => {
     college: '',
     branch: '',
     yearOfAdmission: '',
+    upiId: '',
     password: prefilledPassword
   });
   const [error, setError] = useState('');
@@ -50,6 +53,56 @@ const SignupPage = () => {
     setShowCollegeDropdown(true);
   };
 
+  const handleNextStep = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    // Validate Step 1
+    if (currentStep === 1) {
+      if (!formData.firstName.trim()) {
+        setError('Please enter your first name.');
+        return;
+      }
+      if (!formData.surname.trim()) {
+        setError('Please enter your surname.');
+        return;
+      }
+      if (!formData.email.endsWith('@sigce.edu.in')) {
+        setError('Only SIGCE email addresses (@sigce.edu.in) are allowed.');
+        return;
+      }
+      if (formData.password.length < 6) {
+        setError('Password must be at least 6 characters.');
+        return;
+      }
+      
+      // Check if user already exists
+      setLoading(true);
+      try {
+        const signInMethods = await fetchSignInMethodsForEmail(auth, formData.email);
+        if (signInMethods.length > 0) {
+          setError('An account with this email already exists. Please login instead.');
+          setLoading(false);
+          return;
+        }
+        
+        // User doesn't exist, proceed to step 2
+        setCurrentStep(2);
+      } catch (err) {
+        console.error('Error checking email:', err);
+        setError('Failed to verify email. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+  };
+
+  const handlePreviousStep = () => {
+    setError('');
+    setCurrentStep(1);
+  };
+
   const handleSignup = async (e) => {
     e.preventDefault();
     setError('');
@@ -70,8 +123,14 @@ const SignupPage = () => {
       setError('Please enter your branch/department.');
       return;
     }
-    if (!formData.email.endsWith('@sigce.edu.in')) {
-      setError('Only SIGCE email addresses (@sigce.edu.in) are allowed.');
+    if (!formData.upiId.trim()) {
+      setError('Please enter your UPI ID for receiving payments.');
+      return;
+    }
+    // Basic UPI ID validation
+    const upiRegex = /^[\w.-]+@[\w.-]+$/;
+    if (!upiRegex.test(formData.upiId)) {
+      setError('Please enter a valid UPI ID (e.g., yourname@paytm).');
       return;
     }
 
@@ -80,7 +139,7 @@ const SignupPage = () => {
       // Combine names into full name
       const fullName = `${formData.firstName} ${formData.middleName} ${formData.surname}`.replace(/\s+/g, ' ').trim();
       
-      await signup(formData.email, formData.password, fullName, formData.college, formData.branch, formData.yearOfAdmission);
+      await signup(formData.email, formData.password, fullName, formData.college, formData.branch, formData.yearOfAdmission, formData.upiId);
       if (auth.currentUser) {
         await sendEmailVerification(auth.currentUser, actionCodeSettings);
       }
@@ -160,7 +219,14 @@ const SignupPage = () => {
             <h1 className="font-['Outfit'] text-2xl sm:text-3xl font-black text-slate-900 mb-1.5" data-testid="signup-title">
               Create Account
             </h1>
-            <p className="text-slate-500 text-sm">Join the student marketplace community</p>
+            <p className="text-slate-500 text-sm">
+              {currentStep === 1 ? 'Step 1 of 2: Basic Information' : 'Step 2 of 2: Academic Details'}
+            </p>
+            {/* Progress Bar */}
+            <div className="mt-4 flex gap-2">
+              <div className={`h-1.5 flex-1 rounded-full transition-all ${currentStep >= 1 ? 'bg-indigo-600' : 'bg-slate-200'}`} />
+              <div className={`h-1.5 flex-1 rounded-full transition-all ${currentStep >= 2 ? 'bg-indigo-600' : 'bg-slate-200'}`} />
+            </div>
           </div>
 
           {error && (
@@ -169,71 +235,144 @@ const SignupPage = () => {
             </div>
           )}
 
-          <form onSubmit={handleSignup} className="space-y-4">
+          {/* STEP 1: Basic Information */}
+          {currentStep === 1 && (
+            <form onSubmit={handleNextStep} className="space-y-4">
+              {/* Name Fields - First, Middle, Surname */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* First Name */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="firstName">
+                    First Name <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <input
+                      id="firstName" type="text" placeholder="Arjun" required
+                      maxLength={50}
+                      pattern="[A-Za-z\s]+"
+                      title="Only letters and spaces allowed"
+                      className="input-premium w-full pl-11 pr-4 py-3 text-sm"
+                      data-testid="signup-firstname-input" {...field('firstName')}
+                    />
+                  </div>
+                </div>
 
-            {/* Name Fields - First, Middle, Surname */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {/* First Name */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="firstName">
-                  First Name <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <input
-                    id="firstName" type="text" placeholder="Arjun" required
-                    className="input-premium w-full pl-11 pr-4 py-3 text-sm"
-                    data-testid="signup-firstname-input" {...field('firstName')}
-                  />
+                {/* Middle Name */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="middleName">
+                    Middle Name
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <input
+                      id="middleName" type="text" placeholder="Kumar"
+                      maxLength={50}
+                      pattern="[A-Za-z\s]*"
+                      title="Only letters and spaces allowed"
+                      className="input-premium w-full pl-11 pr-4 py-3 text-sm"
+                      data-testid="signup-middlename-input" {...field('middleName')}
+                    />
+                  </div>
+                </div>
+
+                {/* Surname */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="surname">
+                    Surname <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <input
+                      id="surname" type="text" placeholder="Sharma" required
+                      maxLength={50}
+                      pattern="[A-Za-z\s]+"
+                      title="Only letters and spaces allowed"
+                      className="input-premium w-full pl-11 pr-4 py-3 text-sm"
+                      data-testid="signup-surname-input" {...field('surname')}
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Middle Name */}
+              {/* SIGCE Email */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="middleName">
-                  Middle Name
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="email">
+                  SIGCE Email <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <input
-                    id="middleName" type="text" placeholder="Kumar"
+                    id="email" type="email" placeholder="your.name@sigce.edu.in" required
                     className="input-premium w-full pl-11 pr-4 py-3 text-sm"
-                    data-testid="signup-middlename-input" {...field('middleName')}
+                    data-testid="signup-email-input" {...field('email')}
                   />
+                </div>
+                <p className="mt-1 text-xs text-slate-400">Must be a valid @sigce.edu.in address</p>
+              </div>
+
+              {/* Password */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="password">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
+                    id="password" type={showPassword ? 'text' : 'password'} placeholder="Min. 6 characters" required minLength={6}
+                    className="input-premium w-full pl-11 pr-12 py-3 text-sm"
+                    data-testid="signup-password-input" {...field('password')}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    data-testid="toggle-password-visibility"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
               </div>
 
-              {/* Surname */}
+              {/* Next Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full btn-gradient py-3.5 text-sm mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                data-testid="signup-next-btn"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Verifying...
+                  </span>
+                ) : 'Next: Academic Details'}
+              </button>
+            </form>
+          )}
+
+          {/* STEP 2: Academic Details */}
+          {currentStep === 2 && (
+            <form onSubmit={handleSignup} className="space-y-4">
+              {/* UPI ID */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="surname">
-                  Surname <span className="text-red-500">*</span>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="upiId">
+                  UPI ID <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <input
-                    id="surname" type="text" placeholder="Sharma" required
+                    id="upiId" type="text" placeholder="yourname@paytm" required
+                    maxLength={100}
+                    pattern="[\w.-]+@[\w.-]+"
+                    title="Enter a valid UPI ID (e.g., yourname@paytm)"
                     className="input-premium w-full pl-11 pr-4 py-3 text-sm"
-                    data-testid="signup-surname-input" {...field('surname')}
+                    data-testid="signup-upi-input" {...field('upiId')}
                   />
                 </div>
+                <p className="mt-1 text-xs text-slate-400">For receiving payments when you sell items</p>
               </div>
-            </div>
-
-            {/* SIGCE Email */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="email">
-                SIGCE Email <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input
-                  id="email" type="email" placeholder="your.name@sigce.edu.in" required
-                  className="input-premium w-full pl-11 pr-4 py-3 text-sm"
-                  data-testid="signup-email-input" {...field('email')}
-                />
-              </div>
-              <p className="mt-1 text-xs text-slate-400">Must be a valid @sigce.edu.in address</p>
-            </div>
 
             {/* College */}
             <div>
@@ -383,24 +522,35 @@ const SignupPage = () => {
               </label>
             </div>
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading || !collegeSelected || !agreedToTerms}
-              className="w-full btn-gradient py-3.5 text-sm mt-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:animate-none"
-              data-testid="signup-submit-btn"
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Creating account...
-                </span>
-              ) : 'Create Account'}
-            </button>
-          </form>
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={handlePreviousStep}
+                className="flex-1 py-3.5 text-sm rounded-xl font-semibold border-2 border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors"
+                data-testid="signup-back-btn"
+              >
+                Back
+              </button>
+              <button
+                type="submit"
+                disabled={loading || !collegeSelected || !agreedToTerms}
+                className="flex-1 btn-gradient py-3.5 text-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:animate-none"
+                data-testid="signup-submit-btn"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Creating account...
+                  </span>
+                ) : 'Create Account'}
+              </button>
+            </div>
+            </form>
+          )}
 
           <p className="mt-6 text-center text-sm text-slate-500">
             Already have an account?{' '}

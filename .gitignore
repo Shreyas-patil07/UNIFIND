@@ -4,6 +4,8 @@
 .env.*.local
 .env.production
 .env.development
+.vscode
+.kiro
 backend/.env
 frontend/.env
 
@@ -73,6 +75,7 @@ out/
 *.swo
 .project
 .settings/
+.backend.zip
 
 # Firebase
 .firebaserc

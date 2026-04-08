@@ -740,12 +740,34 @@ pytest
 ### Manual Testing Checklist
 
 - [ ] User registration and login
-- [ ] Product listing creation
+- [ ] Product listing creation with image upload
 - [ ] Product browsing and filtering
-- [ ] Chat functionality
+- [ ] Advanced search with nested categories
+- [ ] Recently viewed products tracking
+- [ ] Chat functionality with real-time updates
 - [ ] Review submission
-- [ ] Profile updates
+- [ ] Profile updates (with rate limiting)
 - [ ] Analytics dashboard
+- [ ] Need Board AI search (with rate limiting)
+- [ ] Dark mode toggle and persistence
+
+### Need Board Testing
+1. Login to the app
+2. Navigate to Need Board page
+3. Enter search query (e.g., "laptop for coding")
+4. Verify results show with product images
+5. Check search history appears
+6. Verify rate limiting (3 searches per 12 hours)
+7. Click on result to navigate to product page
+
+### Chat Testing
+1. Open chat page
+2. Verify chat list loads
+3. Select a chat
+4. Send a message
+5. Switch to another tab (polling should pause)
+6. Return to tab (polling should resume with immediate refresh)
+7. Verify messages marked as read when visible
 
 ---
 

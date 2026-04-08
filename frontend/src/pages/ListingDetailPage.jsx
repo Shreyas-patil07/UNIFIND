@@ -1,15 +1,111 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import { Button } from '../components/ui/Button';
 import { ArrowLeft, MapPin, Eye, Share2, Heart, MessageCircle, Shield } from 'lucide-react';
-import { products, users } from '../data/mockData';
+import { getProduct, getPublicProfile } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import { hasViewedProduct, markProductAsViewed } from '../utils/viewTracking';
+import { isProductLiked, likeProduct, unlikeProduct } from '../utils/likedProducts';
+import ShareModal from '../components/ShareModal';
 
 const ListingDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const product = products.find(p => p.id === id) || products[0];
-  const seller = users.find(u => u.id === product.sellerId);
+  const { currentUser } = useAuth();
+  const [product, setProduct] = useState(null);
+  const [seller, setSeller] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+
+  useEffect(() => {
+    const loadProductDetails = async () => {
+      try {
+        // Check if already viewed in this session
+        const alreadyViewed = hasViewedProduct(id);
+        
+        // Get ID token if user is logged in
+        const idToken = currentUser ? await currentUser.getIdToken() : null;
+        
+        // Only fetch with token if not already viewed
+        // This prevents unnecessary view increments
+        const productData = await getProduct(id, !alreadyViewed ? idToken : null);
+        setProduct(productData);
+
+        // Mark as viewed in localStorage
+        if (!alreadyViewed) {
+          markProductAsViewed(id);
+          console.log('Product view tracked:', id);
+        } else {
+          console.log('Product already viewed in this session:', id);
+        }
+
+        // Load seller info
+        if (productData.seller_id) {
+          const sellerData = await getPublicProfile(productData.seller_id);
+          setSeller(sellerData);
+        }
+      } catch (error) {
+        console.error('Failed to load product:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProductDetails();
+  }, [id, currentUser]);
+
+  useEffect(() => {
+    if (currentUser && id) {
+      setIsLiked(isProductLiked(currentUser.uid, id));
+    }
+  }, [currentUser, id]);
+
+  const handleLike = () => {
+    if (!currentUser) {
+      navigate('/login');
+      return;
+    }
+    
+    if (isLiked) {
+      unlikeProduct(currentUser.uid, id);
+      setIsLiked(false);
+    } else {
+      likeProduct(currentUser.uid, id);
+      setIsLiked(true);
+    }
+  };
+
+  const handleShare = async () => {
+    setShowShareModal(true);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-[100dvh] bg-slate-50">
+        <Header />
+        <div className="flex items-center justify-center h-96">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-[100dvh] bg-slate-50">
+        <Header />
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Product not found</h2>
+            <Button onClick={() => navigate('/buyer')}>Back to Browse</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[100dvh] bg-slate-50">
@@ -30,15 +126,21 @@ const ListingDetailPage = () => {
           <div>
             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden mb-4">
               <img
-                src={product.images[0]}
+                src={product.images[selectedImage]}
                 alt={product.title}
                 className="w-full aspect-square object-cover"
                 data-testid="product-main-image"
               />
             </div>
             <div className="grid grid-cols-4 gap-3">
-              {product.images.slice(0, 4).map((img, i) => (
-                <div key={i} className="bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:border-blue-500 transition-colors">
+              {(Array.isArray(product.images) ? product.images : []).slice(0, 4).map((img, i) => (
+                <div 
+                  key={i} 
+                  onClick={() => setSelectedImage(i)}
+                  className={`bg-white rounded-xl border overflow-hidden cursor-pointer transition-colors ${
+                    selectedImage === i ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-slate-200 hover:border-blue-500'
+                  }`}
+                >
                   <img src={img} alt="" className="w-full aspect-square object-cover" />
                 </div>
               ))}
@@ -103,13 +205,19 @@ const ListingDetailPage = () => {
                 </Button>
                 <Button
                   variant="outline"
-                  className="rounded-xl border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition-all"
+                  onClick={handleLike}
+                  className={`rounded-xl border-slate-200 transition-all ${
+                    isLiked 
+                      ? 'bg-red-50 border-red-500 hover:bg-red-100' 
+                      : 'hover:border-blue-500 hover:bg-blue-50'
+                  }`}
                   data-testid="save-btn"
                 >
-                  <Heart className="h-5 w-5" />
+                  <Heart className={`h-5 w-5 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
                 </Button>
                 <Button
                   variant="outline"
+                  onClick={handleShare}
                   className="rounded-xl border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition-all"
                   data-testid="share-btn"
                 >
@@ -120,6 +228,15 @@ const ListingDetailPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        url={window.location.href}
+        title={product?.title}
+        price={product?.price}
+      />
     </div>
   );
 };

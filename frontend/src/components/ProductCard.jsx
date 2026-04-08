@@ -1,7 +1,9 @@
-﻿import React from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Eye, MessageCircle, Heart, Phone, MessageSquare } from 'lucide-react';
-import { users } from '../data/mockData';
+import { MapPin, Eye, MessageCircle, Heart, Share2 } from 'lucide-react';
+import { getPublicProfile } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import ShareModal from './ShareModal';
 
 const conditionConfig = {
   'Like New': { color: 'bg-emerald-500', label: 'Like New' },
@@ -12,33 +14,83 @@ const conditionConfig = {
 
 const ProductCard = ({ product, onView }) => {
   const navigate = useNavigate();
-  const seller = users.find(u => u.id === product.sellerId);
+  const { currentUser } = useAuth();
+  const [seller, setSeller] = useState(null);
+  const [isLiked, setIsLiked] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const condition = conditionConfig[product.condition] || { color: 'bg-slate-500', label: product.condition };
+
+  // Load seller info
+  useEffect(() => {
+    const loadSeller = async () => {
+      if (product.seller_id) {
+        try {
+          const sellerProfile = await getPublicProfile(product.seller_id);
+          setSeller(sellerProfile);
+        } catch (error) {
+          console.error('Failed to load seller:', error);
+        }
+      }
+    };
+
+    loadSeller();
+  }, [product.seller_id]);
+
+  // Load liked state from localStorage
+  useEffect(() => {
+    if (currentUser) {
+      const likedProducts = JSON.parse(localStorage.getItem(`liked_products_${currentUser.uid}`) || '[]');
+      setIsLiked(likedProducts.includes(product.id));
+    }
+  }, [currentUser, product.id]);
+
+
 
   const handleCardClick = () => {
     if (onView) onView(product);
     navigate(`/listing/${product.id}`);
   };
 
-  const handleQuickContact = (e, type) => {
+  const handleLike = (e) => {
     e.stopPropagation();
-    if (type === 'whatsapp') {
-      // WhatsApp link with pre-filled message
-      const message = `Hi! I'm interested in your listing: ${product.title} (₹${product.price.toLocaleString()})`;
-      window.open(`https://wa.me/919876543210?text=${encodeURIComponent(message)}`, '_blank');
-    } else if (type === 'call') {
-      window.location.href = 'tel:+919876543210';
+    e.preventDefault();
+    
+    if (!currentUser) {
+      navigate('/login');
+      return;
+    }
+
+    const likedProducts = JSON.parse(localStorage.getItem(`liked_products_${currentUser.uid}`) || '[]');
+    
+    if (isLiked) {
+      // Remove from liked
+      const updated = likedProducts.filter(id => id !== product.id);
+      localStorage.setItem(`liked_products_${currentUser.uid}`, JSON.stringify(updated));
+      setIsLiked(false);
+    } else {
+      // Add to liked
+      const updated = [...likedProducts, product.id];
+      localStorage.setItem(`liked_products_${currentUser.uid}`, JSON.stringify(updated));
+      setIsLiked(true);
     }
   };
 
+  const handleShare = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setShowShareModal(true);
+  };
+
+
+
   return (
     <div
-      className="group flex flex-col bg-white rounded-2xl border border-slate-200 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover hover:border-indigo-300/50"
+      className="group flex flex-col bg-white rounded-2xl border border-slate-200 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover hover:border-indigo-300/50"
       onClick={handleCardClick}
       data-testid={`product-card-${product.id}`}
     >
       {/* ===== IMAGE ===== */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+      <div className="relative aspect-[4/3] overflow-hidden bg-slate-100 rounded-t-2xl">
         <img
           src={product.images[0]}
           alt={product.title}
@@ -69,9 +121,38 @@ const ProductCard = ({ product, onView }) => {
         </div>
 
         {/* Views badge */}
-        <div className="absolute top-2.5 right-2.5 bg-black/50 backdrop-blur-sm px-2 py-0.5 rounded-lg flex items-center gap-1">
-          <Eye className="h-3 w-3 text-white" />
-          <span className="text-[10px] text-white font-medium">{product.views}</span>
+        <div className="absolute top-2.5 right-2.5 flex gap-1.5">
+          <div className="bg-black/50 backdrop-blur-sm px-2 py-0.5 rounded-lg flex items-center gap-1">
+            <Eye className="h-3 w-3 text-white" />
+            <span className="text-[10px] text-white font-medium">{product.views}</span>
+          </div>
+        </div>
+
+        {/* Like and Share buttons */}
+        <div className="absolute bottom-2.5 right-2.5 flex gap-1.5">
+          {/* Like Button */}
+          <button
+            onClick={handleLike}
+            className={`p-1.5 rounded-lg backdrop-blur-sm transition-all duration-200 active:scale-95 ${
+              isLiked 
+                ? 'bg-red-500 text-white' 
+                : 'bg-white/90 text-slate-700 hover:bg-white'
+            }`}
+            data-testid="product-like-btn"
+            title={isLiked ? 'Unlike' : 'Like'}
+          >
+            <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
+          </button>
+
+          {/* Share Button */}
+          <button
+            onClick={handleShare}
+            className="p-1.5 rounded-lg bg-white/90 backdrop-blur-sm text-slate-700 hover:bg-white transition-all duration-200 active:scale-95"
+            data-testid="product-share-btn"
+            title="Share"
+          >
+            <Share2 className="h-4 w-4" />
+          </button>
         </div>
       </div>
 
@@ -115,49 +196,35 @@ const ProductCard = ({ product, onView }) => {
         </div>
 
         {/* Actions */}
-        <div className="flex flex-col gap-2 mt-auto">
-          {/* Quick Contact Buttons */}
-          <div className="flex gap-2">
-            <button
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-2 rounded-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5"
-              onClick={(e) => handleQuickContact(e, 'whatsapp')}
-              data-testid="product-whatsapp-btn"
-              title="Contact via WhatsApp"
-            >
-              <MessageSquare className="h-3.5 w-3.5" />
-              WhatsApp
-            </button>
-            <button
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5"
-              onClick={(e) => handleQuickContact(e, 'call')}
-              data-testid="product-call-btn"
-              title="Call Seller"
-            >
-              <Phone className="h-3.5 w-3.5" />
-              Call
-            </button>
-          </div>
-          
-          {/* View and Chat Buttons */}
-          <div className="flex gap-2">
-            <button
-              className="flex-1 border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 text-xs font-semibold py-2 rounded-xl transition-all duration-200 active:scale-95"
-              onClick={(e) => { e.stopPropagation(); handleCardClick(); }}
-              data-testid="product-view-btn"
-            >
-              View
-            </button>
-            <button
-              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2 rounded-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5"
-              onClick={(e) => { e.stopPropagation(); navigate('/chat'); }}
-              data-testid="product-chat-btn"
-            >
-              <MessageCircle className="h-3.5 w-3.5" />
-              Chat
-            </button>
-          </div>
+        <div className="flex gap-2 mt-auto">
+          <button
+            className="flex-1 border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 text-xs font-semibold py-2 rounded-xl transition-all duration-200 active:scale-95"
+            onClick={(e) => { e.stopPropagation(); handleCardClick(); }}
+            data-testid="product-view-btn"
+          >
+            View
+          </button>
+          <button
+            className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2 rounded-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5"
+            onClick={(e) => { e.stopPropagation(); navigate('/chat'); }}
+            data-testid="product-chat-btn"
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+            Chat
+          </button>
         </div>
       </div>
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <ShareModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          url={`/listing/${product.id}`}
+          title={product.title}
+          price={product.price}
+        />
+      )}
     </div>
   );
 };

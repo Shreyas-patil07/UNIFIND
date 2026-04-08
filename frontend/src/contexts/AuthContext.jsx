@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
   const [userProfile, setUserProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  const signup = async (email, password, name, college, branch, yearOfAdmission) => {
+  const signup = async (email, password, name, college, branch, yearOfAdmission, upiId) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password)
     const user = userCredential.user
 
@@ -38,6 +38,7 @@ export const AuthProvider = ({ children }) => {
       college,
       branch,
       year_of_admission: yearOfAdmission,
+      upi_id: upiId,
       trust_score: 0,
       rating: 0.0,
       review_count: 0,

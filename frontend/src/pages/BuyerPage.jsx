@@ -2,14 +2,16 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Header from '../components/Header';
 import ProductCard from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/SkeletonLoader';
-import { products, categories } from '../data/mockData';
+import { categories } from '../data/categories';
+import { getProducts } from '../services/api';
 import { SlidersHorizontal, X, ChevronDown, Search, ArrowUpDown, Clock, Trash2 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { getRecentlyViewed, addToRecentlyViewed, clearRecentlyViewed } from '../utils/recentlyViewed';
 
 const BuyerPage = () => {
   const { darkMode } = useTheme();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedSubject, setSelectedSubject] = useState('all');
   const [selectedMathsLevel, setSelectedMathsLevel] = useState('all');
@@ -84,10 +86,56 @@ const BuyerPage = () => {
 
   // Load recently viewed and search history on mount
   useEffect(() => {
-    setRecentlyViewed(getRecentlyViewed());
-    const history = JSON.parse(localStorage.getItem('unifind_search_history') || '[]');
-    setSearchHistory(history);
+    const viewed = getRecentlyViewed();
+    setRecentlyViewed(Array.isArray(viewed) ? viewed : []);
+    try {
+      const history = JSON.parse(localStorage.getItem('unifind_search_history') || '[]');
+      setSearchHistory(Array.isArray(history) ? history : []);
+    } catch (e) {
+      setSearchHistory([]);
+    }
   }, []);
+
+  // Close sort dropdown when filter drawer opens
+  useEffect(() => {
+    if (filterDrawerOpen) {
+      setSortDropdownOpen(false);
+    }
+  }, [filterDrawerOpen]);
+
+  // Close filter drawer when sort dropdown opens
+  useEffect(() => {
+    if (sortDropdownOpen) {
+      setFilterDrawerOpen(false);
+    }
+  }, [sortDropdownOpen]);
+
+  // Load products from API
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        setLoading(true);
+        const fetchedProducts = await getProducts({
+          category: selectedCategory !== 'All' ? selectedCategory : undefined
+        });
+        setProducts(Array.isArray(fetchedProducts) ? fetchedProducts : []);
+        console.log('Products loaded:', Array.isArray(fetchedProducts) ? fetchedProducts.length : 0);
+      } catch (error) {
+        console.error('Failed to load products:', error);
+        console.error('Error details:', error.response?.data || error.message);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, [selectedCategory]);
+
+  // Debug: Log condition changes
+  useEffect(() => {
+    console.log('Condition filter changed to:', condition);
+  }, [condition]);
 
   // Handle product view
   const handleProductView = (product) => {
@@ -97,8 +145,9 @@ const BuyerPage = () => {
 
   // Handle search submission
   const handleSearch = (query) => {
-    if (query.trim() && !searchHistory.includes(query.trim())) {
-      const updated = [query.trim(), ...searchHistory].slice(0, 10);
+    const historyArray = Array.isArray(searchHistory) ? searchHistory : [];
+    if (query.trim() && !historyArray.includes(query.trim())) {
+      const updated = [query.trim(), ...historyArray].slice(0, 10);
       setSearchHistory(updated);
       localStorage.setItem('unifind_search_history', JSON.stringify(updated));
     }
@@ -118,7 +167,7 @@ const BuyerPage = () => {
 
   // Memoize filtered and sorted products for better performance
   const sortedProducts = useMemo(() => {
-    const filtered = products.filter(product => {
+    const filtered = (Array.isArray(products) ? products : []).filter(product => {
       // Search filter
       if (searchQuery.trim() !== '') {
         const query = searchQuery.toLowerCase();
@@ -148,7 +197,10 @@ const BuyerPage = () => {
         }
       }
       
-      if (condition !== 'all' && product.condition !== condition) return false;
+      if (condition !== 'all' && product.condition !== condition) {
+        console.log(`Filtering out product: ${product.title}, condition: ${product.condition}, filter: ${condition}`);
+        return false;
+      }
       return true;
     });
 
@@ -179,8 +231,7 @@ const BuyerPage = () => {
     selectedMathsLevel !== 'all',
     selectedMaterial !== 'all',
     selectedGraphicsItem !== 'all',
-    condition !== 'all',
-    searchQuery.trim() !== ''
+    condition !== 'all'
   ].filter(Boolean).length;
 
   const resetFilters = () => {
@@ -190,7 +241,6 @@ const BuyerPage = () => {
     setSelectedMaterial('all');
     setSelectedGraphicsItem('all');
     setCondition('all');
-    setSearchQuery('');
     setSortBy('newest');
   };
 
@@ -211,38 +261,19 @@ const BuyerPage = () => {
   );
 
   return (
-    <div className={`min-h-[100dvh] pb-20 ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
+    <div className={`min-h-[100dvh] pb-[calc(64px+env(safe-area-inset-bottom))] ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
       <Header />
 
-      <div className="px-4 sm:px-6 md:px-10 lg:px-20 py-6 with-bottom-nav">
-
-        {/* ===== HERO BANNER ===== */}
-        <div className="relative bg-gradient-hero rounded-2xl sm:rounded-3xl overflow-hidden mb-8 p-6 sm:p-10">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-1/3 w-48 h-48 bg-violet-500/15 rounded-full blur-3xl pointer-events-none" />
-          <div className="relative z-10">
-            <span className="inline-flex items-center gap-1.5 bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-3">
-              🛍️ Marketplace
-            </span>
-            <h1
-              className="font-['Outfit'] text-2xl sm:text-3xl lg:text-4xl font-black text-white mb-2"
-              data-testid="buyer-page-title"
-            >
-              Discover Amazing Deals
-            </h1>
-            <p className="text-slate-400 text-sm sm:text-base max-w-md">
-              Browse verified listings from SIGCE students. Safe, trusted campus commerce.
-            </p>
-          </div>
-        </div>
-
-        {/* ===== SEARCH BAR ===== */}
-        <div className="mb-6">
+      {/* Sticky Search Bar */}
+      <div className={`sticky top-16 sm:top-[72px] z-40 ${
+        darkMode ? 'bg-slate-900' : 'bg-slate-50'
+      }`}>
+        <div className="px-3 sm:px-6 md:px-10 lg:px-20 pt-3 pb-3">
           <div className="relative">
-            <Search className={`absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+            <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 ${darkMode ? 'text-indigo-400' : 'text-indigo-500'}`} />
             <input
               type="text"
-              placeholder="Search by title, description, or location..."
+              placeholder="Search products..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => {
@@ -250,60 +281,30 @@ const BuyerPage = () => {
                   handleSearch(searchQuery);
                 }
               }}
-              className={`w-full pl-12 pr-4 py-3.5 rounded-xl text-sm font-medium border transition-all duration-200 ${
+              className={`w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-sm font-medium border transition-all duration-200 ${
                 darkMode 
-                  ? 'bg-slate-800 border-slate-700 text-slate-200 placeholder-slate-500 focus:border-indigo-500'
-                  : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400 focus:border-indigo-300'
+                  ? 'bg-slate-800 border-slate-700 text-slate-200 placeholder-slate-400 focus:border-indigo-500'
+                  : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400 focus:border-indigo-400'
               } focus:outline-none focus:ring-2 focus:ring-indigo-500/20`}
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className={`absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-lg transition-colors ${
-                  darkMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'
+                className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 sm:p-1.5 rounded-lg transition-all active:scale-95 ${
+                  darkMode ? 'hover:bg-slate-700 text-slate-400 hover:text-slate-200' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-700'
                 }`}
               >
                 <X className="h-4 w-4" />
               </button>
             )}
           </div>
-
-          {/* Search History */}
-          {searchHistory.length > 0 && !searchQuery && (
-            <div className={`mt-3 p-3 rounded-xl border ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Clock className={`h-4 w-4 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                  <span className={`text-xs font-semibold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Recent Searches</span>
-                </div>
-                <button
-                  onClick={clearSearchHistory}
-                  className={`text-xs font-medium ${darkMode ? 'text-slate-400 hover:text-red-400' : 'text-slate-500 hover:text-red-600'} transition-colors`}
-                >
-                  Clear
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {searchHistory.slice(0, 5).map((term, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSearchQuery(term)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                      darkMode 
-                        ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                        : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-                    }`}
-                  >
-                    {term}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
+      </div>
+
+      <div className="px-3 sm:px-6 md:px-10 lg:px-20 with-bottom-nav">
 
         {/* ===== RECENTLY VIEWED ===== */}
-        {recentlyViewed.length > 0 && (
+        {Array.isArray(recentlyViewed) && recentlyViewed.length > 0 && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
               <h2 className={`text-sm font-bold ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>
@@ -329,383 +330,209 @@ const BuyerPage = () => {
           </div>
         )}
 
-        {/* ===== CATEGORY CHIPS (horizontal scroll on mobile) ===== */}
-        <div className="mb-5">
-          <div className={`text-xs font-bold uppercase tracking-wider mb-2.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Category</div>
-          <div className="chips-row">
-            {categories.map((cat) => (
-              <FilterChip
-                key={cat}
-                label={cat}
-                active={selectedCategory === cat}
-                onClick={() => {
-                  setSelectedCategory(cat);
-                  if (cat !== 'Printed Notes') {
-                    setSelectedSubject('all');
-                    setSelectedMathsLevel('all');
-                  }
-                  if (cat !== 'Materials') {
-                    setSelectedMaterial('all');
-                    setSelectedGraphicsItem('all');
-                  }
+        {/* ===== FILTERS BAR (Filters & Sort) ===== */}
+        <div className="mb-6">
+          <div className="flex items-center gap-3 pb-2 relative">
+            <div className="flex items-center gap-3 overflow-x-auto flex-1">
+              {/* Combined Filters Button */}
+              <div className="relative flex-shrink-0">
+                <button
+                  onClick={() => {
+                    console.log('Filters button clicked');
+                    setFilterDrawerOpen(true);
+                  }}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-colors shadow-sm ${
+                    darkMode 
+                      ? 'bg-slate-800 border-slate-700 text-slate-300 hover:border-indigo-500'
+                      : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-300'
+                  } ${activeFiltersCount > 0 ? 'ring-2 ring-indigo-500/50 border-indigo-500' : ''}`}
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                  <span>Filters</span>
+                  {activeFiltersCount > 0 && (
+                    <span className="bg-indigo-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              {/* Reset Button */}
+              {activeFiltersCount > 0 && (
+                <button
+                  onClick={resetFilters}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-colors shadow-sm flex-shrink-0 ${
+                    darkMode 
+                      ? 'bg-slate-800 border-slate-700 text-slate-300 hover:border-red-500 hover:text-red-400'
+                      : 'bg-white border-slate-200 text-slate-700 hover:border-red-300 hover:text-red-600'
+                  }`}
+                >
+                  <X className="h-4 w-4" />
+                  <span className="hidden sm:inline">Reset</span>
+                </button>
+              )}
+            </div>
+
+            {/* Sort Dropdown - Outside overflow container */}
+            <div className="relative flex-shrink-0 ml-auto">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  console.log('Sort button clicked, current state:', sortDropdownOpen);
+                  setSortDropdownOpen(!sortDropdownOpen);
                 }}
-                testId={`category-filter-${cat.toLowerCase()}`}
-              />
-            ))}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-colors shadow-sm ${
+                  darkMode 
+                    ? 'bg-slate-800 border-slate-700 text-slate-300 hover:border-indigo-500'
+                    : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-300'
+                }`}
+              >
+                <ArrowUpDown className="h-4 w-4" />
+                <span className="hidden sm:inline">{sortOptions.find(opt => opt.value === sortBy)?.label || 'Sort'}</span>
+                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${sortDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Sort Popup */}
+              {sortDropdownOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-[60]" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log('Sort backdrop clicked');
+                      setSortDropdownOpen(false);
+                    }}
+                  />
+                  <div className={`absolute top-full right-0 mt-2 rounded-xl border shadow-xl z-[61] min-w-[200px] ${
+                    darkMode 
+                      ? 'bg-slate-800 border-slate-700' 
+                      : 'bg-white border-slate-200'
+                  }`}>
+                    {sortOptions.map((option, index) => (
+                      <button
+                        key={option.value}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSortBy(option.value);
+                          setSortDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors ${
+                          sortBy === option.value
+                            ? darkMode
+                              ? 'bg-indigo-600 text-white'
+                              : 'bg-indigo-50 text-indigo-600'
+                            : darkMode
+                              ? 'text-slate-300 hover:bg-slate-700'
+                              : 'text-slate-700 hover:bg-slate-50'
+                        } ${index === 0 ? 'rounded-t-xl' : ''} ${index === sortOptions.length - 1 ? 'rounded-b-xl' : ''}`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Results Count */}
+          <div className="mt-4">
+            <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} data-testid="results-count">
+              <span className={`font-bold ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{sortedProducts.length}</span> results
+              {selectedCategory !== 'All' && (
+                <span className="ml-1">in <span className="font-semibold text-indigo-600">{selectedCategory}</span></span>
+              )}
+            </p>
           </div>
         </div>
 
-        {/* ===== SUBJECT DROPDOWN (only visible when Printed Notes is selected) ===== */}
-        {selectedCategory === 'Printed Notes' && (
-          <div className="mb-5">
-            <div className={`text-xs font-bold uppercase tracking-wider mb-2.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Subject</div>
-            <div className="relative inline-block w-full sm:w-64">
-              <button
-                onClick={() => setSubjectDropdownOpen(!subjectDropdownOpen)}
-                className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm font-medium border transition-all duration-200 ${
-                  darkMode 
-                    ? 'bg-slate-800 border-slate-700 text-slate-200 hover:border-indigo-500'
-                    : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-300'
-                } ${selectedSubject !== 'all' ? 'ring-2 ring-indigo-500/50' : ''}`}
-              >
-                <span>{selectedSubject === 'all' ? 'All Subjects' : selectedSubject}</span>
-                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${subjectDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-              
-              {subjectDropdownOpen && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-10" 
-                    onClick={() => setSubjectDropdownOpen(false)}
-                  />
-                  <div className={`absolute top-full left-0 right-0 mt-2 rounded-xl border shadow-xl z-20 max-h-80 overflow-y-auto ${
-                    darkMode 
-                      ? 'bg-slate-800 border-slate-700' 
-                      : 'bg-white border-slate-200'
-                  }`}>
-                    {subjects.map((subject) => (
-                      <button
-                        key={subject}
-                        onClick={() => {
-                          setSelectedSubject(subject === 'All Subjects' ? 'all' : subject);
-                          if (subject !== 'Maths') {
-                            setSelectedMathsLevel('all');
-                          }
-                          setSubjectDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors ${
-                          (selectedSubject === 'all' && subject === 'All Subjects') || selectedSubject === subject
-                            ? darkMode
-                              ? 'bg-indigo-600 text-white'
-                              : 'bg-indigo-50 text-indigo-600'
-                            : darkMode
-                              ? 'text-slate-300 hover:bg-slate-700'
-                              : 'text-slate-700 hover:bg-slate-50'
-                        } ${subject === subjects[0] ? 'rounded-t-xl' : ''} ${subject === subjects[subjects.length - 1] ? 'rounded-b-xl' : ''}`}
-                      >
-                        {subject}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ===== MATHS LEVEL DROPDOWN (only visible when Maths is selected) ===== */}
-        {selectedCategory === 'Printed Notes' && selectedSubject === 'Maths' && (
-          <div className="mb-5">
-            <div className={`text-xs font-bold uppercase tracking-wider mb-2.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Maths Level</div>
-            <div className="relative inline-block w-full sm:w-64">
-              <button
-                onClick={() => setMathsDropdownOpen(!mathsDropdownOpen)}
-                className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm font-medium border transition-all duration-200 ${
-                  darkMode 
-                    ? 'bg-slate-800 border-slate-700 text-slate-200 hover:border-indigo-500'
-                    : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-300'
-                } ${selectedMathsLevel !== 'all' ? 'ring-2 ring-indigo-500/50' : ''}`}
-              >
-                <span>{selectedMathsLevel === 'all' ? 'All Maths' : selectedMathsLevel}</span>
-                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${mathsDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-              
-              {mathsDropdownOpen && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-10" 
-                    onClick={() => setMathsDropdownOpen(false)}
-                  />
-                  <div className={`absolute top-full left-0 right-0 mt-2 rounded-xl border shadow-xl z-20 max-h-80 overflow-y-auto ${
-                    darkMode 
-                      ? 'bg-slate-800 border-slate-700' 
-                      : 'bg-white border-slate-200'
-                  }`}>
-                    {mathsLevels.map((level) => (
-                      <button
-                        key={level}
-                        onClick={() => {
-                          setSelectedMathsLevel(level === 'All Maths' ? 'all' : level);
-                          setMathsDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors ${
-                          (selectedMathsLevel === 'all' && level === 'All Maths') || selectedMathsLevel === level
-                            ? darkMode
-                              ? 'bg-indigo-600 text-white'
-                              : 'bg-indigo-50 text-indigo-600'
-                            : darkMode
-                              ? 'text-slate-300 hover:bg-slate-700'
-                              : 'text-slate-700 hover:bg-slate-50'
-                        } ${level === mathsLevels[0] ? 'rounded-t-xl' : ''} ${level === mathsLevels[mathsLevels.length - 1] ? 'rounded-b-xl' : ''}`}
-                      >
-                        {level}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ===== MATERIAL TYPE DROPDOWN (only visible when Materials is selected) ===== */}
-        {selectedCategory === 'Materials' && (
-          <div className="mb-5">
-            <div className={`text-xs font-bold uppercase tracking-wider mb-2.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Material Type</div>
-            <div className="relative inline-block w-full sm:w-64">
-              <button
-                onClick={() => setMaterialDropdownOpen(!materialDropdownOpen)}
-                className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm font-medium border transition-all duration-200 ${
-                  darkMode 
-                    ? 'bg-slate-800 border-slate-700 text-slate-200 hover:border-indigo-500'
-                    : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-300'
-                } ${selectedMaterial !== 'all' ? 'ring-2 ring-indigo-500/50' : ''}`}
-              >
-                <span>{selectedMaterial === 'all' ? 'All Materials' : selectedMaterial}</span>
-                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${materialDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-              
-              {materialDropdownOpen && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-10" 
-                    onClick={() => setMaterialDropdownOpen(false)}
-                  />
-                  <div className={`absolute top-full left-0 right-0 mt-2 rounded-xl border shadow-xl z-20 max-h-80 overflow-y-auto ${
-                    darkMode 
-                      ? 'bg-slate-800 border-slate-700' 
-                      : 'bg-white border-slate-200'
-                  }`}>
-                    {materials.map((material) => (
-                      <button
-                        key={material}
-                        onClick={() => {
-                          setSelectedMaterial(material === 'All Materials' ? 'all' : material);
-                          if (material !== 'Graphics Kit') {
-                            setSelectedGraphicsItem('all');
-                          }
-                          setMaterialDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors ${
-                          (selectedMaterial === 'all' && material === 'All Materials') || selectedMaterial === material
-                            ? darkMode
-                              ? 'bg-indigo-600 text-white'
-                              : 'bg-indigo-50 text-indigo-600'
-                            : darkMode
-                              ? 'text-slate-300 hover:bg-slate-700'
-                              : 'text-slate-700 hover:bg-slate-50'
-                        } ${material === materials[0] ? 'rounded-t-xl' : ''} ${material === materials[materials.length - 1] ? 'rounded-b-xl' : ''}`}
-                      >
-                        {material}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ===== GRAPHICS KIT ITEMS DROPDOWN (only visible when Graphics Kit is selected) ===== */}
-        {selectedCategory === 'Materials' && selectedMaterial === 'Graphics Kit' && (
-          <div className="mb-5">
-            <div className={`text-xs font-bold uppercase tracking-wider mb-2.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Graphics Kit Items</div>
-            <div className="relative inline-block w-full sm:w-64">
-              <button
-                onClick={() => setGraphicsDropdownOpen(!graphicsDropdownOpen)}
-                className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm font-medium border transition-all duration-200 ${
-                  darkMode 
-                    ? 'bg-slate-800 border-slate-700 text-slate-200 hover:border-indigo-500'
-                    : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-300'
-                } ${selectedGraphicsItem !== 'all' ? 'ring-2 ring-indigo-500/50' : ''}`}
-              >
-                <span>{selectedGraphicsItem === 'all' ? 'All Graphics Items' : selectedGraphicsItem}</span>
-                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${graphicsDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-              
-              {graphicsDropdownOpen && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-10" 
-                    onClick={() => setGraphicsDropdownOpen(false)}
-                  />
-                  <div className={`absolute top-full left-0 right-0 mt-2 rounded-xl border shadow-xl z-20 max-h-80 overflow-y-auto ${
-                    darkMode 
-                      ? 'bg-slate-800 border-slate-700' 
-                      : 'bg-white border-slate-200'
-                  }`}>
-                    {graphicsKitItems.map((item) => (
-                      <button
-                        key={item}
-                        onClick={() => {
-                          setSelectedGraphicsItem(item === 'All Graphics Items' ? 'all' : item);
-                          setGraphicsDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors ${
-                          (selectedGraphicsItem === 'all' && item === 'All Graphics Items') || selectedGraphicsItem === item
-                            ? darkMode
-                              ? 'bg-indigo-600 text-white'
-                              : 'bg-indigo-50 text-indigo-600'
-                            : darkMode
-                              ? 'text-slate-300 hover:bg-slate-700'
-                              : 'text-slate-700 hover:bg-slate-50'
-                        } ${item === graphicsKitItems[0] ? 'rounded-t-xl' : ''} ${item === graphicsKitItems[graphicsKitItems.length - 1] ? 'rounded-b-xl' : ''}`}
-                      >
-                        {item}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ===== FILTER BAR ===== */}
-        <div className="flex items-center justify-end gap-3 mb-6">
-          {/* Filter button (mobile) + Reset */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {activeFiltersCount > 0 && (
-              <button
-                onClick={resetFilters}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 transition-colors"
-              >
-                <X className="h-3 w-3" />
-                Reset
-              </button>
-            )}
-            <button
-              onClick={() => setFilterDrawerOpen(true)}
-              className={`relative flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold border transition-colors shadow-sm ${
-                darkMode 
-                  ? 'bg-slate-800 border-slate-700 text-slate-300 hover:border-indigo-500'
-                  : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-300'
-              }`}
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              <span className="hidden sm:inline">Condition</span>
-              {condition !== 'all' && (
-                <span className="absolute -top-1 -right-1 h-4 w-4 bg-indigo-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">1</span>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* ===== CONDITION FILTER DRAWER ===== */}
+        {/* ===== UNIFIED FILTER DRAWER ===== */}
         {filterDrawerOpen && (
           <>
             <div
-              className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 animate-fade-in"
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] animate-fade-in"
               onClick={() => setFilterDrawerOpen(false)}
             />
-            <div className={`fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl p-6 shadow-2xl animate-slide-in-up md:static md:rounded-2xl md:bg-transparent md:shadow-none md:p-0 md:animate-none ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
-              <div className="flex items-center justify-between mb-5">
-                <h3 className={`text-base font-bold ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>Condition</h3>
-                <button onClick={() => setFilterDrawerOpen(false)} className={`p-1.5 rounded-lg ${darkMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}>
+            <div className={`fixed bottom-0 left-0 right-0 z-[61] rounded-t-3xl p-6 shadow-2xl animate-slide-in-up max-h-[80vh] overflow-y-auto ${darkMode ? 'bg-slate-800 border-t-2 border-slate-700' : 'bg-white border-t-2 border-slate-200'}`}>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Filters</h3>
+                <button 
+                  onClick={() => setFilterDrawerOpen(false)} 
+                  className={`p-2 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}
+                >
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              <div className="flex flex-wrap gap-2 mb-6">
-                {[
-                  { label: 'All Conditions', val: 'all', testId: 'condition-filter-all' },
-                  { label: 'Like New', val: 'Like New', testId: 'condition-filter-like-new' },
-                  { label: 'Excellent', val: 'Excellent', testId: 'condition-filter-excellent' },
-                  { label: 'Good', val: 'Good', testId: 'condition-filter-good' },
-                  { label: 'Fair', val: 'Fair', testId: 'condition-filter-fair' },
-                ].map(({ label, val, testId }) => (
-                  <FilterChip
-                    key={val}
-                    label={label}
-                    active={condition === val}
-                    onClick={() => { setCondition(val); setFilterDrawerOpen(false); }}
-                    testId={testId}
-                  />
-                ))}
+
+              {/* Category Section */}
+              <div className="mb-6">
+                <h4 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Category</h4>
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((cat) => (
+                    <FilterChip
+                      key={cat}
+                      label={cat}
+                      active={selectedCategory === cat}
+                      onClick={() => {
+                        console.log('Category selected:', cat);
+                        setSelectedCategory(cat);
+                      }}
+                      testId={`category-filter-${cat.toLowerCase()}`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Condition Section */}
+              <div className="mb-6">
+                <h4 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Condition</h4>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { label: 'All Conditions', val: 'all', testId: 'condition-filter-all' },
+                    { label: 'Like New', val: 'Like New', testId: 'condition-filter-like-new' },
+                    { label: 'Excellent', val: 'Excellent', testId: 'condition-filter-excellent' },
+                    { label: 'Good', val: 'Good', testId: 'condition-filter-good' },
+                    { label: 'Fair', val: 'Fair', testId: 'condition-filter-fair' },
+                  ].map(({ label, val, testId }) => (
+                    <FilterChip
+                      key={val}
+                      label={label}
+                      active={condition === val}
+                      onClick={() => { 
+                        console.log('Condition selected:', val);
+                        setCondition(val); 
+                      }}
+                      testId={testId}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                <button
+                  onClick={() => {
+                    resetFilters();
+                    setFilterDrawerOpen(false);
+                  }}
+                  className={`flex-1 px-4 py-3 rounded-xl font-semibold transition-colors ${
+                    darkMode 
+                      ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' 
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  Reset
+                </button>
+                <button
+                  onClick={() => setFilterDrawerOpen(false)}
+                  className="flex-1 bg-indigo-600 text-white px-4 py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-colors"
+                >
+                  Apply Filters
+                </button>
               </div>
             </div>
           </>
         )}
-
-        {/* ===== RESULTS COUNT & SORT ===== */}
-        <div className="flex items-center justify-between mb-5 gap-3">
-          <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} data-testid="results-count">
-            <span className={`font-bold ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{sortedProducts.length}</span> results
-            {selectedCategory !== 'All' && (
-              <span className="ml-1">in <span className="font-semibold text-indigo-600">{selectedCategory}</span></span>
-            )}
-          </p>
-          
-          {/* Sort Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium border transition-all duration-200 ${
-                darkMode 
-                  ? 'bg-slate-800 border-slate-700 text-slate-200 hover:border-indigo-500'
-                  : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-300'
-              }`}
-            >
-              <ArrowUpDown className="h-4 w-4" />
-              <span className="hidden sm:inline">Sort</span>
-              <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${sortDropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
-            
-            {sortDropdownOpen && (
-              <>
-                <div 
-                  className="fixed inset-0 z-10" 
-                  onClick={() => setSortDropdownOpen(false)}
-                />
-                <div className={`absolute top-full right-0 mt-2 w-56 rounded-xl border shadow-xl z-20 ${
-                  darkMode 
-                    ? 'bg-slate-800 border-slate-700' 
-                    : 'bg-white border-slate-200'
-                }`}>
-                  {sortOptions.map((option, index) => (
-                    <button
-                      key={option.value}
-                      onClick={() => {
-                        setSortBy(option.value);
-                        setSortDropdownOpen(false);
-                      }}
-                      className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors ${
-                        sortBy === option.value
-                          ? darkMode
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-indigo-50 text-indigo-600'
-                          : darkMode
-                            ? 'text-slate-300 hover:bg-slate-700'
-                            : 'text-slate-700 hover:bg-slate-50'
-                      } ${index === 0 ? 'rounded-t-xl' : ''} ${index === sortOptions.length - 1 ? 'rounded-b-xl' : ''}`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
 
         {/* ===== PRODUCTS GRID ===== */}
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">

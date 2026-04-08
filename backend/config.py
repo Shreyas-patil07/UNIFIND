@@ -25,10 +25,16 @@ class Settings(BaseSettings):
     FIREBASE_CLIENT_CERT_URL: str
     
     # CORS Configuration
-    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173,https://localhost:5173"
     
     # Gemini AI Configuration
     GEMINI_API_KEY: str
+    
+    # Cloudinary Configuration
+    CLOUDINARY_CLOUD_NAME: str
+    CLOUDINARY_API_KEY: str
+    CLOUDINARY_API_SECRET: str
+    CLOUDINARY_UPLOAD_PRESET: str = "unifind_products"
     
     # Environment
     ENVIRONMENT: str = "development"  # development, staging, production
@@ -42,7 +48,30 @@ class Settings(BaseSettings):
 @lru_cache()
 def get_settings() -> Settings:
     """Get cached settings instance."""
-    return Settings()
+    settings = Settings()
+    
+    # Validate critical environment variables
+    required_vars = [
+        'FIREBASE_PROJECT_ID',
+        'FIREBASE_PRIVATE_KEY',
+        'FIREBASE_CLIENT_EMAIL',
+        'GEMINI_API_KEY',
+        'CLOUDINARY_CLOUD_NAME',
+        'CLOUDINARY_API_KEY',
+        'CLOUDINARY_API_SECRET'
+    ]
+    
+    missing_vars = []
+    for var in required_vars:
+        if not getattr(settings, var, None):
+            missing_vars.append(var)
+    
+    if missing_vars:
+        raise ValueError(
+            f"Missing required environment variables: {', '.join(missing_vars)}"
+        )
+    
+    return settings
 
 
 # Global settings instance

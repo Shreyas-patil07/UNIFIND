@@ -1,6 +1,15 @@
 /**
  * Image Service - Abstracted image upload with compression
  * Supports: Supabase Storage (profiles) + Cloudinary (products)
+ * 
+ * Usage Examples:
+ * 
+ * Single upload:
+ *   const url = await imageService.upload(file, 'product');
+ * 
+ * Multiple uploads (parallel):
+ *   const urls = await imageService.uploadMultiple([file1, file2, file3], 'product');
+ *   // Returns array of successful URLs, handles individual failures gracefully
  */
 
 class ImageService {
@@ -36,11 +45,15 @@ class ImageService {
    * Validate image file
    */
   validateFile(file) {
-    if (!file.type.startsWith('image/')) {
-      throw new Error('File must be an image');
+    // Validate file type - only JPEG, PNG, WebP allowed
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type.toLowerCase())) {
+      throw new Error('Only JPEG, PNG, and WebP images are supported');
     }
+    
+    // Validate file size - max 5MB before compression
     if (file.size > this.MAX_FILE_SIZE) {
-      throw new Error('File size must be less than 5MB');
+      throw new Error('Image must be less than 5MB');
     }
   }
 
@@ -235,6 +248,8 @@ class ImageService {
     try {
       const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
       
+      console.log('Cloudinary cloud name:', cloudName);
+      
       if (!cloudName) {
         throw new Error('Cloudinary cloud name not configured');
       }
@@ -244,6 +259,8 @@ class ImageService {
       formData.append('upload_preset', 'unifind_products');
       formData.append('folder', 'unifind/products');
 
+      console.log('Uploading to Cloudinary...', file.name, file.size);
+
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
         {
@@ -252,16 +269,60 @@ class ImageService {
         }
       );
 
+      console.log('Cloudinary response status:', response.status);
+
       if (!response.ok) {
-        throw new Error('Cloudinary upload failed');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Cloudinary error:', errorData);
+        throw new Error(errorData.error?.message || 'Cloudinary upload failed');
       }
 
       const data = await response.json();
+      console.log('Cloudinary upload successful:', data.secure_url);
       return data.secure_url;
     } catch (error) {
       console.error('Cloudinary upload failed:', error);
-      throw new Error('Failed to upload to Cloudinary');
+      throw new Error('Failed to upload to Cloudinary: ' + error.message);
     }
+  }
+
+  /**
+   * Upload multiple images in parallel
+   * @param {File[]} files - Array of image files to upload
+   * @param {string} type - 'profile' or 'product' (default: 'product')
+   * @returns {Promise<string[]>} - Array of successful Image_URLs
+   */
+  async uploadMultiple(files, type = 'product') {
+    if (!Array.isArray(files) || files.length === 0) {
+      throw new Error('Files must be a non-empty array');
+    }
+
+    // Upload all files concurrently
+    const uploadPromises = files.map(async (file, index) => {
+      try {
+        const url = await this.upload(file, type);
+        return { success: true, url, index };
+      } catch (error) {
+        console.error(`Failed to upload file ${index + 1}:`, error.message);
+        return { success: false, error: error.message, index };
+      }
+    });
+
+    // Wait for all uploads to complete
+    const results = await Promise.all(uploadPromises);
+
+    // Extract successful URLs
+    const successfulUrls = results
+      .filter(result => result.success)
+      .map(result => result.url);
+
+    // Log failures for debugging
+    const failures = results.filter(result => !result.success);
+    if (failures.length > 0) {
+      console.warn(`${failures.length} upload(s) failed:`, failures);
+    }
+
+    return successfulUrls;
   }
 
   /**

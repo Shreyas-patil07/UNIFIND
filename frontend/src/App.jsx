@@ -16,6 +16,7 @@ import ListingDetailPage from './pages/ListingDetailPage'
 import SellerPage from './pages/SellerPage'
 import PostListingPage from './pages/PostListingPage'
 import NeedBoardPage from './pages/NeedBoardPage'
+import NeedBoardHistoryPage from './pages/NeedBoardHistoryPage'
 import ChatPage from './pages/ChatPage'
 import AnalyticsPage from './pages/AnalyticsPage'
 import ProfilePage from './pages/ProfilePage'
@@ -53,6 +54,7 @@ function App() {
             <Route path="/seller" element={<ProtectedRoute><SellerPage /></ProtectedRoute>} />
             <Route path="/post-listing" element={<ProtectedRoute><PostListingPage /></ProtectedRoute>} />
             <Route path="/need-board" element={<ProtectedRoute><NeedBoardPage /></ProtectedRoute>} />
+            <Route path="/needboard/history" element={<ProtectedRoute><NeedBoardHistoryPage /></ProtectedRoute>} />
             <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
             <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfileRedirect /></ProtectedRoute>} />

@@ -1,15 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import { ShoppingBag, Package, MessageCircle, BarChart3, Sparkles, List, TrendingUp, Clock, ArrowRight } from 'lucide-react';
-import { recentActivity, userStats } from '../data/mockData';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { getProducts, getUserChats } from '../services/api';
 
 const DashboardHome = () => {
   const navigate = useNavigate();
   const { currentUser, userProfile } = useAuth();
   const { darkMode } = useTheme();
+  const [products, setProducts] = useState([]);
+  const [chats, setChats] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const displayName = currentUser?.displayName || userProfile?.name || 'Student';
   const firstName = displayName.split(' ')[0];
@@ -17,6 +20,58 @@ const DashboardHome = () => {
   const itemsBought = userProfile?.items_bought || 0;
   const itemsSold = userProfile?.items_sold || 0;
   const rating = userProfile?.rating || 0.0;
+
+  // Load user data
+  useEffect(() => {
+    const loadData = async () => {
+      if (!currentUser) return;
+
+      try {
+        const [userProducts, userChats] = await Promise.all([
+          getProducts({ seller_id: currentUser.uid }),
+          getUserChats(currentUser.uid)
+        ]);
+        
+        setProducts(Array.isArray(userProducts) ? userProducts : []);
+        setChats(Array.isArray(userChats) ? userChats : []);
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error);
+        setProducts([]);
+        setChats([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [currentUser]);
+
+  // Calculate stats from real data
+  const userStats = {
+    bought: itemsBought,
+    sold: itemsSold,
+    rating: rating,
+    earnings: 0, // TODO: Calculate from transactions
+    savings: 0, // TODO: Calculate from transactions
+    trustScore: trustScore
+  };
+
+  // Generate recent activity from products and chats
+  const recentActivity = [
+    ...(Array.isArray(products) ? products.slice(0, 2).map(p => ({
+      id: `product-${p.id}`,
+      type: 'sale',
+      title: `Listed ${p.title}`,
+      amount: p.price,
+      date: p.posted_date
+    })) : []),
+    ...(Array.isArray(chats) ? chats.slice(0, 1).map(c => ({
+      id: `chat-${c.id}`,
+      type: 'message',
+      title: 'New message',
+      date: c.last_message_time
+    })) : [])
+  ].slice(0, 3);
 
   const navCards = [
     {

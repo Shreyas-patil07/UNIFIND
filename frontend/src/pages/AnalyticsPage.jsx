@@ -1,27 +1,63 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { TrendingUp, TrendingDown, Eye, Heart, MessageCircle, Package, IndianRupee } from 'lucide-react';
-import { userStats } from '../data/mockData';
+import { useAuth } from '../contexts/AuthContext';
+import { getProducts } from '../services/api';
 
 const AnalyticsPage = () => {
-  // Mock analytics data
+  const { currentUser } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState([]);
+  
+  // Load user's products
+  useEffect(() => {
+    const loadProducts = async () => {
+      if (!currentUser) return;
+      
+      try {
+        const userProducts = await getProducts({ seller_id: currentUser.uid });
+        setProducts(Array.isArray(userProducts) ? userProducts : []);
+      } catch (error) {
+        console.error('Failed to load products:', error);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, [currentUser]);
+
+  // Calculate stats from real data
+  const safeProducts = Array.isArray(products) ? products : [];
+  
   const stats = {
-    totalViews: 1247,
-    totalLikes: 89,
-    totalMessages: 156,
-    totalRevenue: 124500,
-    activeListings: 8,
-    soldItems: 12,
-    viewsChange: +12.5,
-    revenueChange: +8.3
+    totalViews: safeProducts.reduce((sum, p) => sum + (p.views || 0), 0),
+    totalLikes: 0, // TODO: Implement likes feature
+    totalMessages: 0, // TODO: Get from chats API
+    totalRevenue: safeProducts.reduce((sum, p) => sum + (p.is_active ? 0 : p.price), 0),
+    activeListings: safeProducts.filter(p => p.is_active).length,
+    soldItems: safeProducts.filter(p => !p.is_active).length,
+    viewsChange: 0, // TODO: Calculate change
+    revenueChange: 0 // TODO: Calculate change
+  };
+
+  const userStats = {
+    bought: 0, // TODO: Implement transaction history
+    sold: safeProducts.filter(p => !p.is_active).length,
+    rating: 0, // TODO: Get from reviews
+    earnings: safeProducts.reduce((sum, p) => sum + (p.is_active ? 0 : p.price), 0),
+    savings: 0, // TODO: Calculate from transactions
+    trustScore: 0 // TODO: Get from user profile
   };
 
   const monthlyData = [
-    { month: 'Jan', sales: 8, revenue: 45000 },
-    { month: 'Feb', sales: 12, revenue: 67000 },
-    { month: 'Mar', sales: 15, revenue: 89000 },
-    { month: 'Apr', sales: 10, revenue: 56000 },
-    { month: 'May', sales: 18, revenue: 124500 }
+    // TODO: Calculate from real transaction data
+    { month: 'Jan', sales: 0, revenue: 0 },
+    { month: 'Feb', sales: 0, revenue: 0 },
+    { month: 'Mar', sales: 0, revenue: 0 },
+    { month: 'Apr', sales: 0, revenue: 0 },
+    { month: 'May', sales: safeProducts.filter(p => !p.is_active).length, revenue: safeProducts.reduce((sum, p) => sum + (p.is_active ? 0 : p.price), 0) }
   ];
 
   const topProducts = [
@@ -97,7 +133,7 @@ const AnalyticsPage = () => {
           <div className="bg-white rounded-2xl border border-slate-200 p-8">
             <h2 className="text-xl font-bold text-slate-900 mb-6">Monthly Sales</h2>
             <div className="space-y-4">
-              {monthlyData.map((data, i) => (
+              {(Array.isArray(monthlyData) ? monthlyData : []).map((data, i) => (
                 <div key={i} className="flex items-center gap-4">
                   <div className="w-12 text-sm font-medium text-slate-600">{data.month}</div>
                   <div className="flex-1">
@@ -119,7 +155,7 @@ const AnalyticsPage = () => {
           <div className="bg-white rounded-2xl border border-slate-200 p-8">
             <h2 className="text-xl font-bold text-slate-900 mb-6">Monthly Revenue</h2>
             <div className="space-y-4">
-              {monthlyData.map((data, i) => (
+              {(Array.isArray(monthlyData) ? monthlyData : []).map((data, i) => (
                 <div key={i} className="flex items-center gap-4">
                   <div className="w-12 text-sm font-medium text-slate-600">{data.month}</div>
                   <div className="flex-1">
@@ -152,7 +188,7 @@ const AnalyticsPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {topProducts.map((product, i) => (
+                {(Array.isArray(topProducts) ? topProducts : []).map((product, i) => (
                   <tr key={i} className="border-b border-slate-100 last:border-0" data-testid={`top-product-${i}`}>
                     <td className="py-4 px-4 text-sm font-medium text-slate-900">{product.name}</td>
                     <td className="py-4 px-4 text-center">
