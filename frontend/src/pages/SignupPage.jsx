@@ -143,21 +143,17 @@ const SignupPage = () => {
       
       const userCredential = await signup(formData.email, formData.password, fullName, formData.college, formData.branch, formData.yearOfAdmission, formData.upiId);
       
-      // Send verification email via backend
+      // Send verification email using Firebase's built-in method
       if (userCredential && userCredential.user) {
         try {
-          await fetch(`${import.meta.env.VITE_API_URL}/auth/send-verification`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              email: formData.email,
-              firebase_uid: userCredential.user.uid
-            }),
+          const { sendEmailVerification } = await import('firebase/auth');
+          await sendEmailVerification(userCredential.user, {
+            url: window.location.origin + '/dashboard',
+            handleCodeInApp: false
           });
         } catch (emailError) {
           console.error('Failed to send verification email:', emailError);
+          // Don't block signup if email fails
         }
       }
       

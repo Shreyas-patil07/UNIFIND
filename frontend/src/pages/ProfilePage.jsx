@@ -135,36 +135,15 @@ const ProfilePage = () => {
     setResendingEmail(true);
     setResendSuccess(false);
     try {
-      // Get API URL with proper fallback
-      let apiUrl = import.meta.env.VITE_API_URL;
-      if (!apiUrl || apiUrl.trim() === '') {
-        apiUrl = window.location.hostname === 'localhost' 
-          ? 'http://localhost:8000/api'
-          : 'https://unifind-backend.onrender.com/api';
-      }
-      // Remove trailing slash if present
-      apiUrl = apiUrl.replace(/\/$/, '');
-      
-      const response = await fetch(`${apiUrl}/auth/resend-verification`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: authUser.email,
-          firebase_uid: authUser.uid
-        }),
+      // Use Firebase's built-in email verification
+      const { sendEmailVerification } = await import('firebase/auth');
+      await sendEmailVerification(authUser, {
+        url: window.location.origin + '/dashboard',
+        handleCodeInApp: false
       });
       
-      const data = await response.json();
-      
-      if (response.ok) {
-        setResendSuccess(true);
-        setTimeout(() => setResendSuccess(false), 5000);
-      } else {
-        console.error('Failed to resend verification email:', data);
-        alert(`Failed to send verification email: ${data.detail || 'Unknown error'}`);
-      }
+      setResendSuccess(true);
+      setTimeout(() => setResendSuccess(false), 5000);
     } catch (error) {
       console.error('Failed to resend verification email:', error);
       alert('Failed to send verification email. Please try again.');
