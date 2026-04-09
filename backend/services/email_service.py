@@ -1,5 +1,6 @@
 """
 Email service for sending verification emails using Gmail SMTP.
+Supports both direct SMTP and fallback methods for restricted environments.
 """
 import os
 import secrets
@@ -7,15 +8,17 @@ from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import aiosmtplib
+import smtplib
 from config import settings
 
 
 class EmailService:
-    """Service for sending emails via Gmail SMTP"""
+    """Service for sending emails via Gmail SMTP with fallback options"""
     
     def __init__(self):
         self.smtp_host = "smtp.gmail.com"
-        self.smtp_port = 587
+        self.smtp_port_tls = 587  # TLS
+        self.smtp_port_ssl = 465  # SSL
         self.sender_email = settings.GMAIL_USER
         self.sender_password = settings.GMAIL_APP_PASSWORD
         self.verification_tokens = {}  # In production, use Redis or database
@@ -47,7 +50,7 @@ class EmailService:
             del self.verification_tokens[token]
     
     async def send_verification_email(self, to_email: str, verification_url: str):
-        """Send email verification link"""
+        """Send email verification link with multiple fallback methods"""
         subject = "Verify Your UniFind Account"
         
         html_content = f"""
@@ -87,10 +90,73 @@ class EmailService:
         </html>
         """
         
-        await self._send_email(to_email, subject, html_content)
+        # Try multiple methods in order
+        methods = [
+            ("SSL (Port 465)", self._send_email_ssl),
+            ("TLS (Port 587)", self._send_email_tls),
+            ("Synchronous SSL", self._send_email_sync_ssl),
+        ]
+        
+        last_error = None
+        for method_name, method in methods:
+            try:
+                await method(to_email, subject, html_content)
+                print(f"✓ Email sent successfully using {method_name}")
+                return
+            except Exception as e:
+                last_error = e
+                print(f"✗ {method_name} failed: {str(e)}")
+                continue
+        
+        # All methods failed
+        raise Exception(f"All email methods failed. Last error: {str(last_error)}")
     
-    async def _send_email(self, to_email: str, subject: str, html_content: str):
-        """Internal method to send email via SMTP"""
+    async def _send_email_ssl(self, to_email: str, subject: str, html_content: str):
+        """Send email using SSL on port 465 (async)"""
+        message = self._create_message(to_email, subject, html_content)
+        
+        await aiosmtplib.send(
+            message,
+            hostname=self.smtp_host,
+            port=self.smtp_port_ssl,
+            use_tls=True,  # Use SSL
+            username=self.sender_email,
+            password=self.sender_password,
+            timeout=30,
+        )
+    
+    async def _send_email_tls(self, to_email: str, subject: str, html_content: str):
+        """Send email using STARTTLS on port 587 (async)"""
+        message = self._create_message(to_email, subject, html_content)
+        
+        await aiosmtplib.send(
+            message,
+            hostname=self.smtp_host,
+            port=self.smtp_port_tls,
+            start_tls=True,
+            username=self.sender_email,
+            password=self.sender_password,
+            timeout=30,
+        )
+    
+    async def _send_email_sync_ssl(self, to_email: str, subject: str, html_content: str):
+        """Send email using synchronous smtplib with SSL (fallback)"""
+        import asyncio
+        
+        def send_sync():
+            message = self._create_message(to_email, subject, html_content)
+            
+            # Use SSL connection
+            with smtplib.SMTP_SSL(self.smtp_host, self.smtp_port_ssl, timeout=30) as server:
+                server.login(self.sender_email, self.sender_password)
+                server.send_message(message)
+        
+        # Run synchronous code in thread pool
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, send_sync)
+    
+    def _create_message(self, to_email: str, subject: str, html_content: str) -> MIMEMultipart:
+        """Create email message"""
         message = MIMEMultipart("alternative")
         message["Subject"] = subject
         message["From"] = self.sender_email
@@ -99,23 +165,7 @@ class EmailService:
         html_part = MIMEText(html_content, "html")
         message.attach(html_part)
         
-        try:
-            # Add timeout to prevent hanging
-            await aiosmtplib.send(
-                message,
-                hostname=self.smtp_host,
-                port=self.smtp_port,
-                start_tls=True,
-                username=self.sender_email,
-                password=self.sender_password,
-                timeout=30,  # 30 second timeout
-            )
-        except aiosmtplib.SMTPException as e:
-            raise Exception(f"SMTP error: {str(e)}")
-        except TimeoutError:
-            raise Exception("Email service timeout - please check SMTP configuration")
-        except Exception as e:
-            raise Exception(f"Failed to send email: {str(e)}")
+        return message
 
 
 # Singleton instance

@@ -143,13 +143,26 @@ const SignupPage = () => {
       
       const userCredential = await signup(formData.email, formData.password, fullName, formData.college, formData.branch, formData.yearOfAdmission, formData.upiId);
       
-      // Send verification email using Firebase's built-in method
+      // Send verification email via backend SMTP
       if (userCredential && userCredential.user) {
         try {
-          const { sendEmailVerification } = await import('firebase/auth');
-          await sendEmailVerification(userCredential.user, {
-            url: window.location.origin + '/dashboard',
-            handleCodeInApp: false
+          let apiUrl = import.meta.env.VITE_API_URL;
+          if (!apiUrl || apiUrl.trim() === '') {
+            apiUrl = window.location.hostname === 'localhost' 
+              ? 'http://localhost:8000/api'
+              : 'https://unifind-backend.onrender.com/api';
+          }
+          apiUrl = apiUrl.replace(/\/$/, '');
+          
+          await fetch(`${apiUrl}/auth/send-verification`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: formData.email,
+              firebase_uid: userCredential.user.uid
+            }),
           });
         } catch (emailError) {
           console.error('Failed to send verification email:', emailError);

@@ -85,18 +85,35 @@ const OTPVerificationPage = () => {
     setError('');
     setResendSuccess(false);
     try {
-      // Use Firebase's built-in email verification
-      const { sendEmailVerification } = await import('firebase/auth');
-      await sendEmailVerification(auth.currentUser, {
-        url: window.location.origin + '/dashboard',
-        handleCodeInApp: false
+      let apiUrl = import.meta.env.VITE_API_URL;
+      if (!apiUrl || apiUrl.trim() === '') {
+        apiUrl = window.location.hostname === 'localhost' 
+          ? 'http://localhost:8000/api'
+          : 'https://unifind-backend.onrender.com/api';
+      }
+      apiUrl = apiUrl.replace(/\/$/, '');
+      
+      const response = await fetch(`${apiUrl}/auth/resend-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: auth.currentUser.email,
+          firebase_uid: auth.currentUser.uid
+        }),
       });
       
-      setResendSuccess(true);
-      setCountdown(60); // 60s cooldown
+      if (response.ok) {
+        setResendSuccess(true);
+        setCountdown(60); // 60s cooldown
+      } else {
+        const data = await response.json();
+        setError(data.detail || 'Failed to resend. Please try again.');
+      }
     } catch (err) {
       console.error('Resend error:', err);
-      setError(err.message || 'Failed to resend. Please try again.');
+      setError('Failed to resend. Please try again.');
     } finally {
       setResending(false);
     }
