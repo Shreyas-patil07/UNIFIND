@@ -135,37 +135,18 @@ const ProfilePage = () => {
     setResendingEmail(true);
     setResendSuccess(false);
     try {
-      let apiUrl = import.meta.env.VITE_API_URL;
-      if (!apiUrl || apiUrl.trim() === '') {
-        apiUrl = window.location.hostname === 'localhost' 
-          ? 'http://localhost:8000/api'
-          : 'https://unifind-backend.onrender.com/api';
-      }
-      apiUrl = apiUrl.replace(/\/$/, '');
-      
-      const response = await fetch(`${apiUrl}/auth/resend-verification`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: authUser.email,
-          firebase_uid: authUser.uid
-        }),
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        setResendSuccess(true);
-        setTimeout(() => setResendSuccess(false), 5000);
-      } else {
-        console.error('Failed to resend verification email:', data);
-        alert(`Failed to send verification email: ${data.detail || 'Unknown error'}`);
-      }
+      const { sendEmailVerification } = await import('firebase/auth');
+      const { actionCodeSettings } = await import('../services/firebase');
+      await sendEmailVerification(authUser, actionCodeSettings);
+      setResendSuccess(true);
+      setTimeout(() => setResendSuccess(false), 5000);
     } catch (error) {
       console.error('Failed to resend verification email:', error);
-      alert('Failed to send verification email. Please try again.');
+      if (error.code === 'auth/too-many-requests') {
+        alert('Too many requests. Please wait a moment before trying again.');
+      } else {
+        alert('Failed to send verification email. Please try again.');
+      }
     } finally {
       setResendingEmail(false);
     }

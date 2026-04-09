@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Mail, Lock, User, GraduationCap, Eye, EyeOff, Calendar, CheckCircle, Smartphone } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { auth, db } from '../services/firebase';
+import { sendEmailVerification } from 'firebase/auth';
+import { auth, actionCodeSettings, db } from '../services/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
 const SignupPage = () => {
@@ -141,35 +142,10 @@ const SignupPage = () => {
       // Combine names into full name
       const fullName = `${formData.firstName} ${formData.middleName} ${formData.surname}`.replace(/\s+/g, ' ').trim();
       
-      const userCredential = await signup(formData.email, formData.password, fullName, formData.college, formData.branch, formData.yearOfAdmission, formData.upiId);
-      
-      // Send verification email via backend SMTP
-      if (userCredential && userCredential.user) {
-        try {
-          let apiUrl = import.meta.env.VITE_API_URL;
-          if (!apiUrl || apiUrl.trim() === '') {
-            apiUrl = window.location.hostname === 'localhost' 
-              ? 'http://localhost:8000/api'
-              : 'https://unifind-backend.onrender.com/api';
-          }
-          apiUrl = apiUrl.replace(/\/$/, '');
-          
-          await fetch(`${apiUrl}/auth/send-verification`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              email: formData.email,
-              firebase_uid: userCredential.user.uid
-            }),
-          });
-        } catch (emailError) {
-          console.error('Failed to send verification email:', emailError);
-          // Don't block signup if email fails
-        }
+      await signup(formData.email, formData.password, fullName, formData.college, formData.branch, formData.yearOfAdmission, formData.upiId);
+      if (auth.currentUser) {
+        await sendEmailVerification(auth.currentUser, actionCodeSettings);
       }
-      
       navigate('/otp-verification', { state: { email: formData.email } });
     } catch (err) {
       setError(getErrorMessage(err.code));
