@@ -300,7 +300,7 @@ function HeroSection({ onSignup, onBrowse, userCount }) {
         <div style={{ position: 'relative' }}>
           <div style={{ position: 'relative', height: 480, borderRadius: 16, overflow: 'hidden', boxShadow: ghostShadow, transform: 'rotate(2deg)' }}>
             <img
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWD0EduIw03KgR_0XmGguabMFdUW1WrB4XXVFFYHkAeb9bVYqcE56RHx95e8njimvz1YK2zaToPgUd_cPEO-7fY2zsmlRE4bFHhFqLN0XXJrZhD--VPhqMRZSj4fEm8caRSEQ2A2RVlseBZxsxYx3XP-Dj2kTL333TS_4JVvggyo97GjhqhJOV9Z9r5UY-cKAUEM0Zr7jPvRQS0WdgyhLcZhd2gRz4Rpd5nLkP9g1gtyeEptK0E9LXXvjxqQNlf3028R6mnmgCbiI"
+              src="https://gonzaga.azureedge.net/-/media/Website/Images/Body-Content/About/Our-Campus-and-Location/body-college-hall.ashx?h=428px&w=750px&rev=a09c7976b5bb4fad80a88ae77daaa227&hash=AB682326061999B3FF357764EE74082B"
               alt="College students sharing notes"
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
