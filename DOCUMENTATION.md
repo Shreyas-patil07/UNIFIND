@@ -240,22 +240,21 @@ UNIFIND/
 
 ### Authentication
 
-UNIFIND uses Firebase Authentication with a custom Gmail-based email verification system:
+UNIFIND uses Firebase Authentication with built-in email verification:
 
 **Authentication Flow**:
 1. User signs up with email and password (Firebase Auth)
-2. Backend sends verification email via Gmail SMTP
-3. User clicks verification link with token
-4. Backend verifies token and updates both Firestore and Firebase Auth
-5. User gains full access after verification
+2. Firebase automatically sends verification email
+3. User clicks verification link in email
+4. User gains full access after verification
 
 **Email Verification Features**:
-- Custom HTML email templates
-- 24-hour token expiry
-- One-time use tokens
-- Auto-sync between Firebase Auth and Firestore
-- Resend functionality
-- Auto-check verification status
+- Native Firebase email verification
+- Reliable email delivery through Firebase infrastructure
+- Auto-check verification status every 5 seconds
+- Manual "I've Verified My Email" button for instant refresh
+- Resend functionality from multiple pages
+- Simple and maintainable implementation
 
 **Backend validates Firebase tokens** for all protected endpoints.
 
@@ -983,4 +982,4 @@ This project is licensed under the MIT License.
 
 ---
 
-**Last Updated**: April 6, 2026 | **Version**: 2.3.0
+**Last Updated**: April 10, 2026 | **Version**: 2.2.0

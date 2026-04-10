@@ -280,6 +280,6 @@ Users have the right to:
 
 ---
 
-**Last Updated:** April 9, 2026  
+**Last Updated:** April 10, 2026  
 **Compliance Status:** ✅ Ready for Legal Review  
-**Next Review Date:** April 9, 2027
+**Next Review Date:** April 10, 2027

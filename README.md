@@ -41,6 +41,8 @@
 
 **UNIFIND** is a next-generation student-to-student marketplace that revolutionizes campus commerce through AI-powered matching, transparent quality systems, and trust-based transactions. Built with 100% modern technologies, UNIFIND makes buying and selling textbooks, notes, lab equipment, and electronics safe, smart, and sustainable.
 
+**Current Version**: 2.2.0 (April 10, 2026)
+
 > 💡 **The Problem**: Students spend ₹10,000+ per semester on textbooks that sit unused after exams. Existing solutions (Facebook groups, OLX) are unsafe, slow, or expensive.
 
 > ✨ **Our Solution**: A campus-focused marketplace with AI-powered Need Board, Cashify-style condition grading, and comprehensive Trust Scores—all built on cutting-edge, scalable technology.
@@ -50,7 +52,7 @@
 ## ✨ Key Features
 
 ### Core Marketplace
-- 🔐 **Secure Authentication** - Firebase Authentication with Gmail-based email verification
+- 🔐 **Secure Authentication** - Firebase Authentication with built-in email verification
 - 🛍️ **Smart Listings** - Create detailed product listings with photos and condition assessment
 - 🔍 **Advanced Search & Filtering** - Real-time search with history, nested category dropdowns, and smart sorting
 - 📱 **Responsive Design** - Seamless experience across all devices
@@ -59,7 +61,7 @@
 - 📋 **Recently Viewed** - Track and quickly access recently viewed products
 - 💬 **Quick Contact** - WhatsApp and Call buttons for instant seller communication
 - 🏷️ **Negotiable Badges** - Clear indicators for price negotiation availability
-- ✉️ **Email Verification** - Custom Gmail SMTP integration for reliable email delivery
+- ✉️ **Email Verification** - Reliable Firebase email verification system
 
 ### AI-Powered Features
 - 🤖 **AI Need Board** - Post what you need in natural language, get smart matches
@@ -266,10 +268,6 @@ FIREBASE_CLIENT_CERT_URL=https://www.googleapis.com/robot/v1/metadata/x509/...
 
 # CORS Configuration
 CORS_ORIGINS=http://localhost:3000,http://localhost:5173
-
-# Email Configuration (Gmail SMTP)
-GMAIL_USER=your-gmail@gmail.com
-GMAIL_APP_PASSWORD=your-16-char-app-password
 
 # Gemini AI
 GEMINI_API_KEY=your-gemini-api-key
@@ -834,28 +832,36 @@ For detailed documentation, see the files above or visit the `/docs` endpoint wh
 
 ## 📝 Recent Updates
 
-### April 9, 2026 - Gmail-Based Email Verification (v2.1.3)
-- **Custom Email Verification System**:
-  - Replaced Firebase email verification with Gmail SMTP
-  - Professional HTML email templates
-  - 24-hour token expiry with one-time use
-  - Auto-sync between Firebase Auth and Firestore
-  - Resend verification from profile or OTP page
-  - Auto-check verification status every 5 seconds
-  - Prevents duplicate API calls in React StrictMode
-  - Email sent from systemrecord07@gmail.com
-  
-- **Backend Email Service**:
-  - `aiosmtplib` for async SMTP operations
-  - Token generation and validation
-  - Firestore and Firebase Auth synchronization
-  - Comprehensive error handling
-  
-- **Frontend Improvements**:
-  - VerifyEmailPage with success/error states
-  - Auto-redirect after verification
-  - Manual "I've Verified My Email" button
-  - Better error messages and user feedback
+### April 10, 2026 - Email Verification & UI Enhancements (v2.2.0)
+
+**Email Verification System**:
+- ✅ Restored Firebase built-in email verification for reliability
+- ✅ Simplified authentication flow with native Firebase methods
+- ✅ Removed custom SMTP complexity for better maintainability
+- ✅ Auto-check verification status every 5 seconds
+- ✅ Manual "I've Verified My Email" button for instant refresh
+- ✅ Resend verification from profile or OTP page
+- ✅ Prevents duplicate API calls in React StrictMode
+
+**Major UI/UX Improvements**:
+- ✅ Enhanced landing page with modern design and animations
+- ✅ Improved product cards with better visual hierarchy
+- ✅ Updated header with refined navigation
+- ✅ Better chat interface with improved message display
+- ✅ Enhanced profile page with cleaner layout
+- ✅ Improved dashboard with better statistics display
+- ✅ Updated analytics page with clearer metrics
+- ✅ Better form styling across all pages
+- ✅ Consistent color scheme and spacing
+- ✅ Improved mobile responsiveness
+
+**Technical Improvements**:
+- ✅ Simplified email service architecture
+- ✅ Better error handling across all pages
+- ✅ Improved loading states and feedback
+- ✅ Enhanced accessibility features
+- ✅ Optimized component rendering
+- ✅ Better state management patterns
 
 ### April 7, 2026 - Enhanced Marketplace Features (v2.1.0)
 - **Advanced Search & Filtering**:
