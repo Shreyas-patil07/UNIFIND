@@ -69,7 +69,7 @@ const NeedBoardHistoryPage = () => {
   };
 
   return (
-    <div className={`min-h-[100dvh] pb-20 ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
+    <div className={`min-h-[100dvh] pb-20 ${darkMode ? 'bg-[#0f0f0f]' : 'bg-slate-50'}`}>
       <Header hideSearch />
 
       <div className="px-6 sm:px-8 md:px-12 lg:px-24 py-12">
@@ -82,7 +82,7 @@ const NeedBoardHistoryPage = () => {
                 Search History
               </h1>
             </div>
-            <p className={`text-base ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+            <p className={`text-base ${darkMode ? 'text-neutral-400' : 'text-slate-600'}`}>
               View your past NeedBoard AI searches and results (last 12 hours)
             </p>
           </div>
@@ -93,7 +93,7 @@ const NeedBoardHistoryPage = () => {
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className={`rounded-2xl border p-6 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}
+                  className={`rounded-2xl border p-6 ${darkMode ? 'bg-[#212121] border-neutral-700' : 'bg-white border-slate-200'}`}
                 >
                   <div className={`h-4 w-3/4 ${darkMode ? 'bg-slate-700' : 'bg-slate-200'} rounded animate-pulse mb-3`} />
                   <div className={`h-4 w-1/2 ${darkMode ? 'bg-slate-700' : 'bg-slate-200'} rounded animate-pulse`} />
@@ -104,12 +104,12 @@ const NeedBoardHistoryPage = () => {
 
           {/* Empty State */}
           {!loading && searchHistory.length === 0 && (
-            <div className={`rounded-2xl border p-12 text-center ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
-              <History className={`h-16 w-16 mx-auto mb-4 ${darkMode ? 'text-slate-600' : 'text-slate-300'}`} />
-              <h2 className={`text-xl font-bold mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+            <div className={`rounded-2xl border p-12 text-center ${darkMode ? 'bg-[#212121] border-neutral-700' : 'bg-white border-slate-200'}`}>
+              <History className={`h-16 w-16 mx-auto mb-4 ${darkMode ? 'text-slate-600' : 'text-neutral-300'}`} />
+              <h2 className={`text-xl font-bold mb-2 ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`}>
                 No search history yet
               </h2>
-              <p className={`text-sm mb-6 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+              <p className={`text-sm mb-6 ${darkMode ? 'text-slate-500' : 'text-neutral-400'}`}>
                 Your NeedBoard AI searches will appear here
               </p>
               <button
@@ -132,7 +132,7 @@ const NeedBoardHistoryPage = () => {
                 return (
                   <div
                     key={index}
-                    className={`rounded-2xl border overflow-hidden ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}
+                    className={`rounded-2xl border overflow-hidden ${darkMode ? 'bg-[#212121] border-neutral-700' : 'bg-white border-slate-200'}`}
                   >
                     {/* Search Header */}
                     <div
@@ -144,25 +144,25 @@ const NeedBoardHistoryPage = () => {
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">
-                            <Clock className={`h-4 w-4 flex-shrink-0 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-                            <span className={`text-sm ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                            <Clock className={`h-4 w-4 flex-shrink-0 ${darkMode ? 'text-slate-500' : 'text-neutral-400'}`} />
+                            <span className={`text-sm ${darkMode ? 'text-slate-500' : 'text-neutral-400'}`}>
                               {timeAgo}
                             </span>
                           </div>
-                          <p className={`text-lg font-semibold mb-2 ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>
+                          <p className={`text-lg font-semibold mb-2 ${darkMode ? 'text-neutral-200' : 'text-slate-900'}`}>
                             {search.query}
                           </p>
                           {hasResults && (
-                            <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                            <p className={`text-sm ${darkMode ? 'text-neutral-400' : 'text-slate-600'}`}>
                               {search.results.length} {search.results.length === 1 ? 'result' : 'results'} found
                             </p>
                           )}
                         </div>
-                        <button className={`p-2 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-100'}`}>
+                        <button className={`p-2 rounded-lg transition-colors ${darkMode ? 'hover:bg-neutral-800' : 'hover:bg-slate-100'}`}>
                           {isExpanded ? (
-                            <ChevronUp className={`h-5 w-5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`} />
+                            <ChevronUp className={`h-5 w-5 ${darkMode ? 'text-neutral-400' : 'text-slate-600'}`} />
                           ) : (
-                            <ChevronDown className={`h-5 w-5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`} />
+                            <ChevronDown className={`h-5 w-5 ${darkMode ? 'text-neutral-400' : 'text-slate-600'}`} />
                           )}
                         </button>
                       </div>
@@ -170,7 +170,7 @@ const NeedBoardHistoryPage = () => {
 
                     {/* Expanded Content */}
                     {isExpanded && (
-                      <div className={`border-t p-6 ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                      <div className={`border-t p-6 ${darkMode ? 'border-neutral-700' : 'border-slate-200'}`}>
                         {/* Extracted Intent */}
                         {search.extracted && (
                           <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border border-blue-200 p-6 mb-6">
@@ -232,7 +232,7 @@ const NeedBoardHistoryPage = () => {
                                     </div>
                                   ) : (
                                     <div className="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 bg-slate-200 rounded-lg flex items-center justify-center">
-                                      <span className="text-slate-400 text-xs">No image</span>
+                                      <span className="text-neutral-400 text-xs">No image</span>
                                     </div>
                                   )}
 
@@ -249,7 +249,7 @@ const NeedBoardHistoryPage = () => {
                                     <div className="text-lg font-black text-blue-600 mb-1">
                                       {result.price != null ? `₹${Number(result.price).toLocaleString()}` : '—'}
                                     </div>
-                                    <p className={`text-sm line-clamp-2 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                    <p className={`text-sm line-clamp-2 ${darkMode ? 'text-neutral-400' : 'text-slate-600'}`}>
                                       {result.reason}
                                     </p>
                                   </div>
@@ -258,7 +258,7 @@ const NeedBoardHistoryPage = () => {
                             </div>
                           </div>
                         ) : (
-                          <div className={`text-center py-8 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                          <div className={`text-center py-8 ${darkMode ? 'text-slate-500' : 'text-neutral-400'}`}>
                             No results found for this search
                           </div>
                         )}
@@ -276,3 +276,4 @@ const NeedBoardHistoryPage = () => {
 };
 
 export default NeedBoardHistoryPage;
+

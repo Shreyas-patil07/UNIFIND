@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Mail, Lock, User, GraduationCap, Eye, EyeOff, Calendar, CheckCircle, Smartphone } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { sendEmailVerification } from 'firebase/auth';
 import { auth, actionCodeSettings, db } from '../services/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import { getUserCount } from '../services/api';
 
 const SignupPage = () => {
   const navigate = useNavigate();
@@ -28,6 +29,16 @@ const SignupPage = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [userCount, setUserCount] = useState(0);
+
+  // Fetch user count on mount
+  useEffect(() => {
+    const fetchUserCount = async () => {
+      const count = await getUserCount();
+      setUserCount(count);
+    };
+    fetchUserCount();
+  }, []);
   const [showPassword, setShowPassword] = useState(false);
   const [showCollegeDropdown, setShowCollegeDropdown] = useState(false);
   const [collegeSearch, setCollegeSearch] = useState('');
@@ -167,7 +178,7 @@ const SignupPage = () => {
   ];
 
   return (
-    <div className="min-h-[100dvh] flex flex-col lg:flex-row bg-slate-900">
+    <div className="min-h-[100dvh] flex flex-col lg:flex-row bg-[#0f0f0f]">
 
       {/* ===== LEFT PANEL - Branding ===== */}
       <div className="hidden lg:flex lg:w-5/12 relative flex-col justify-between p-12 bg-gradient-hero overflow-hidden">
@@ -201,7 +212,22 @@ const SignupPage = () => {
         </div>
 
         <div className="relative z-10 glass border border-white/10 rounded-2xl p-4">
-          <p className="text-slate-300 text-xs">🎓 Exclusive to SIGCE — Smt. Indira Gandhi College of Engineering, Navi Mumbai</p>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex -space-x-1.5">
+              {['bg-indigo-500', 'bg-violet-500', 'bg-emerald-500'].map((c, i) => (
+                <div key={i} className={`h-7 w-7 ${c} rounded-full border-2 border-slate-800 flex items-center justify-center text-white text-xs font-bold`}>
+                  {['A', 'P', 'S'][i]}
+                </div>
+              ))}
+            </div>
+            <div>
+              <p className="text-white text-xs font-semibold">
+                {userCount > 0 ? `${userCount.toLocaleString()} students trading` : 'Join the community'}
+              </p>
+              <p className="text-slate-500 text-xs">Be part of the community</p>
+            </div>
+          </div>
+          <p className="text-slate-300 text-xs border-t border-white/10 pt-3">🎓 Exclusive to SIGCE — Smt. Indira Gandhi College of Engineering, Navi Mumbai</p>
         </div>
       </div>
 

@@ -28,6 +28,17 @@ export default function Header({ hideSearch = false }) {
   const [errorMessage, setErrorMessage] = useState('')
   const searchRef = useRef(null)
 
+  // Load Manrope font for landing page style
+  useEffect(() => {
+    if (!document.getElementById('uf-header-fonts')) {
+      const link = document.createElement('link');
+      link.id = 'uf-header-fonts';
+      link.rel = 'stylesheet';
+      link.href = 'https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800;900&display=swap';
+      document.head.appendChild(link);
+    }
+  }, []);
+
   // Fetch unread message count
   useEffect(() => {
     if (!currentUser?.uid) return;
@@ -243,7 +254,7 @@ export default function Header({ hideSearch = false }) {
   return (
     <>
       {/* ===== TOP HEADER ===== */}
-      <header className={`sticky top-0 z-50 h-16 sm:h-[72px] backdrop-blur-md border-b ${darkMode ? 'bg-slate-800/95 border-slate-700/80' : 'bg-white/95 border-slate-200/80'}`}>
+      <header className={`sticky top-0 z-50 h-16 sm:h-[72px] backdrop-blur-md border-b ${darkMode ? 'bg-neutral-900/95 border-neutral-800/80' : 'bg-white/95 border-slate-200/80'}`}>
         <div className="h-full px-4 sm:px-6 md:px-10 lg:px-20 flex items-center">
           <div className="flex items-center justify-between gap-4 w-full">
 
@@ -253,10 +264,9 @@ export default function Header({ hideSearch = false }) {
               className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity flex-shrink-0"
               data-testid="header-logo"
             >
-              <img src="/UNIFIND.png" alt="UNIFIND Logo" className="h-8 sm:h-10 md:h-12 lg:h-14 w-auto" />
-              <span className="font-['Outfit'] font-black text-xl sm:text-2xl md:text-3xl lg:text-4xl tracking-tight">
-                <span className="text-indigo-600">UNI</span>
-                <span className="text-violet-600">FIND</span>
+              <img src="/UNIFIND.png" alt="UNIFIND Logo" className="h-10 sm:h-12 w-auto" />
+              <span style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 900, letterSpacing: '-0.04em', color: '#003358' }} className="text-2xl sm:text-3xl">
+                UNIFIND
               </span>
             </Link>
 
@@ -271,7 +281,7 @@ export default function Header({ hideSearch = false }) {
                     className={`hidden md:flex relative items-center gap-1.5 px-2 lg:px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                       active
                         ? darkMode ? 'bg-indigo-900/50 text-indigo-300' : 'bg-indigo-50 text-indigo-600'
-                        : darkMode ? 'text-slate-300 hover:bg-slate-700 hover:text-indigo-400' : 'text-slate-600 hover:bg-slate-100 hover:text-slateigo-600'
+                        : darkMode ? 'text-neutral-300 hover:bg-neutral-800 hover:text-indigo-400' : 'text-slate-600 hover:bg-slate-100 hover:text-slateigo-600'
                     }`}
                     title={label}
                   >
@@ -309,7 +319,7 @@ export default function Header({ hideSearch = false }) {
                   className={`hidden md:flex relative items-center gap-1.5 px-2 lg:px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                     showSearchResults
                       ? darkMode ? 'bg-indigo-900/50 text-indigo-300' : 'bg-indigo-50 text-indigo-600'
-                      : darkMode ? 'text-slate-300 hover:bg-slate-700 hover:text-indigo-400' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'
+                      : darkMode ? 'text-neutral-300 hover:bg-neutral-800 hover:text-indigo-400' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'
                   }`}
                   title={showSearchResults ? "Close" : "Find Users & Notifications"}
                   data-testid="desktop-find-users-btn"
@@ -348,9 +358,9 @@ export default function Header({ hideSearch = false }) {
 
                 {/* User Search & Notifications Dropdown */}
                 {showSearchResults && (
-                  <div className={`fixed md:absolute top-[72px] md:top-full left-2 right-2 md:left-auto md:right-0 mt-0 md:mt-2 w-auto md:w-96 max-w-none md:max-w-[384px] rounded-xl shadow-xl border z-50 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                  <div className={`fixed md:absolute top-[72px] md:top-full left-2 right-2 md:left-auto md:right-0 mt-0 md:mt-2 w-auto md:w-96 max-w-none md:max-w-[384px] rounded-xl shadow-xl border z-50 ${darkMode ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-slate-200'}`}>
                     {/* Tabs */}
-                    <div className={`flex border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                    <div className={`flex border-b ${darkMode ? 'border-neutral-800' : 'border-slate-200'}`}>
                       <button
                         onClick={() => {
                           setShowNotifications(false)
@@ -407,7 +417,7 @@ export default function Header({ hideSearch = false }) {
                     {/* Search Tab Content */}
                     {!showNotifications && !showFriends && (
                       <>
-                        <div className={`p-3 border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+                        <div className={`p-3 border-b ${darkMode ? 'border-neutral-800' : 'border-slate-200'}`}>
                           <div className="relative">
                             <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
                             <input
@@ -418,7 +428,7 @@ export default function Header({ hideSearch = false }) {
                               autoFocus
                               className={`w-full pl-9 pr-3 py-2.5 rounded-lg border outline-none text-sm ${
                                 darkMode 
-                                  ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-400 focus:border-indigo-500' 
+                                  ? 'bg-neutral-800 border-neutral-700 text-neutral-200 placeholder-neutral-500 focus:border-indigo-500' 
                                   : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
                               }`}
                             />
@@ -435,7 +445,7 @@ export default function Header({ hideSearch = false }) {
                                 <button
                                   key={user.id}
                                   onClick={() => handleUserClick(user.id)}
-                                  className={`w-full px-4 py-3 flex items-center gap-3 transition-colors ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-50'}`}
+                                  className={`w-full px-4 py-3 flex items-center gap-3 transition-colors ${darkMode ? 'hover:bg-neutral-800' : 'hover:bg-slate-50'}`}
                                 >
                                   <img
                                     src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}`}
@@ -478,7 +488,7 @@ export default function Header({ hideSearch = false }) {
                               <button
                                 key={friend.id}
                                 onClick={() => handleUserClick(friend.id)}
-                                className={`w-full px-4 py-3 flex items-center gap-3 transition-colors ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-50'}`}
+                                className={`w-full px-4 py-3 flex items-center gap-3 transition-colors ${darkMode ? 'hover:bg-neutral-800' : 'hover:bg-slate-50'}`}
                               >
                                 <img
                                   src={friend.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(friend.name || 'User')}`}
@@ -511,7 +521,7 @@ export default function Header({ hideSearch = false }) {
                             {friendRequests.map((request) => (
                               <div
                                 key={request.id}
-                                className={`px-4 py-3 border-b last:border-b-0 ${darkMode ? 'border-slate-700' : 'border-slate-100'}`}
+                                className={`px-4 py-3 border-b last:border-b-0 ${darkMode ? 'border-neutral-800' : 'border-slate-100'}`}
                               >
                                 <div className="flex items-center gap-3 mb-3">
                                   <img
@@ -551,7 +561,7 @@ export default function Header({ hideSearch = false }) {
                                     disabled={requestsLoading}
                                     className={`flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all disabled:opacity-50 ${
                                       darkMode 
-                                        ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' 
+                                        ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200' 
                                         : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                                     }`}
                                   >
@@ -626,7 +636,7 @@ export default function Header({ hideSearch = false }) {
                   )}
                 </button>
                 <button
-                  className={`p-2 rounded-xl transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-100'}`}
+                  className={`p-2 rounded-xl transition-colors ${darkMode ? 'text-neutral-300 hover:bg-neutral-800' : 'text-slate-600 hover:bg-slate-100'}`}
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                   data-testid="mobile-menu-btn"
                   aria-label="Toggle menu"
@@ -666,7 +676,7 @@ export default function Header({ hideSearch = false }) {
                   )}
                 </button>
                 <button
-                  className={`p-2 rounded-xl transition-colors ${darkMode ? 'text-indigo-400 hover:bg-slate-700' : 'text-indigo-600 hover:bg-indigo-50'}`}
+                  className={`p-2 rounded-xl transition-colors ${darkMode ? 'text-indigo-400 hover:bg-neutral-800' : 'text-indigo-600 hover:bg-indigo-50'}`}
                   onClick={() => navigate('/dashboard')}
                   data-testid="mobile-dashboard-btn"
                   aria-label="Dashboard"
@@ -687,7 +697,7 @@ export default function Header({ hideSearch = false }) {
               onClick={() => setMobileMenuOpen(false)}
             />
             {/* Drawer */}
-            <div className={`absolute top-full left-0 right-0 z-50 md:hidden border-b shadow-xl animate-fade-in-up max-h-[calc(100dvh-80px)] overflow-y-auto ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+            <div className={`absolute top-full left-0 right-0 z-50 md:hidden border-b shadow-xl animate-fade-in-up max-h-[calc(100dvh-80px)] overflow-y-auto ${darkMode ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-slate-200'}`}>
               <div className="px-4 py-4 space-y-1">
                 {navLinks.map(({ label, path, icon: Icon, badge }) => {
                   const active = isActive(path)
@@ -698,7 +708,7 @@ export default function Header({ hideSearch = false }) {
                       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
                         active
                           ? darkMode ? 'bg-indigo-900/50 text-indigo-300' : 'bg-indigo-50 text-indigo-700'
-                          : darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50'
+                          : darkMode ? 'text-neutral-300 hover:bg-neutral-800' : 'text-slate-700 hover:bg-slate-50'
                       }`}
                     >
                       <Icon className={`h-5 w-5 ${active ? (darkMode ? 'text-indigo-400' : 'text-indigo-600') : (darkMode ? 'text-slate-500' : 'text-slate-400')}`} />
@@ -711,7 +721,7 @@ export default function Header({ hideSearch = false }) {
                     </button>
                   )
                 })}
-                <div className={`pt-2 border-t ${darkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+                <div className={`pt-2 border-t ${darkMode ? 'border-neutral-800' : 'border-slate-100'}`}>
 
                   <button
                     onClick={handleProfileClick}
@@ -765,7 +775,7 @@ export default function Header({ hideSearch = false }) {
       {/* Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-          <div className={`w-full max-w-md rounded-2xl shadow-xl ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
+          <div className={`w-full max-w-md rounded-2xl shadow-xl ${darkMode ? 'bg-neutral-900' : 'bg-white'}`}>
             <div className="p-6 text-center">
               <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
                 <CheckCircle className="h-8 w-8 text-green-600" />
@@ -790,7 +800,7 @@ export default function Header({ hideSearch = false }) {
       {/* Error Modal */}
       {showErrorModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-          <div className={`w-full max-w-md rounded-2xl shadow-xl ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
+          <div className={`w-full max-w-md rounded-2xl shadow-xl ${darkMode ? 'bg-neutral-900' : 'bg-white'}`}>
             <div className="p-6 text-center">
               <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
                 <AlertCircle className="h-8 w-8 text-red-600" />

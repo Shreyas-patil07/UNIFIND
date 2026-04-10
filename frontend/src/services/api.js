@@ -52,6 +52,18 @@ export const getPublicProfile = async (userId, includePrivate = false) => {
   return response.data
 }
 
+// Get total user count
+export const getUserCount = async () => {
+  try {
+    const usersRef = collection(db, 'users')
+    const snapshot = await getDocs(usersRef)
+    return snapshot.size
+  } catch (error) {
+    console.error('Error getting user count:', error)
+    return 0
+  }
+}
+
 export const getUsers = async (limitCount = 100) => {
   const q = query(collection(db, 'users'), limit(limitCount))
   const querySnapshot = await getDocs(q)

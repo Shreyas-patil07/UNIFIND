@@ -171,7 +171,7 @@ const PostListingPage = () => {
   });
 
   return (
-    <div className={`min-h-[100dvh] pb-20 ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
+    <div className={`min-h-[100dvh] pb-20 ${darkMode ? 'bg-[#0f0f0f]' : 'bg-slate-50'}`}>
       <Header hideSearch />
       
       <div className="px-6 sm:px-8 md:px-12 lg:px-24 py-12">
@@ -179,9 +179,9 @@ const PostListingPage = () => {
           <h1 className={`font-['Outfit'] text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight mb-2 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`} data-testid="post-listing-title">
             Post New Listing
           </h1>
-          <p className={`text-base mb-8 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Fill in the details to list your item</p>
+          <p className={`text-base mb-8 ${darkMode ? 'text-neutral-400' : 'text-slate-600'}`}>Fill in the details to list your item</p>
 
-          <form onSubmit={handleSubmit} className={`rounded-2xl border p-8 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+          <form onSubmit={handleSubmit} className={`rounded-2xl border p-8 ${darkMode ? 'bg-[#212121] border-neutral-700' : 'bg-white border-slate-200'}`}>
             {/* Error Message */}
             {error && (
               <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
@@ -191,7 +191,7 @@ const PostListingPage = () => {
 
             {/* Images */}
             <div className="mb-6">
-              <label className={`block text-sm font-medium mb-3 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+              <label className={`block text-sm font-medium mb-3 ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`}>
                 Product Images {imagePreviews.length > 0 && `(${imagePreviews.length}/5)`}
               </label>
               
@@ -224,49 +224,49 @@ const PostListingPage = () => {
                     className="hidden"
                     disabled={uploading}
                   />
-                  <Upload className={`h-12 w-12 mx-auto mb-3 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
-                  <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Click to upload or drag and drop</p>
-                  <p className={`text-xs mt-1 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>PNG, JPG up to 5MB (max 5 images)</p>
+                  <Upload className={`h-12 w-12 mx-auto mb-3 ${darkMode ? 'text-slate-500' : 'text-neutral-400'}`} />
+                  <p className={`text-sm ${darkMode ? 'text-neutral-400' : 'text-slate-600'}`}>Click to upload or drag and drop</p>
+                  <p className={`text-xs mt-1 ${darkMode ? 'text-slate-500' : 'text-neutral-400'}`}>PNG, JPG up to 5MB (max 5 images)</p>
                 </label>
               )}
             </div>
 
             {/* Title */}
             <div className="mb-6">
-              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Title</label>
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`}>Title</label>
               <input
                 type="text"
                 placeholder="e.g., MacBook Pro 14-inch M1"
                 maxLength={200}
                 className={`w-full rounded-xl border px-4 py-3 outline-none transition-all ${
                   darkMode 
-                    ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-400 focus:border-blue-500'
+                    ? 'bg-slate-700 border-slate-600 text-neutral-200 placeholder-slate-400 focus:border-blue-500'
                     : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
                 }`}
                 required
                 {...field('title')}
               />
-              <p className={`text-xs mt-1 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+              <p className={`text-xs mt-1 ${darkMode ? 'text-slate-500' : 'text-neutral-400'}`}>
                 {formData.title.length}/200 characters
               </p>
             </div>
 
             {/* Description */}
             <div className="mb-6">
-              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Description</label>
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`}>Description</label>
               <textarea
                 rows={4}
                 placeholder="Describe your item..."
                 maxLength={2000}
                 className={`w-full rounded-xl border px-4 py-3 outline-none transition-all resize-none ${
                   darkMode 
-                    ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-400 focus:border-blue-500'
+                    ? 'bg-slate-700 border-slate-600 text-neutral-200 placeholder-slate-400 focus:border-blue-500'
                     : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
                 }`}
                 required
                 {...field('description')}
               />
-              <p className={`text-xs mt-1 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+              <p className={`text-xs mt-1 ${darkMode ? 'text-slate-500' : 'text-neutral-400'}`}>
                 {formData.description.length}/2000 characters
               </p>
             </div>
@@ -274,7 +274,7 @@ const PostListingPage = () => {
             {/* Price & Category */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Price (₹)</label>
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`}>Price (₹)</label>
                 <input
                   type="number"
                   placeholder="25000"
@@ -283,22 +283,22 @@ const PostListingPage = () => {
                   step="1"
                   className={`w-full rounded-xl border px-4 py-3 outline-none transition-all ${
                     darkMode 
-                      ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-400 focus:border-blue-500'
+                      ? 'bg-slate-700 border-slate-600 text-neutral-200 placeholder-slate-400 focus:border-blue-500'
                       : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
                   }`}
                   required
                   {...field('price')}
                 />
-                <p className={`text-xs mt-1 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                <p className={`text-xs mt-1 ${darkMode ? 'text-slate-500' : 'text-neutral-400'}`}>
                   Min: ₹1, Max: ₹1,00,00,000
                 </p>
               </div>
               <div>
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Category</label>
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`}>Category</label>
                 <select
                   className={`w-full rounded-xl border px-4 py-3 outline-none transition-all ${
                     darkMode 
-                      ? 'bg-slate-700 border-slate-600 text-slate-200 focus:border-blue-500'
+                      ? 'bg-slate-700 border-slate-600 text-neutral-200 focus:border-blue-500'
                       : 'bg-white border-slate-200 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
                   }`}
                   required
@@ -315,11 +315,11 @@ const PostListingPage = () => {
             {/* Condition & Location */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <div>
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Condition</label>
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`}>Condition</label>
                 <select
                   className={`w-full rounded-xl border px-4 py-3 outline-none transition-all ${
                     darkMode 
-                      ? 'bg-slate-700 border-slate-600 text-slate-200 focus:border-blue-500'
+                      ? 'bg-slate-700 border-slate-600 text-neutral-200 focus:border-blue-500'
                       : 'bg-white border-slate-200 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
                   }`}
                   required
@@ -333,14 +333,14 @@ const PostListingPage = () => {
                 </select>
               </div>
               <div>
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Location</label>
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`}>Location</label>
                 <input
                   type="text"
                   placeholder="e.g., IIT Delhi"
                   maxLength={200}
                   className={`w-full rounded-xl border px-4 py-3 outline-none transition-all ${
                     darkMode 
-                      ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-400 focus:border-blue-500'
+                      ? 'bg-slate-700 border-slate-600 text-neutral-200 placeholder-slate-400 focus:border-blue-500'
                       : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
                   }`}
                   required
@@ -356,7 +356,7 @@ const PostListingPage = () => {
                 variant="outline"
                 onClick={() => navigate('/seller')}
                 disabled={uploading}
-                className={`flex-1 rounded-xl ${darkMode ? 'border-slate-600 hover:border-slate-500 hover:bg-slate-700' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
+                className={`flex-1 rounded-xl ${darkMode ? 'border-slate-600 hover:border-slate-500 hover:bg-neutral-800' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
               >
                 Cancel
               </Button>
@@ -383,4 +383,5 @@ const PostListingPage = () => {
 };
 
 export default PostListingPage;
+
 

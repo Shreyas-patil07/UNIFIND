@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { MapPin, Eye, MessageCircle, Heart, Share2 } from 'lucide-react';
 import { getPublicProfile } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import ShareModal from './ShareModal';
 
 const conditionConfig = {
@@ -15,6 +16,7 @@ const conditionConfig = {
 const ProductCard = ({ product, onView }) => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
+  const { darkMode } = useTheme();
   const [seller, setSeller] = useState(null);
   const [isLiked, setIsLiked] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -85,12 +87,16 @@ const ProductCard = ({ product, onView }) => {
 
   return (
     <div
-      className="group flex flex-col bg-white rounded-2xl border border-slate-200 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover hover:border-indigo-300/50"
+      className={`group flex flex-col rounded-2xl border cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover ${
+        darkMode 
+          ? 'bg-[#212121] border-neutral-700 hover:border-indigo-500/50' 
+          : 'bg-white border-slate-200 hover:border-indigo-300/50'
+      }`}
       onClick={handleCardClick}
       data-testid={`product-card-${product.id}`}
     >
       {/* ===== IMAGE ===== */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-slate-100 rounded-t-2xl">
+      <div className={`relative aspect-[4/3] overflow-hidden rounded-t-2xl ${darkMode ? 'bg-neutral-800' : 'bg-slate-100'}`}>
         <img
           src={product.images[0]}
           alt={product.title}
@@ -160,7 +166,7 @@ const ProductCard = ({ product, onView }) => {
       <div className="p-3.5 flex-1 flex flex-col">
         {/* Title */}
         <h3
-          className="text-sm font-bold text-slate-900 mb-1.5 line-clamp-2 leading-snug"
+          className={`text-sm font-bold mb-1.5 line-clamp-2 leading-snug ${darkMode ? 'text-neutral-100' : 'text-slate-900'}`}
           data-testid="product-title"
         >
           {product.title}
@@ -168,28 +174,28 @@ const ProductCard = ({ product, onView }) => {
 
         {/* Price */}
         <div
-          className="text-lg font-black text-indigo-600 mb-2"
+          className={`text-lg font-black mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}
           data-testid="product-price"
         >
           ₹{product.price.toLocaleString()}
         </div>
 
         {/* Location */}
-        <div className="flex items-center gap-1 text-xs text-slate-400 mb-3">
+        <div className={`flex items-center gap-1 text-xs mb-3 ${darkMode ? 'text-neutral-500' : 'text-slate-400'}`}>
           <MapPin className="h-3 w-3 flex-shrink-0" />
           <span className="truncate" data-testid="product-location">{product.location}</span>
         </div>
 
         {/* Seller row */}
-        <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-100">
+        <div className={`flex items-center gap-2 mb-3 pb-3 border-b ${darkMode ? 'border-neutral-700' : 'border-slate-100'}`}>
           <img
             src={seller?.avatar}
             alt={seller?.name}
-            className="h-6 w-6 rounded-full object-cover ring-1 ring-slate-200 flex-shrink-0"
+            className={`h-6 w-6 rounded-full object-cover ring-1 flex-shrink-0 ${darkMode ? 'ring-neutral-700' : 'ring-slate-200'}`}
             data-testid="seller-avatar"
           />
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-slate-800 truncate" data-testid="seller-name">
+            <p className={`text-xs font-semibold truncate ${darkMode ? 'text-neutral-300' : 'text-slate-800'}`} data-testid="seller-name">
               {seller?.name?.split(' ')[0] || seller?.name}
             </p>
           </div>
@@ -198,14 +204,20 @@ const ProductCard = ({ product, onView }) => {
         {/* Actions */}
         <div className="flex gap-2 mt-auto">
           <button
-            className="flex-1 border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 text-xs font-semibold py-2 rounded-xl transition-all duration-200 active:scale-95"
+            className={`flex-1 border text-xs font-semibold py-2 rounded-xl transition-all duration-200 active:scale-95 ${
+              darkMode 
+                ? 'border-neutral-700 hover:border-indigo-500 hover:bg-indigo-500/10 hover:text-indigo-400 text-neutral-300'
+                : 'border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700'
+            }`}
             onClick={(e) => { e.stopPropagation(); handleCardClick(); }}
             data-testid="product-view-btn"
           >
             View
           </button>
           <button
-            className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2 rounded-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5"
+            className={`flex-1 text-white text-xs font-semibold py-2 rounded-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 ${
+              darkMode ? 'bg-indigo-500 hover:bg-indigo-600' : 'bg-indigo-600 hover:bg-indigo-700'
+            }`}
             onClick={(e) => { e.stopPropagation(); navigate('/chat'); }}
             data-testid="product-chat-btn"
           >

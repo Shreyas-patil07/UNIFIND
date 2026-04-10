@@ -1,347 +1,856 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Shield, Award, TrendingUp, Users, Package, ArrowRight, User, Star, Zap, BookOpen, CheckCircle } from 'lucide-react';
-import Footer from '../components/Footer';
 import { useAuth } from '../contexts/AuthContext';
+import { getUserCount } from '../services/api';
 
-const LandingPage = () => {
-  const navigate = useNavigate();
-  const { currentUser } = useAuth();
-  const heroRef = useRef(null);
+/* ============================================================
+   INLINE STYLES — matches code.html + DESIGN.md spec
+   Color tokens, ghost-shadow, glass-header, primary-gradient,
+   signature-underline animation – all implemented via inline
+   style objects or a scoped <style> tag injected once.
+============================================================ */
 
-  // Floating orb animation using CSS only — no heavy libs
+const COLORS = {
+  background: '#f8f9ff',
+  onSurface: '#171c22',
+  onSurfaceVariant: '#42474f',
+  primary: '#003358',
+  primaryContainer: '#004a7c',
+  secondary: '#00696a',
+  secondaryContainer: '#90eff0',
+  onSecondaryContainer: '#006e6f',
+  tertiaryFixedDim: '#ffba3f',
+  surfaceContainerLow: '#f0f4fd',
+  surfaceContainer: '#eaeef7',
+  surfaceContainerHigh: '#e4e8f1',
+  surfaceContainerHighest: '#dee3eb',
+  surfaceContainerLowest: '#ffffff',
+  outlineVariant: '#c1c7d0',
+  onPrimaryContainer: '#87baf3',
+};
 
-  const features = [
-    {
-      icon: Sparkles,
-      title: 'AI Matching',
-      desc: 'Describe what you need, our AI finds the perfect match from thousands of listings instantly.',
-      gradient: 'from-violet-500 to-indigo-600',
-      bg: 'bg-violet-50',
-      iconColor: 'text-violet-600',
-    },
-    {
-      icon: Shield,
-      title: 'Trust Score',
-      desc: 'Every user has a verified trust score based on transactions, reviews, and campus verification.',
-      gradient: 'from-emerald-500 to-teal-600',
-      bg: 'bg-emerald-50',
-      iconColor: 'text-emerald-600',
-    },
-    {
-      icon: Award,
-      title: 'Condition Grading',
-      desc: 'Standardized product condition ratings ensure you know exactly what you\'re buying.',
-      gradient: 'from-amber-500 to-orange-500',
-      bg: 'bg-amber-50',
-      iconColor: 'text-amber-600',
-    },
-    {
-      icon: Zap,
-      title: 'Instant Chat',
-      desc: 'Reach sellers instantly with our built-in chat system. No waiting, no delays.',
-      gradient: 'from-blue-500 to-cyan-500',
-      bg: 'bg-blue-50',
-      iconColor: 'text-blue-600',
-    },
-    {
-      icon: BookOpen,
-      title: 'Need Board',
-      desc: 'Post what you need, let sellers find you. AI-powered matching for your perfect deal.',
-      gradient: 'from-pink-500 to-rose-500',
-      bg: 'bg-pink-50',
-      iconColor: 'text-pink-600',
-    },
-    {
-      icon: CheckCircle,
-      title: 'Verified Students',
-      desc: 'Only verified college students. Safe, secure, and scam-free campus commerce.',
-      gradient: 'from-indigo-500 to-purple-600',
-      bg: 'bg-indigo-50',
-      iconColor: 'text-indigo-600',
-    },
-  ];
+const ghostShadow = '0 12px 40px rgba(0,74,124,0.06)';
 
-  const stats = [
-    { icon: Users, value: '8,934', label: 'Active Students', color: 'text-indigo-600', bg: 'bg-indigo-50' },
-    { icon: Package, value: '1,247', label: 'Total Listings', color: 'text-violet-600', bg: 'bg-violet-50' },
-    { icon: TrendingUp, value: '3,421', label: 'Deals Completed', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { icon: Star, value: '4.7★', label: 'Average Rating', color: 'text-amber-600', bg: 'bg-amber-50' },
-  ];
+/* Inject Google Fonts + custom styles once */
+function usePageStyles() {
+  useEffect(() => {
+    // Google Fonts
+    if (!document.getElementById('uf-gfonts')) {
+      const link = document.createElement('link');
+      link.id = 'uf-gfonts';
+      link.rel = 'stylesheet';
+      link.href =
+        'https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap';
+      document.head.appendChild(link);
+    }
+    // Scoped CSS
+    if (!document.getElementById('uf-landing-styles')) {
+      const tag = document.createElement('style');
+      tag.id = 'uf-landing-styles';
+      tag.textContent = `
+        .uf-body { font-family: 'Manrope', sans-serif; background: #f8f9ff; color: #171c22; }
+        .uf-mso { font-family: 'Material Symbols Outlined'; font-weight: normal; font-style: normal;
+                  font-size: 24px; line-height: 1; letter-spacing: normal; text-transform: none;
+                  display: inline-block; white-space: nowrap; word-wrap: normal;
+                  direction: ltr; -webkit-font-smoothing: antialiased; }
+        .uf-glass-header { background: rgba(255,255,255,0.80); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .uf-primary-gradient { background: linear-gradient(135deg, #003358 0%, #004a7c 100%); }
+        .uf-bulletin-card { transition: background 0.25s; }
+        .uf-bulletin-card:hover { background-color: #e4e8f1 !important; }
+        .uf-sig-underline { position: relative; display: inline-block; }
+        .uf-sig-underline::after { content: ''; position: absolute; bottom: -2px; left: 0;
+          width: 100%; height: 3px; background: #ffba3f; transform: scaleX(0.45);
+          transform-origin: left; transition: transform 0.3s ease; border-radius: 2px; }
+        .uf-sig-underline:hover::after { transform: scaleX(1); }
+        .uf-path-card { transition: background 0.25s; cursor: pointer; }
+        .uf-path-card:hover { background-color: #e4e8f1 !important; }
+        .uf-path-card:hover .uf-path-arrow { color: #003358 !important; }
+        .uf-btn-contact { transition: background 0.2s, color 0.2s; }
+        .uf-btn-contact:hover { background: #00696a !important; color: #fff !important; }
+        .uf-upload-btn:hover { opacity: 0.88; }
+        .uf-cta-primary:hover { transform: scale(1.04); }
+        .uf-cta-secondary:hover { background: #dee3eb !important; }
+        .uf-footer-social:hover { background: #90eff0 !important; }
+        .uf-nav-link { transition: color 0.2s; }
+        .uf-nav-link:hover { color: #00696a !important; }
+      `;
+      document.head.appendChild(tag);
+    }
+  }, []);
+}
 
-  const testimonials = [
-    { name: 'Riya Sharma', branch: 'Computer Engg', text: 'Sold my old laptop in 2 hours! The trust score system made everyone feel safe.', rating: 5 },
-    { name: 'Arjun Patel', branch: 'AI & Data Science', text: 'Found exactly what I needed through NeedBoard AI. Unbelievably fast!', rating: 5 },
-    { name: 'Priya Desai', branch: 'Electrical Engg', text: 'The barcode scanner for textbooks is genius. Saved so much time searching.', rating: 5 },
-  ];
-
+/* ============================================================
+   ICON wrapper (Material Symbols Outlined)
+============================================================ */
+function Icon({ name, fill = 0, size = 24, className = '', style = {} }) {
   return (
-    <div className="min-h-[100dvh] bg-slate-900 overflow-x-hidden">
+    <span
+      className={`uf-mso ${className}`}
+      style={{
+        fontVariationSettings: `'FILL' ${fill}, 'wght' 400, 'GRAD' 0, 'opsz' ${size}`,
+        fontSize: size,
+        ...style,
+      }}
+    >
+      {name}
+    </span>
+  );
+}
 
-      {/* ===== NAVBAR ===== */}
-      <header className="sticky top-0 z-50 glass-dark border-b border-white/10">
-        <div className="px-3 sm:px-4 md:px-6 lg:px-10 xl:px-20 py-2.5 sm:py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-3" data-testid="landing-logo">
-            <img src="/UNIFIND.png" alt="UNIFIND Logo" className="h-12 sm:h-14 md:h-16 w-auto" />
-            <span className="font-['Outfit'] font-black text-2xl sm:text-3xl md:text-4xl tracking-tight">
-              <span className="text-indigo-400">UNI</span>
-              <span className="text-violet-400">FIND</span>
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {currentUser ? (
-              <button
-                onClick={() => navigate('/profile')}
-                className="btn-gradient px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2"
-                data-testid="landing-profile-btn"
-              >
-                <User className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Profile</span>
-              </button>
-            ) : (
-              <>
-                <button
-                  onClick={() => navigate('/login')}
-                  className="px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-slate-300 hover:text-white hover:bg-white/10 rounded-lg sm:rounded-xl transition-all duration-200"
-                  data-testid="landing-login-btn"
-                >
-                  Login
-                </button>
-                <button
-                  onClick={() => navigate('/signup')}
-                  className="btn-gradient px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 text-xs sm:text-sm"
-                  data-testid="landing-signup-btn"
-                >
-                  <span className="hidden sm:inline">Get Started</span>
-                  <span className="sm:hidden">Sign Up</span>
-                </button>
-              </>
-            )}
-          </div>
+/* ============================================================
+   NAVBAR
+============================================================ */
+function Navbar({ currentUser, onProfile, onLogin, onSignup }) {
+  return (
+    <nav
+      className="uf-glass-header"
+      style={{ position: 'sticky', top: 0, zIndex: 50, boxShadow: '0 1px 0 rgba(0,0,0,0.06)' }}
+    >
+      <div
+        style={{
+          maxWidth: 1280,
+          margin: '0 auto',
+          padding: '0 24px',
+          height: 64,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <img src="/UNIFIND.png" alt="UNIFIND Logo" style={{ height: 48, width: 48, objectFit: 'contain' }} />
+          <span style={{ fontSize: 28, fontWeight: 900, letterSpacing: '-0.04em', color: COLORS.primary }}>
+            UNIFIND
+          </span>
         </div>
-      </header>
 
-      {/* ===== HERO SECTION ===== */}
-      <section className="relative overflow-hidden pt-4 pb-20 md:pb-28 lg:pb-40 px-4 sm:px-6 md:px-10 lg:px-20 bg-gradient-hero min-h-[80vh] md:min-h-[85vh] flex flex-col justify-center">
-        {/* Decorative orbs */}
-        <div className="absolute top-0 left-1/4 w-[450px] h-[450px] bg-indigo-600/20 rounded-full blur-3xl pointer-events-none animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-[350px] h-[350px] bg-violet-600/20 rounded-full blur-3xl pointer-events-none animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 left-0 w-72 h-72 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
+        {/* Desktop nav links */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 32 }} className="uf-desktop-nav">
+          <a href="#market" className="uf-nav-link" style={{ color: COLORS.primary, fontWeight: 700, fontSize: 13, borderBottom: `2px solid ${COLORS.tertiaryFixedDim}`, paddingBottom: 4, textDecoration: 'none' }}>
+            Market
+          </a>
+          <a href="#library" className="uf-nav-link" style={{ color: '#475569', fontWeight: 500, fontSize: 13, textDecoration: 'none' }}>
+            Library
+          </a>
+          <a href="#community" className="uf-nav-link" style={{ color: '#475569', fontWeight: 500, fontSize: 13, textDecoration: 'none' }}>
+            Community
+          </a>
+        </div>
 
-        {/* SIGCE Banner */}
-        <div className="relative z-10 flex justify-center mb-4 md:mb-6">
-          <div className="glass border border-indigo-500/40 rounded-xl md:rounded-2xl px-3 py-2.5 md:px-5 md:py-3.5 inline-flex items-center gap-2 md:gap-3 animate-fade-in-up shadow-xl max-w-full">
-            <span className="text-xl md:text-2xl lg:text-3xl flex-shrink-0">🎓</span>
-            <div className="flex-1 min-w-0">
-              <p className="text-white font-bold text-xs sm:text-sm md:text-base">Currently Open to SIGCE Students</p>
-              <p className="text-slate-400 text-[10px] sm:text-xs md:text-sm hidden sm:block">Exclusively for Smt. Indira Gandhi College of Engineering</p>
-            </div>
-            <a
-              href="https://sigce.edu.in/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-500 text-white text-xs md:text-sm font-semibold px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl transition-all duration-200 active:scale-95 whitespace-nowrap shadow-lg hover:shadow-xl"
-              data-testid="sigce-link"
+        {/* Actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {currentUser ? (
+            <button
+              onClick={onProfile}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '8px 18px', borderRadius: 12,
+                background: 'linear-gradient(135deg, #003358 0%, #004a7c 100%)',
+                color: '#fff', fontWeight: 700, fontSize: 13,
+                border: 'none', cursor: 'pointer',
+              }}
+              data-testid="landing-profile-btn"
             >
-              Visit
-            </a>
-          </div>
+              <Icon name="person" size={18} />
+              Profile
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={onLogin}
+                style={{
+                  padding: '8px 14px', borderRadius: 10,
+                  background: 'transparent', color: COLORS.onSurfaceVariant,
+                  fontWeight: 600, fontSize: 13, border: 'none', cursor: 'pointer',
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = COLORS.surfaceContainer)}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                data-testid="landing-login-btn"
+              >
+                Login
+              </button>
+              <button
+                onClick={onSignup}
+                className="uf-primary-gradient"
+                style={{
+                  padding: '9px 20px', borderRadius: 10,
+                  color: '#fff', fontWeight: 700, fontSize: 13,
+                  border: 'none', cursor: 'pointer',
+                }}
+                data-testid="landing-signup-btn"
+              >
+                Get Started
+              </button>
+            </>
+          )}
         </div>
+      </div>
+    </nav>
+  );
+}
 
-        {/* Hero Content */}
-        <div className="relative z-10 max-w-5xl mx-auto text-center" ref={heroRef}>
-          <div className="mb-3 md:mb-4 animate-fade-in-up animate-delay-100">
-            <span className="inline-flex items-center gap-1.5 md:gap-2 bg-indigo-900/60 border border-indigo-500/40 rounded-full px-3 py-1.5 md:px-5 md:py-2.5 text-[10px] sm:text-xs md:text-sm lg:text-base font-bold uppercase tracking-widest text-indigo-300 shadow-lg">
-              <Sparkles className="h-3 w-3 md:h-4 md:w-4 lg:h-5 lg:w-5" />
-              AI-Powered College Marketplace
-            </span>
+/* ============================================================
+   SIGCE BANNER
+============================================================ */
+function SIGCEBanner() {
+  return (
+    <div style={{ background: COLORS.surfaceContainerLow, borderBottom: `1px solid ${COLORS.outlineVariant}22`, padding: '8px 0' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+        <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: COLORS.onSurfaceVariant }}>
+          Active Campus
+        </span>
+        <span style={{ height: 6, width: 6, borderRadius: '50%', background: COLORS.tertiaryFixedDim, display: 'inline-block' }} />
+        <a
+          href="https://sigce.edu.in/"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ fontSize: 13, fontWeight: 600, color: COLORS.primary, textDecoration: 'none' }}
+          data-testid="sigce-link"
+        >
+          Smt. Indira Gandhi College of Engineering
+        </a>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   HERO SECTION
+============================================================ */
+function HeroSection({ onSignup, onBrowse, userCount }) {
+  return (
+    <section style={{ position: 'relative', overflow: 'hidden', paddingTop: 72, paddingBottom: 96 }}>
+      <div
+        style={{
+          maxWidth: 1280, margin: '0 auto', padding: '0 24px',
+          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center',
+        }}
+        className="uf-hero-grid"
+      >
+        {/* Left: Text + Search */}
+        <div style={{ zIndex: 10 }}>
+          {/* Badge */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: COLORS.secondaryContainer, color: COLORS.onSecondaryContainer, padding: '8px 16px', borderRadius: 9999, marginBottom: 24 }}>
+            <Icon name="bolt" fill={1} size={18} />
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em' }}>AI-MATCHING ACTIVE FOR SIGCE</span>
           </div>
 
+          {/* H1 */}
           <h1
-            className="font-['Outfit'] text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-black tracking-tight leading-[1.1] mb-3 md:mb-4 lg:mb-5 animate-fade-in-up animate-delay-200 px-2"
+            style={{ fontSize: 'clamp(2.8rem, 5vw, 5rem)', fontWeight: 900, letterSpacing: '-0.03em', color: COLORS.primary, lineHeight: 1.05, marginBottom: 20 }}
             data-testid="hero-title"
           >
-            <span className="text-white">Buy &amp; Sell </span>
-            <br />
-            <span className="gradient-text-hero">on Campus</span>
-            <br />
-            <span className="text-white text-xl sm:text-2xl md:text-3xl lg:text-5xl xl:text-6xl font-bold">Safely &amp; Easily</span>
+            Buy &amp; Sell on{' '}
+            <span style={{ color: COLORS.secondary, fontStyle: 'italic' }}>Campus.</span>
           </h1>
 
-          <p
-            className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl leading-relaxed text-slate-300 max-w-3xl mx-auto mb-6 md:mb-8 lg:mb-12 animate-fade-in-up animate-delay-300 px-4"
-            data-testid="hero-description"
-          >
-            India's most trusted student marketplace. Buy, sell, and trade with verified college students.
-            <span className="text-indigo-400 font-semibold"> AI-powered matching</span>, trust scores, and instant chat.
+          <p style={{ fontSize: 17, color: COLORS.onSurfaceVariant, marginBottom: 36, maxWidth: 420, lineHeight: 1.65 }} data-testid="hero-description">
+            The curated marketplace for textbooks, electronics, and study guides. Verified by peers, matched by AI.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 md:gap-4 lg:gap-5 animate-fade-in-up animate-delay-400 px-4">
+          {/* Dual Search Bar */}
+          <div style={{ background: COLORS.surfaceContainerLowest, padding: 8, borderRadius: 16, boxShadow: ghostShadow, display: 'flex', gap: 8, maxWidth: 640, border: `1px solid ${COLORS.outlineVariant}26` }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '10px 16px', background: COLORS.surfaceContainer, borderRadius: 10 }}>
+              <Icon name="search" size={20} style={{ color: COLORS.onSurfaceVariant, marginRight: 10, flexShrink: 0 }} />
+              <input
+                type="text"
+                placeholder="Search textbooks, calculators, gear..."
+                style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 13, width: '100%', color: COLORS.onSurface }}
+              />
+            </div>
+            <div style={{ width: 1, background: `${COLORS.outlineVariant}33` }} />
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '10px 16px', background: COLORS.surfaceContainer, borderRadius: 10 }}>
+              <Icon name="description" size={20} style={{ color: COLORS.onSurfaceVariant, marginRight: 10, flexShrink: 0 }} />
+              <input
+                type="text"
+                placeholder="Search class notes, PDFs..."
+                style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 13, width: '100%', color: COLORS.onSurface }}
+              />
+            </div>
             <button
-              onClick={() => navigate('/signup')}
-              className="btn-gradient w-full sm:w-auto px-6 py-3 md:px-8 md:py-3.5 lg:px-9 lg:py-4 text-sm md:text-base lg:text-lg font-bold flex items-center justify-center gap-2 shadow-2xl hover:shadow-indigo-500/50 transition-all duration-300 hover:scale-105"
-              data-testid="hero-get-started-btn"
+              onClick={onBrowse}
+              className="uf-primary-gradient"
+              style={{ padding: '10px 28px', borderRadius: 10, color: '#fff', fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', flexShrink: 0 }}
             >
-              Get Started Free
-              <ArrowRight className="h-4 w-4 md:h-5 md:w-5" />
-            </button>
-            <button
-              onClick={() => navigate('/buyer')}
-              className="w-full sm:w-auto glass border border-white/20 text-white font-bold px-6 py-3 md:px-8 md:py-3.5 lg:px-9 lg:py-4 rounded-xl text-sm md:text-base lg:text-lg hover:bg-white/10 transition-all duration-300 active:scale-95 shadow-xl hover:shadow-2xl"
-              data-testid="hero-browse-btn"
-            >
-              Browse Listings
+              Find
             </button>
           </div>
 
-          {/* Social Proof */}
-          <div className="mt-8 md:mt-12 lg:mt-16 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 animate-fade-in-up animate-delay-500 px-4">
-            <div className="flex -space-x-2">
-              {['bg-indigo-500', 'bg-violet-500', 'bg-emerald-500', 'bg-blue-500'].map((c, i) => (
-                <div key={i} className={`h-8 w-8 md:h-10 md:w-10 lg:h-11 lg:w-11 ${c} rounded-full border-2 md:border-3 border-slate-900 flex items-center justify-center text-white text-sm md:text-base lg:text-lg font-bold shadow-lg`}>
+          {/* Social proof */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 28 }}>
+            <div style={{ display: 'flex' }}>
+              {['#4f46e5', '#00696a', '#f59e0b', '#2563eb'].map((c, i) => (
+                <div
+                  key={i}
+                  style={{ height: 30, width: 30, borderRadius: '50%', background: c, border: '2px solid #f8f9ff', marginLeft: i > 0 ? -10 : 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11, fontWeight: 700 }}
+                >
                   {['R', 'A', 'P', 'S'][i]}
                 </div>
               ))}
             </div>
-            <p className="text-slate-300 text-xs sm:text-sm md:text-base text-center sm:text-left">
-              <span className="text-white font-bold text-base sm:text-lg md:text-xl">8,900+</span> students already joined
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== STATS SECTION ===== */}
-      <section className="py-16 px-4 sm:px-6 md:px-10 lg:px-20 bg-slate-800/50">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-            {stats.map(({ icon: Icon, value, label, color, bg }, i) => (
-              <div
-                key={label}
-                className="glass border border-white/10 rounded-2xl p-6 text-center hover:border-indigo-500/40 transition-all duration-300 hover:-translate-y-1"
-                style={{ animationDelay: `${i * 100}ms` }}
-                data-testid={`stat-card-${label.toLowerCase().replace(' ', '-')}`}
-              >
-                <div className={`${bg} h-12 w-12 rounded-xl flex items-center justify-center mx-auto mb-3`}>
-                  <Icon className={`h-6 w-6 ${color}`} />
-                </div>
-                <div className="text-2xl sm:text-3xl font-black text-white mb-1">{value}</div>
-                <div className="text-xs text-slate-400">{label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ===== FEATURES SECTION ===== */}
-      <section className="py-16 md:py-20 px-4 sm:px-6 md:px-10 lg:px-20 bg-slate-900" data-testid="features-section">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <span className="inline-block bg-indigo-900/60 border border-indigo-500/30 text-indigo-400 text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full mb-4">
-              Why UNIFIND
+            <span style={{ fontSize: 13, color: COLORS.onSurfaceVariant }}>
+              <strong style={{ color: COLORS.primary }}>{userCount > 0 ? userCount.toLocaleString() : '8,900+'}</strong> students already joined
             </span>
-            <h2
-              className="font-['Outfit'] text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white mb-4"
-              data-testid="features-title"
-            >
-              Everything you need to{' '}
-              <span className="gradient-text-hero">trade on campus</span>
-            </h2>
-            <p className="text-slate-400 text-base max-w-2xl mx-auto">
-              Built for students, by students. Experience the future of campus commerce.
-            </p>
           </div>
+        </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
-            {features.map(({ icon: Icon, title, desc, gradient, bg, iconColor }, i) => (
-              <div
-                key={title}
-                className="group glass border border-white/10 rounded-2xl p-6 hover:border-indigo-500/40 transition-all duration-300 hover:-translate-y-1 hover:bg-white/5"
-                data-testid={`feature-card-${title.toLowerCase().replace(' ', '-')}`}
-              >
-                <div className={`${bg} h-12 w-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                  <Icon className={`h-6 w-6 ${iconColor}`} />
-                </div>
-                <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
+        {/* Right: Hero Image */}
+        <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', height: 480, borderRadius: 16, overflow: 'hidden', boxShadow: ghostShadow, transform: 'rotate(2deg)' }}>
+            <img
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWD0EduIw03KgR_0XmGguabMFdUW1WrB4XXVFFYHkAeb9bVYqcE56RHx95e8njimvz1YK2zaToPgUd_cPEO-7fY2zsmlRE4bFHhFqLN0XXJrZhD--VPhqMRZSj4fEm8caRSEQ2A2RVlseBZxsxYx3XP-Dj2kTL333TS_4JVvggyo97GjhqhJOV9Z9r5UY-cKAUEM0Zr7jPvRQS0WdgyhLcZhd2gRz4Rpd5nLkP9g1gtyeEptK0E9LXXvjxqQNlf3028R6mnmgCbiI"
+              alt="College students sharing notes"
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,51,88,0.40) 0%, transparent 60%)' }} />
+          </div>
+          {/* Float badge */}
+          <div style={{ position: 'absolute', bottom: -20, left: -24, background: '#fff', padding: 20, borderRadius: 16, boxShadow: ghostShadow, border: `1px solid ${COLORS.outlineVariant}1A` }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ background: `${COLORS.tertiaryFixedDim}33`, padding: 10, borderRadius: 10 }}>
+                <Icon name="stars" fill={1} size={24} style={{ color: '#614100' }} />
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ===== TESTIMONIALS ===== */}
-      <section className="py-20 px-4 sm:px-6 md:px-10 lg:px-20 bg-slate-800/40">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="font-['Outfit'] text-3xl sm:text-4xl font-black text-white mb-3">
-              Loved by <span className="gradient-text-hero">Students</span>
-            </h2>
-            <p className="text-slate-400">See what your fellow students are saying</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {testimonials.map(({ name, branch, text, rating }, i) => (
-              <div key={name} className="glass border border-white/10 rounded-2xl p-6 hover:border-indigo-500/30 transition-all duration-300">
-                <div className="flex items-center gap-1 mb-4">
-                  {Array.from({ length: rating }).map((_, j) => (
-                    <Star key={j} className="h-4 w-4 text-amber-400 fill-amber-400" />
-                  ))}
-                </div>
-                <p className="text-slate-300 text-sm leading-relaxed mb-5">"{text}"</p>
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                    {name[0]}
-                  </div>
-                  <div>
-                    <p className="text-white text-sm font-semibold">{name}</p>
-                    <p className="text-slate-500 text-xs">{branch}</p>
-                  </div>
-                </div>
+              <div>
+                <div style={{ fontSize: 10, color: COLORS.onSurfaceVariant, fontWeight: 500 }}>Community Verified</div>
+                <div style={{ fontSize: 20, fontWeight: 900, color: COLORS.primary }}>4.9/5 Score</div>
               </div>
-            ))}
+            </div>
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* ===== CTA SECTION ===== */}
-      <section className="py-20 px-4 sm:px-6 md:px-10 lg:px-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-primary opacity-90" />
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-1/2 -right-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-1/2 -left-1/4 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
+      {/* Responsive override styles */}
+      <style>{`
+        @media (max-width: 768px) {
+          .uf-hero-grid { grid-template-columns: 1fr !important; }
+          .uf-hero-grid > div:last-child { display: none; }
+          .uf-desktop-nav { display: none !important; }
+        }
+      `}</style>
+    </section>
+  );
+}
+
+/* ============================================================
+   DUAL PATH SECTION
+============================================================ */
+function DualPath({ onMarket, onLibrary }) {
+  return (
+    <section style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px 48px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }} className="uf-dual-grid">
+        <style>{`@media (max-width: 640px) { .uf-dual-grid { grid-template-columns: 1fr !important; } }`}</style>
+        {/* Marketplace */}
+        <div
+          className="uf-path-card"
+          onClick={onMarket}
+          style={{ padding: 32, borderRadius: 16, background: COLORS.surfaceContainerLow, position: 'relative', overflow: 'hidden' }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 48 }}>
+            <div style={{ background: '#fff', padding: 14, borderRadius: 10, boxShadow: ghostShadow }}>
+              <Icon name="shopping_cart" size={28} style={{ color: COLORS.secondary }} />
+            </div>
+            <span className="uf-path-arrow" style={{ color: COLORS.outlineVariant, transition: 'color 0.2s' }}>
+              <Icon name="arrow_forward" size={22} />
+            </span>
+          </div>
+          <h3 style={{ fontSize: 26, fontWeight: 900, color: COLORS.primary, marginBottom: 8 }}>Student Marketplace</h3>
+          <p style={{ color: COLORS.onSurfaceVariant, marginBottom: 20, fontSize: 14, maxWidth: 280 }}>Buy and sell physical gear from peers directly on campus.</p>
+          <span className="uf-sig-underline" style={{ color: COLORS.secondary, fontWeight: 700, fontSize: 13 }}>Browse Gear</span>
         </div>
-        <div className="relative z-10 max-w-3xl mx-auto text-center">
-          <h2
-            className="font-['Outfit'] text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-5"
-            data-testid="cta-title"
+
+        {/* Library */}
+        <div
+          className="uf-path-card"
+          onClick={onLibrary}
+          style={{ padding: 32, borderRadius: 16, background: COLORS.surfaceContainerLow, position: 'relative', overflow: 'hidden' }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 48 }}>
+            <div style={{ background: '#fff', padding: 14, borderRadius: 10, boxShadow: ghostShadow }}>
+              <Icon name="library_books" size={28} style={{ color: COLORS.primary }} />
+            </div>
+            <span className="uf-path-arrow" style={{ color: COLORS.outlineVariant, transition: 'color 0.2s' }}>
+              <Icon name="arrow_forward" size={22} />
+            </span>
+          </div>
+          <h3 style={{ fontSize: 26, fontWeight: 900, color: COLORS.primary, marginBottom: 8 }}>Academic Library</h3>
+          <p style={{ color: COLORS.onSurfaceVariant, marginBottom: 20, fontSize: 14, maxWidth: 280 }}>Access high-quality study guides, notes, and digital resources.</p>
+          <span className="uf-sig-underline" style={{ color: COLORS.primary, fontWeight: 700, fontSize: 13 }}>Explore Library</span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   FEATURED GEAR SECTION
+============================================================ */
+const GEAR_ITEMS = [
+  {
+    label: 'NEARLY NEW',
+    labelBg: `${COLORS.primaryContainer}`,
+    labelColor: '#fff',
+    image: 'https://images.unsplash.com/photo-1564466809058-bf4114d55352?w=400&q=80',
+    title: 'TI-84 Plus CE Edition',
+    price: '₹4,500',
+    seller: 'Rahul M.',
+    rating: '4.8',
+  },
+  {
+    label: 'HOT ITEM',
+    labelBg: COLORS.tertiaryFixedDim,
+    labelColor: '#281800',
+    image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&q=80',
+    title: 'Organic Chemistry 10th Ed',
+    price: '₹850',
+    seller: 'Priya S.',
+    rating: '4.9',
+  },
+  {
+    label: null,
+    image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&q=80',
+    title: 'iPad Air (4th Gen) 64GB',
+    price: '₹28,000',
+    seller: 'Amit K.',
+    rating: '4.7',
+  },
+  {
+    label: null,
+    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&q=80',
+    title: 'Bose Noise Cancelling 700',
+    price: '₹12,000',
+    seller: 'Sarah L.',
+    rating: '5.0',
+  },
+];
+
+function GearCard({ item, onContactSeller }) {
+  return (
+    <div
+      className="uf-bulletin-card"
+      style={{ background: COLORS.surfaceContainerLowest, borderRadius: 16, overflow: 'hidden' }}
+    >
+      <div style={{ height: 176, overflow: 'hidden', position: 'relative' }}>
+        <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        {item.label && (
+          <div style={{ position: 'absolute', top: 10, left: 10, background: item.labelBg, color: item.labelColor, fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 4 }}>
+            {item.label}
+          </div>
+        )}
+      </div>
+      <div style={{ padding: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+          <h4 style={{ fontWeight: 700, color: COLORS.primary, fontSize: 14, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</h4>
+          <span style={{ color: COLORS.secondary, fontWeight: 900, fontSize: 14, marginLeft: 14, flexShrink: 0 }}>{item.price}</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+          <div style={{ height: 18, width: 18, borderRadius: '50%', background: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 9, fontWeight: 700 }}>
+            {item.seller[0]}
+          </div>
+          <span style={{ fontSize: 11, color: COLORS.onSurfaceVariant }}>Seller: {item.seller}</span>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 3, color: '#614100' }}>
+            <Icon name="star" fill={1} size={14} style={{ color: '#614100' }} />
+            <span style={{ fontSize: 10, fontWeight: 700 }}>{item.rating}</span>
+          </div>
+        </div>
+        <button
+          onClick={onContactSeller}
+          className="uf-btn-contact"
+          style={{ width: '100%', padding: '8px 0', background: COLORS.secondaryContainer, color: COLORS.onSecondaryContainer, fontWeight: 700, fontSize: 12, borderRadius: 10, border: 'none', cursor: 'pointer' }}
+        >
+          Contact Seller
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function FeaturedGear({ onViewAll, onContactSeller }) {
+  return (
+    <section id="market" style={{ background: COLORS.background, padding: '72px 0' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 48 }}>
+          <div>
+            <h2 style={{ fontSize: 36, fontWeight: 900, color: COLORS.primary, marginBottom: 8, letterSpacing: '-0.02em' }}>Featured Gear</h2>
+            <p style={{ color: COLORS.onSurfaceVariant, fontSize: 14 }}>Top-rated items from verified students at SIGCE</p>
+          </div>
+          <button
+            onClick={onViewAll}
+            className="uf-sig-underline"
+            style={{ color: COLORS.secondary, fontWeight: 700, fontSize: 14, background: 'none', border: 'none', cursor: 'pointer' }}
           >
-            Ready to Start Trading?
-          </h2>
-          <p className="text-lg text-indigo-100 mb-10">
-            Join thousands of students buying and selling safely on campus
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            View All Gear
+          </button>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }} className="uf-gear-grid">
+          <style>{`@media (max-width: 1024px) { .uf-gear-grid { grid-template-columns: repeat(2,1fr) !important; } }
+                   @media (max-width: 580px)  { .uf-gear-grid { grid-template-columns: 1fr !important; } }`}</style>
+          {GEAR_ITEMS.map((item, i) => <GearCard key={i} item={item} onContactSeller={onContactSeller} />)}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   DIGITAL LIBRARY SECTION
+============================================================ */
+const LIBRARY_NOTES = [
+  { icon: 'picture_as_pdf', iconColor: '#f87171', iconBg: '#fef2f2', iconBorder: '#fecaca', title: 'SEM-4 Discrete Mathematics Solutions', meta: 'Uploaded by Prof. Gupta\'s Lab', downloads: 52, price: 'FREE', priceColor: COLORS.secondary },
+  { icon: 'article', iconColor: '#60a5fa', iconBg: '#eff6ff', iconBorder: '#bfdbfe', title: 'Microprocessors Quick Revision Guide', meta: 'Handwritten • Verified', downloads: 128, price: '₹49', priceColor: COLORS.secondary },
+  { icon: 'description', iconColor: '#34d399', iconBg: '#ecfdf5', iconBorder: '#a7f3d0', title: 'DBMS Normalization Flashcards', meta: 'Top Rated • 2024', downloads: 89, price: 'FREE', priceColor: COLORS.secondary },
+  { icon: 'picture_as_pdf', iconColor: '#a78bfa', iconBg: '#f5f3ff', iconBorder: '#ddd6fe', title: 'Operating Systems Lab Manual', meta: 'PDF Version • Verified', downloads: 210, price: 'FREE', priceColor: COLORS.secondary },
+];
+
+function LibraryNote({ note }) {
+  return (
+    <div
+      className="uf-bulletin-card"
+      style={{ padding: 18, background: '#fff', borderRadius: 14, boxShadow: ghostShadow, display: 'flex', gap: 14, alignItems: 'center' }}
+    >
+      <div style={{ height: 60, width: 46, background: note.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 6, border: `1px solid ${note.iconBorder}`, flexShrink: 0 }}>
+        <Icon name={note.icon} size={22} style={{ color: note.iconColor }} />
+      </div>
+      <div style={{ flex: 1, overflow: 'hidden' }}>
+        <h5 style={{ fontSize: 13, fontWeight: 700, color: COLORS.primary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{note.title}</h5>
+        <p style={{ fontSize: 10, color: COLORS.onSurfaceVariant, marginTop: 2 }}>{note.meta}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+          <span style={{ fontSize: 10, background: COLORS.surfaceContainer, padding: '2px 8px', borderRadius: 4, color: COLORS.onSurfaceVariant }}>{note.downloads} Downloads</span>
+          <span style={{ fontSize: 10, fontWeight: 700, color: note.priceColor }}>{note.price}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DigitalLibrary({ onUploadNotes }) {
+  return (
+    <section id="library" style={{ background: COLORS.surfaceContainerLow, padding: '72px 0' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 48, alignItems: 'start' }} className="uf-lib-grid">
+          <style>{`@media (max-width: 768px) { .uf-lib-grid { grid-template-columns: 1fr !important; } }`}</style>
+          <div>
+            <h2 style={{ fontSize: 36, fontWeight: 900, color: COLORS.primary, letterSpacing: '-0.02em', lineHeight: 1.15, marginBottom: 20 }}>
+              Digital Library<br />for Scholars
+            </h2>
+            <p style={{ color: COLORS.onSurfaceVariant, marginBottom: 28, fontSize: 14, lineHeight: 1.7 }}>
+              Access hundreds of peer-reviewed study guides and handwritten notes specific to your curriculum at SIGCE.
+            </p>
             <button
-              onClick={() => navigate('/signup')}
-              className="w-full sm:w-auto bg-white text-indigo-600 font-bold px-8 py-4 rounded-xl text-base hover:bg-slate-50 transition-all duration-200 active:scale-95 flex items-center justify-center gap-2"
-              data-testid="cta-signup-btn"
+              onClick={onUploadNotes}
+              className="uf-primary-gradient uf-upload-btn"
+              style={{ padding: '14px 28px', borderRadius: 14, color: '#fff', fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 10, transition: 'opacity 0.2s' }}
             >
-              Create Free Account
-              <ArrowRight className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => navigate('/buyer')}
-              className="w-full sm:w-auto glass border border-white/30 text-white font-semibold px-8 py-4 rounded-xl text-base hover:bg-white/10 transition-all duration-200 active:scale-95"
-            >
-              Browse Listings
+              Upload Your Notes
+              <Icon name="upload" size={20} style={{ color: '#fff' }} />
             </button>
           </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }} className="uf-notes-grid">
+            <style>{`@media (max-width: 500px) { .uf-notes-grid { grid-template-columns: 1fr !important; } }`}</style>
+            {LIBRARY_NOTES.map((note, i) => <LibraryNote key={i} note={note} />)}
+          </div>
         </div>
-      </section>
+      </div>
+    </section>
+  );
+}
 
-      <Footer />
+/* ============================================================
+   VALUE PROPS SECTION
+============================================================ */
+const VALUE_PROPS = [
+  {
+    icon: 'psychology',
+    iconBg: COLORS.secondaryContainer,
+    iconColor: COLORS.onSecondaryContainer,
+    title: 'AI Smart Matching',
+    desc: 'Our algorithms match you with books and notes based on your semester, branch, and current subjects.',
+  },
+  {
+    icon: 'shield_with_heart',
+    iconBg: `${COLORS.tertiaryFixedDim}4D`,
+    iconColor: '#614100',
+    title: 'Student Trust Score',
+    desc: 'Shop with confidence using our transparency-first trust scores calculated from actual peer reviews and verified exchanges.',
+  },
+  {
+    icon: 'task_alt',
+    iconBg: '#d0e4ff',
+    iconColor: COLORS.primary,
+    title: 'Condition Grading',
+    desc: "Every item goes through a standardized condition check—from 'Library Mint' to 'Scholar's Choice' with heavy annotations.",
+  },
+];
+
+function ValueProps() {
+  return (
+    <section style={{ padding: '80px 0', maxWidth: 1280, margin: '0 auto' }}>
+      <div style={{ padding: '0 24px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 48 }} className="uf-val-grid">
+        <style>{`@media (max-width: 768px) { .uf-val-grid { grid-template-columns: 1fr !important; } }`}</style>
+        {VALUE_PROPS.map((vp, i) => (
+          <div key={i}>
+            <div style={{ width: 48, height: 48, background: vp.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 14, marginBottom: 20 }}>
+              <Icon name={vp.icon} fill={1} size={24} style={{ color: vp.iconColor }} />
+            </div>
+            <h4 style={{ fontSize: 18, fontWeight: 700, color: COLORS.primary, marginBottom: 10 }}>{vp.title}</h4>
+            <p style={{ color: COLORS.onSurfaceVariant, fontSize: 13, lineHeight: 1.75 }}>{vp.desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   TRUST & COMMUNITY (CTA Banner)
+============================================================ */
+function TrustSection({ onSignup, userCount }) {
+  return (
+    <section id="community" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px 80px' }}>
+      <div
+        className="uf-primary-gradient"
+        style={{ borderRadius: 20, padding: '56px 64px', display: 'flex', gap: 64, alignItems: 'center', flexWrap: 'wrap' }}
+      >
+        <div style={{ flex: 1, minWidth: 260 }}>
+          <h2 style={{ fontSize: 34, fontWeight: 900, color: '#fff', marginBottom: 18, lineHeight: 1.2 }}>Verified Campus Identity</h2>
+          <p style={{ color: COLORS.onPrimaryContainer, fontSize: 15, marginBottom: 28, lineHeight: 1.7, maxWidth: 420 }}>
+            Every buyer and seller on UNIFIND is a verified student or faculty member of Smt. Indira Gandhi College of Engineering. No outsiders, no scams.
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+            {[{ icon: 'domain', label: 'Campus Pickups' }, { icon: 'payments', label: 'Secure Escrow' }].map(({ icon, label }) => (
+              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: 'rgba(255,255,255,0.12)', borderRadius: 10, backdropFilter: 'blur(8px)' }}>
+                <Icon name={icon} size={18} style={{ color: COLORS.secondaryContainer }} />
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Stats card */}
+        <div style={{ background: 'rgba(255,255,255,0.07)', borderRadius: 16, padding: 28, border: '1px solid rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)', minWidth: 260, flex: '0 0 auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: COLORS.secondaryContainer }}>Community Stats</span>
+            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Live</span>
+          </div>
+          {[
+            { label: 'Active Students', value: userCount > 0 ? userCount.toLocaleString() : '0' }, 
+            { label: 'Items Exchanged', value: '0' }, 
+            { label: 'Library Saves', value: '₹0' }
+          ].map(({ label, value }, i, arr) => (
+            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingBottom: 16, marginBottom: i < arr.length - 1 ? 16 : 0, borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.1)' : 'none' }}>
+              <span style={{ color: '#fff', fontSize: 13 }}>{label}</span>
+              <span style={{ color: '#fff', fontSize: 28, fontWeight: 900 }}>{value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   FINAL CTA SECTION
+============================================================ */
+function FinalCTA({ onSignup, onBrowse }) {
+  return (
+    <section style={{ padding: '72px 24px', textAlign: 'center', maxWidth: 800, margin: '0 auto' }}>
+      <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3.2rem)', fontWeight: 900, color: COLORS.primary, marginBottom: 20, letterSpacing: '-0.03em' }} data-testid="cta-title">
+        Ready to join your campus ecosystem?
+      </h2>
+      <p style={{ fontSize: 17, color: COLORS.onSurfaceVariant, marginBottom: 44, lineHeight: 1.6 }}>
+        Join thousands of students at SIGCE saving money and improving grades every single semester.
+      </p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center' }}>
+        <button
+          onClick={onSignup}
+          className="uf-primary-gradient uf-cta-primary"
+          style={{ padding: '16px 36px', borderRadius: 14, color: '#fff', fontWeight: 700, fontSize: 16, border: 'none', cursor: 'pointer', boxShadow: ghostShadow, transition: 'transform 0.2s' }}
+          data-testid="cta-signup-btn"
+        >
+          Get Started for Free
+        </button>
+        <button
+          onClick={onBrowse}
+          className="uf-cta-secondary"
+          style={{ padding: '16px 36px', borderRadius: 14, color: COLORS.primary, fontWeight: 700, fontSize: 16, border: 'none', cursor: 'pointer', background: COLORS.surfaceContainerHigh, transition: 'background 0.2s' }}
+        >
+          Browse Listings
+        </button>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   FOOTER
+============================================================ */
+function LandingFooter({ onNavigate }) {
+  const footerLinks = {
+    resources: [
+      { label: 'About Us', path: '/about' },
+      { label: 'Safety Guidelines', path: '/community-guidelines' },
+      { label: 'Terms of Service', path: '/terms-conditions' }
+    ],
+    support: [
+      { label: 'Privacy Policy', path: '/privacy-policy' },
+      { label: 'Contact Support', path: 'mailto:systemrecords@gmail.com', isExternal: true }
+    ]
+  };
+
+  const socialLinks = [
+    { icon: 'public', url: 'https://sigce.edu.in/', label: 'Website' },
+    { icon: 'mail', url: 'mailto:systemrecords@gmail.com', label: 'Email' }
+  ];
+
+  return (
+    <footer style={{ background: COLORS.surfaceContainerLow, padding: '56px 0' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40 }} className="uf-footer-grid">
+        <style>{`@media (max-width: 640px) { .uf-footer-grid { grid-template-columns: 1fr !important; } }`}</style>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+            <img src="/UNIFIND.png" alt="UNIFIND" style={{ height: 24, width: 24, objectFit: 'contain' }} />
+            <span style={{ fontSize: 16, fontWeight: 700, color: COLORS.primary }}>UNIFIND</span>
+          </div>
+          <p style={{ fontSize: 13, color: '#64748b', maxWidth: 300, marginBottom: 20 }}>© 2026 UNIFIND. The Academic Curator for Modern Campus Life.</p>
+          <div style={{ display: 'flex', gap: 10 }}>
+            {socialLinks.map(({ icon, url, label }) => (
+              <a 
+                key={icon} 
+                href={url} 
+                target={url.startsWith('http') ? '_blank' : undefined}
+                rel={url.startsWith('http') ? 'noopener noreferrer' : undefined}
+                aria-label={label}
+                className="uf-footer-social" 
+                style={{ height: 32, width: 32, borderRadius: '50%', background: COLORS.surfaceContainer, display: 'flex', alignItems: 'center', justifyContent: 'center', color: COLORS.primary, transition: 'background 0.2s', textDecoration: 'none' }}
+              >
+                <Icon name={icon} size={16} style={{ color: COLORS.primary }} />
+              </a>
+            ))}
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
+          <div>
+            <h4 style={{ fontSize: 13, fontWeight: 700, color: COLORS.primary, marginBottom: 14 }}>Resources</h4>
+            {footerLinks.resources.map(({ label, path }) => (
+              <div key={label} style={{ marginBottom: 8 }}>
+                <button
+                  onClick={() => onNavigate(path)}
+                  style={{ 
+                    fontSize: 13, 
+                    color: '#64748b', 
+                    textDecoration: 'underline', 
+                    transition: 'color 0.2s',
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit'
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.color = COLORS.secondary)}
+                  onMouseLeave={e => (e.currentTarget.style.color = '#64748b')}
+                >{label}</button>
+              </div>
+            ))}
+          </div>
+          <div>
+            <h4 style={{ fontSize: 13, fontWeight: 700, color: COLORS.primary, marginBottom: 14 }}>Support</h4>
+            {footerLinks.support.map(({ label, path, isExternal }) => (
+              <div key={label} style={{ marginBottom: 8 }}>
+                {isExternal ? (
+                  <a
+                    href={path}
+                    style={{ 
+                      fontSize: 13, 
+                      color: '#64748b', 
+                      textDecoration: 'underline', 
+                      transition: 'color 0.2s',
+                      cursor: 'pointer'
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.color = COLORS.secondary)}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#64748b')}
+                  >{label}</a>
+                ) : (
+                  <button
+                    onClick={() => onNavigate(path)}
+                    style={{ 
+                      fontSize: 13, 
+                      color: '#64748b', 
+                      textDecoration: 'underline', 
+                      transition: 'color 0.2s',
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit'
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.color = COLORS.secondary)}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#64748b')}
+                  >{label}</button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+/* ============================================================
+   ROOT COMPONENT
+============================================================ */
+const LandingPage = () => {
+  const navigate = useNavigate();
+  const { currentUser } = useAuth();
+  const [userCount, setUserCount] = useState(0);
+  
+  usePageStyles();
+
+  // Fetch user count on mount
+  useEffect(() => {
+    const fetchUserCount = async () => {
+      const count = await getUserCount();
+      setUserCount(count);
+    };
+    fetchUserCount();
+  }, []);
+
+  const handleContactSeller = () => {
+    if (currentUser) {
+      navigate('/buyer');
+    } else {
+      navigate('/signup');
+    }
+  };
+
+  const handleUploadNotes = () => {
+    if (currentUser) {
+      navigate('/seller');
+    } else {
+      navigate('/signup');
+    }
+  };
+
+  return (
+    <div className="uf-body" style={{ minHeight: '100dvh', overflowX: 'hidden' }}>
+      <Navbar
+        currentUser={currentUser}
+        onProfile={() => navigate('/profile')}
+        onLogin={() => navigate('/login')}
+        onSignup={() => navigate('/signup')}
+      />
+      <SIGCEBanner />
+      <HeroSection onSignup={() => navigate('/signup')} onBrowse={() => navigate('/buyer')} userCount={userCount} />
+      <DualPath onMarket={() => navigate('/buyer')} onLibrary={() => navigate('/buyer')} />
+      <FeaturedGear onViewAll={() => navigate('/buyer')} onContactSeller={handleContactSeller} />
+      <DigitalLibrary onUploadNotes={handleUploadNotes} />
+      <ValueProps />
+      <TrustSection onSignup={() => navigate('/signup')} userCount={userCount} />
+      <FinalCTA onSignup={() => navigate('/signup')} onBrowse={() => navigate('/buyer')} />
+      <LandingFooter onNavigate={navigate} />
     </div>
   );
 };
 
 export default LandingPage;
-

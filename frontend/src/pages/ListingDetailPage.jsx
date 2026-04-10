@@ -5,6 +5,7 @@ import { Button } from '../components/ui/Button';
 import { ArrowLeft, MapPin, Eye, Share2, Heart, MessageCircle, Shield } from 'lucide-react';
 import { getProduct, getPublicProfile } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { hasViewedProduct, markProductAsViewed } from '../utils/viewTracking';
 import { isProductLiked, likeProduct, unlikeProduct } from '../utils/likedProducts';
 import ShareModal from '../components/ShareModal';
@@ -13,6 +14,7 @@ const ListingDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
+  const { darkMode } = useTheme();
   const [product, setProduct] = useState(null);
   const [seller, setSeller] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -33,6 +35,25 @@ const ListingDetailPage = () => {
         // This prevents unnecessary view increments
         const productData = await getProduct(id, !alreadyViewed ? idToken : null);
         setProduct(productData);
+
+        // Update meta tags for social sharing
+        if (productData) {
+          document.title = `${productData.title} - ₹${productData.price.toLocaleString()} | UNIFIND`;
+          
+          // Update or create meta tags
+          updateMetaTag('description', productData.description);
+          updateMetaTag('og:type', 'product', 'property');
+          updateMetaTag('og:url', window.location.href, 'property');
+          updateMetaTag('og:title', `${productData.title} - ₹${productData.price.toLocaleString()}`, 'property');
+          updateMetaTag('og:description', productData.description, 'property');
+          updateMetaTag('og:image', productData.images[0], 'property');
+          updateMetaTag('og:image:width', '1200', 'property');
+          updateMetaTag('og:image:height', '630', 'property');
+          updateMetaTag('twitter:card', 'summary_large_image');
+          updateMetaTag('twitter:title', `${productData.title} - ₹${productData.price.toLocaleString()}`);
+          updateMetaTag('twitter:description', productData.description);
+          updateMetaTag('twitter:image', productData.images[0]);
+        }
 
         // Mark as viewed in localStorage
         if (!alreadyViewed) {
@@ -56,6 +77,17 @@ const ListingDetailPage = () => {
 
     loadProductDetails();
   }, [id, currentUser]);
+
+  // Helper function to update meta tags
+  const updateMetaTag = (name, content, type = 'name') => {
+    let element = document.querySelector(`meta[${type}="${name}"]`);
+    if (!element) {
+      element = document.createElement('meta');
+      element.setAttribute(type, name);
+      document.head.appendChild(element);
+    }
+    element.setAttribute('content', content);
+  };
 
   useEffect(() => {
     if (currentUser && id) {
@@ -84,7 +116,7 @@ const ListingDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] bg-slate-50">
+      <div className="min-h-[100dvh] bg-slate-50 dark:bg-[#0f0f0f]">
         <Header />
         <div className="flex items-center justify-center h-96">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
@@ -95,11 +127,11 @@ const ListingDetailPage = () => {
 
   if (!product) {
     return (
-      <div className="min-h-[100dvh] bg-slate-50">
+      <div className="min-h-[100dvh] bg-slate-50 dark:bg-[#0f0f0f]">
         <Header />
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Product not found</h2>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-neutral-100 mb-2">Product not found</h2>
             <Button onClick={() => navigate('/buyer')}>Back to Browse</Button>
           </div>
         </div>
@@ -108,13 +140,13 @@ const ListingDetailPage = () => {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-slate-50">
+    <div className="min-h-[100dvh] bg-slate-50 dark:bg-[#0f0f0f]">
       <Header />
       
       <div className="px-6 sm:px-8 md:px-12 lg:px-24 py-12">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-8 transition-colors"
+          className="flex items-center gap-2 text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-neutral-100 mb-8 transition-colors"
           data-testid="back-btn"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -124,7 +156,7 @@ const ListingDetailPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Left - Images */}
           <div>
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden mb-4">
+            <div className="bg-white dark:bg-[#212121] rounded-2xl border border-slate-200 dark:border-neutral-700 overflow-hidden mb-4">
               <img
                 src={product.images[selectedImage]}
                 alt={product.title}
@@ -137,8 +169,8 @@ const ListingDetailPage = () => {
                 <div 
                   key={i} 
                   onClick={() => setSelectedImage(i)}
-                  className={`bg-white rounded-xl border overflow-hidden cursor-pointer transition-colors ${
-                    selectedImage === i ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-slate-200 hover:border-blue-500'
+                  className={`bg-white dark:bg-[#212121] rounded-xl border overflow-hidden cursor-pointer transition-colors ${
+                    selectedImage === i ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-slate-200 dark:border-neutral-700 hover:border-blue-500'
                   }`}
                 >
                   <img src={img} alt="" className="w-full aspect-square object-cover" />
@@ -149,41 +181,41 @@ const ListingDetailPage = () => {
 
           {/* Right - Details */}
           <div>
-            <div className="bg-white rounded-2xl border border-slate-200 p-8">
-              <h1 className="font-['Outfit'] text-2xl sm:text-3xl font-bold text-slate-900 mb-4" data-testid="product-title">
+            <div className="bg-white dark:bg-[#212121] rounded-2xl border border-slate-200 dark:border-neutral-700 p-8">
+              <h1 className="font-['Outfit'] text-2xl sm:text-3xl font-bold text-slate-900 dark:text-neutral-100 mb-4" data-testid="product-title">
                 {product.title}
               </h1>
               
-              <div className="text-4xl font-black text-blue-600 mb-6" data-testid="product-price">
+              <div className="text-4xl font-black text-blue-600 dark:text-blue-400 mb-6" data-testid="product-price">
                 ₹{product.price.toLocaleString()}
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-6 pb-6 border-b border-slate-100">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-6 pb-6 border-b border-slate-100 dark:border-neutral-700">
                 <span className="bg-green-100 text-green-700 px-3 py-1.5 rounded-lg text-sm font-semibold">
                   {product.condition}
                 </span>
-                <div className="flex items-center gap-1 text-slate-600">
+                <div className="flex items-center gap-1 text-slate-600 dark:text-neutral-400">
                   <MapPin className="h-4 w-4" />
                   <span className="text-sm">{product.location}</span>
                 </div>
-                <div className="flex items-center gap-1 text-slate-600">
+                <div className="flex items-center gap-1 text-slate-600 dark:text-neutral-400">
                   <Eye className="h-4 w-4" />
                   <span className="text-sm">{product.views} views</span>
                 </div>
               </div>
 
               <div className="mb-6">
-                <h3 className="text-sm font-semibold text-slate-900 mb-2">Description</h3>
-                <p className="text-slate-600 leading-relaxed">{product.description}</p>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-neutral-100 mb-2">Description</h3>
+                <p className="text-slate-600 dark:text-neutral-400 leading-relaxed">{product.description}</p>
               </div>
 
-              <div className="mb-6 pb-6 border-b border-slate-100">
-                <h3 className="text-sm font-semibold text-slate-900 mb-3">Seller Information</h3>
+              <div className="mb-6 pb-6 border-b border-slate-100 dark:border-neutral-700">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-neutral-100 mb-3">Seller Information</h3>
                 <div className="flex items-center gap-4">
                   <img src={seller?.avatar} alt={seller?.name} className="h-12 w-12 rounded-full object-cover" />
                   <div className="flex-1">
-                    <p className="font-semibold text-slate-900">{seller?.name}</p>
-                    <p className="text-sm text-slate-500">{seller?.college}</p>
+                    <p className="font-semibold text-slate-900 dark:text-neutral-100">{seller?.name}</p>
+                    <p className="text-sm text-slate-500 dark:text-neutral-500">{seller?.college}</p>
                   </div>
                   <div className="bg-green-50 px-3 py-1.5 rounded-lg">
                     <div className="flex items-center gap-1">
@@ -206,22 +238,22 @@ const ListingDetailPage = () => {
                 <Button
                   variant="outline"
                   onClick={handleLike}
-                  className={`rounded-xl border-slate-200 transition-all ${
+                  className={`rounded-xl transition-all ${
                     isLiked 
-                      ? 'bg-red-50 border-red-500 hover:bg-red-100' 
-                      : 'hover:border-blue-500 hover:bg-blue-50'
+                      ? 'bg-red-50 dark:bg-red-500/10 border-red-500 hover:bg-red-100 dark:hover:bg-red-500/20' 
+                      : 'border-slate-200 dark:border-neutral-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10'
                   }`}
                   data-testid="save-btn"
                 >
-                  <Heart className={`h-5 w-5 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
+                  <Heart className={`h-5 w-5 ${isLiked ? 'fill-red-500 text-red-500' : darkMode ? 'text-neutral-400' : ''}`} />
                 </Button>
                 <Button
                   variant="outline"
                   onClick={handleShare}
-                  className="rounded-xl border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition-all"
+                  className="rounded-xl border-slate-200 dark:border-neutral-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all"
                   data-testid="share-btn"
                 >
-                  <Share2 className="h-5 w-5" />
+                  <Share2 className={`h-5 w-5 ${darkMode ? 'text-neutral-400' : ''}`} />
                 </Button>
               </div>
             </div>
@@ -242,4 +274,5 @@ const ListingDetailPage = () => {
 };
 
 export default ListingDetailPage;
+
 

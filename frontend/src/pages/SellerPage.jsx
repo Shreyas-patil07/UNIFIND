@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import { categories } from '../data/categories';
@@ -281,7 +281,7 @@ const SellerPage = () => {
         active
           ? 'bg-indigo-600 text-white shadow-glow-indigo'
           : darkMode 
-            ? 'bg-slate-800 text-slate-300 border border-slate-700 hover:border-indigo-500 hover:text-indigo-400'
+            ? 'bg-[#212121] text-neutral-300 border border-neutral-700 hover:border-indigo-500 hover:text-indigo-400'
             : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
       }`}
       data-testid={testId}
@@ -291,7 +291,7 @@ const SellerPage = () => {
   );
 
   return (
-    <div className={`min-h-[100dvh] pb-20 ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
+    <div className={`min-h-[100dvh] pb-20 ${darkMode ? 'bg-[#0f0f0f]' : 'bg-slate-50'}`}>
       <Header hideSearch />
       
       <div className="px-4 sm:px-6 md:px-10 lg:px-20 py-8 with-bottom-nav">
@@ -301,7 +301,7 @@ const SellerPage = () => {
             <h1 className={`font-['Outfit'] text-2xl sm:text-3xl font-black mb-1 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`} data-testid="seller-page-title">
               My Listings
             </h1>
-            <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Manage your campus products</p>
+            <p className={`text-sm ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`}>Manage your campus products</p>
           </div>
           <button
             onClick={() => navigate('/post-listing')}
@@ -315,24 +315,24 @@ const SellerPage = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-7">
-          <div className={`rounded-2xl border p-4 text-center ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`} data-testid="seller-stat-active">
+          <div className={`rounded-2xl border p-4 text-center ${darkMode ? 'bg-[#212121] border-neutral-700' : 'bg-white border-slate-200 shadow-sm'}`} data-testid="seller-stat-active">
             <div className="text-xl sm:text-2xl font-black text-indigo-600 mb-0.5">{activeCount}</div>
-            <div className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Active</div>
+            <div className={`text-xs ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`}>Active</div>
           </div>
-          <div className={`rounded-2xl border p-4 text-center ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`} data-testid="seller-stat-sold">
+          <div className={`rounded-2xl border p-4 text-center ${darkMode ? 'bg-[#212121] border-neutral-700' : 'bg-white border-slate-200 shadow-sm'}`} data-testid="seller-stat-sold">
             <div className="text-xl sm:text-2xl font-black text-emerald-600 mb-0.5">{soldCount}</div>
-            <div className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Sold</div>
+            <div className={`text-xs ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`}>Sold</div>
           </div>
-          <div className={`rounded-2xl border p-4 text-center ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`} data-testid="seller-stat-revenue">
+          <div className={`rounded-2xl border p-4 text-center ${darkMode ? 'bg-[#212121] border-neutral-700' : 'bg-white border-slate-200 shadow-sm'}`} data-testid="seller-stat-revenue">
             <div className="text-xl sm:text-2xl font-black text-amber-600 mb-0.5">₹{(totalRevenue / 1000).toFixed(0)}k</div>
-            <div className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Revenue</div>
+            <div className={`text-xs ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`}>Revenue</div>
           </div>
         </div>
 
         {/* Search Bar */}
         <div className="mb-6">
           <div className="relative">
-            <Search className={`absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+            <Search className={`absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`} />
             <input
               type="text"
               placeholder="Search your listings..."
@@ -345,7 +345,7 @@ const SellerPage = () => {
               }}
               className={`w-full pl-12 pr-4 py-3.5 rounded-xl text-sm font-medium border transition-all duration-200 ${
                 darkMode 
-                  ? 'bg-slate-800 border-slate-700 text-slate-200 placeholder-slate-500 focus:border-indigo-500'
+                  ? 'bg-[#212121] border-neutral-700 text-neutral-200 placeholder-neutral-500 focus:border-indigo-500'
                   : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400 focus:border-indigo-300'
               } focus:outline-none focus:ring-2 focus:ring-indigo-500/20`}
             />
@@ -353,7 +353,7 @@ const SellerPage = () => {
               <button
                 onClick={() => setSearchQuery('')}
                 className={`absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-lg transition-colors ${
-                  darkMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'
+                  darkMode ? 'hover:bg-neutral-800 text-neutral-400' : 'hover:bg-slate-100 text-slate-500'
                 }`}
               >
                 <X className="h-4 w-4" />
@@ -363,15 +363,15 @@ const SellerPage = () => {
 
           {/* Search History */}
           {Array.isArray(searchHistory) && searchHistory.length > 0 && !searchQuery && (
-            <div className={`mt-3 p-3 rounded-xl border ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+            <div className={`mt-3 p-3 rounded-xl border ${darkMode ? 'bg-[#212121] border-neutral-700' : 'bg-slate-50 border-slate-200'}`}>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Clock className={`h-4 w-4 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                  <span className={`text-xs font-semibold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Recent Searches</span>
+                  <Clock className={`h-4 w-4 ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`} />
+                  <span className={`text-xs font-semibold ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`}>Recent Searches</span>
                 </div>
                 <button
                   onClick={clearSearchHistory}
-                  className={`text-xs font-medium ${darkMode ? 'text-slate-400 hover:text-red-400' : 'text-slate-500 hover:text-red-600'} transition-colors`}
+                  className={`text-xs font-medium ${darkMode ? 'text-neutral-400 hover:text-red-400' : 'text-slate-500 hover:text-red-600'} transition-colors`}
                 >
                   Clear
                 </button>
@@ -383,7 +383,7 @@ const SellerPage = () => {
                     onClick={() => setSearchQuery(term)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                       darkMode 
-                        ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                        ? 'bg-slate-700 text-neutral-300 hover:bg-neutral-700'
                         : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
                     }`}
                   >
@@ -405,7 +405,7 @@ const SellerPage = () => {
                   onClick={() => setFilterDrawerOpen(true)}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-colors shadow-sm ${
                     darkMode 
-                      ? 'bg-slate-800 border-slate-700 text-slate-300 hover:border-indigo-500'
+                      ? 'bg-[#212121] border-neutral-700 text-neutral-300 hover:border-indigo-500'
                       : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-300'
                   } ${activeFiltersCount > 0 ? 'ring-2 ring-indigo-500/50 border-indigo-500' : ''}`}
                 >
@@ -425,7 +425,7 @@ const SellerPage = () => {
                   onClick={resetFilters}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-colors shadow-sm flex-shrink-0 ${
                     darkMode 
-                      ? 'bg-slate-800 border-slate-700 text-slate-300 hover:border-red-500 hover:text-red-400'
+                      ? 'bg-[#212121] border-neutral-700 text-neutral-300 hover:border-red-500 hover:text-red-400'
                       : 'bg-white border-slate-200 text-slate-700 hover:border-red-300 hover:text-red-600'
                   }`}
                 >
@@ -444,7 +444,7 @@ const SellerPage = () => {
                 }}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-colors shadow-sm ${
                   darkMode 
-                    ? 'bg-slate-800 border-slate-700 text-slate-300 hover:border-indigo-500'
+                    ? 'bg-[#212121] border-neutral-700 text-neutral-300 hover:border-indigo-500'
                     : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-300'
                 }`}
               >
@@ -465,7 +465,7 @@ const SellerPage = () => {
                   />
                   <div className={`absolute top-full right-0 mt-2 rounded-xl border shadow-xl z-[61] min-w-[200px] ${
                     darkMode 
-                      ? 'bg-slate-800 border-slate-700' 
+                      ? 'bg-[#212121] border-neutral-700' 
                       : 'bg-white border-slate-200'
                   }`}>
                     {sortOptions.map((option, index) => (
@@ -482,7 +482,7 @@ const SellerPage = () => {
                               ? 'bg-indigo-600 text-white'
                               : 'bg-indigo-50 text-indigo-600'
                             : darkMode
-                              ? 'text-slate-300 hover:bg-slate-700'
+                              ? 'text-neutral-300 hover:bg-neutral-800'
                               : 'text-slate-700 hover:bg-slate-50'
                         } ${index === 0 ? 'rounded-t-xl' : ''} ${index === sortOptions.length - 1 ? 'rounded-b-xl' : ''}`}
                       >
@@ -497,8 +497,8 @@ const SellerPage = () => {
 
           {/* Results Count */}
           <div className="mt-4">
-            <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-              <span className={`font-bold ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{filteredAndSortedListings.length}</span> listings
+            <p className={`text-sm ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`}>
+              <span className={`font-bold ${darkMode ? 'text-neutral-200' : 'text-slate-900'}`}>{filteredAndSortedListings.length}</span> listings
               {selectedCategory !== 'All' && (
                 <span className="ml-1">in <span className="font-semibold text-indigo-600">{selectedCategory}</span></span>
               )}
@@ -513,12 +513,12 @@ const SellerPage = () => {
               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] animate-fade-in"
               onClick={() => setFilterDrawerOpen(false)}
             />
-            <div className={`fixed bottom-0 left-0 right-0 z-[61] rounded-t-3xl p-6 shadow-2xl animate-slide-in-up max-h-[80vh] overflow-y-auto ${darkMode ? 'bg-slate-800 border-t-2 border-slate-700' : 'bg-white border-t-2 border-slate-200'}`}>
+            <div className={`fixed bottom-0 left-0 right-0 z-[61] rounded-t-3xl p-6 shadow-2xl animate-slide-in-up max-h-[80vh] overflow-y-auto ${darkMode ? 'bg-[#212121] border-t-2 border-neutral-700' : 'bg-white border-t-2 border-slate-200'}`}>
               <div className="flex items-center justify-between mb-6">
                 <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Filters</h3>
                 <button 
                   onClick={() => setFilterDrawerOpen(false)} 
-                  className={`p-2 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}
+                  className={`p-2 rounded-lg transition-colors ${darkMode ? 'hover:bg-neutral-800 text-neutral-300' : 'hover:bg-slate-100 text-slate-600'}`}
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -526,7 +526,7 @@ const SellerPage = () => {
 
               {/* Category Section */}
               <div className="mb-6">
-                <h4 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Category</h4>
+                <h4 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`}>Category</h4>
                 <div className="flex flex-wrap gap-2">
                   {categories.map((cat) => (
                     <FilterChip
@@ -542,7 +542,7 @@ const SellerPage = () => {
 
               {/* Status Section */}
               <div className="mb-6">
-                <h4 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Status</h4>
+                <h4 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`}>Status</h4>
                 <div className="flex flex-wrap gap-2">
                   {statusOptions.map((status) => (
                     <FilterChip
@@ -558,7 +558,7 @@ const SellerPage = () => {
 
               {/* Condition Section */}
               <div className="mb-6">
-                <h4 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Condition</h4>
+                <h4 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`}>Condition</h4>
                 <div className="flex flex-wrap gap-2">
                   {[
                     { label: 'All Conditions', val: 'all', testId: 'condition-filter-all' },
@@ -579,7 +579,7 @@ const SellerPage = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+              <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-neutral-700">
                 <button
                   onClick={() => {
                     resetFilters();
@@ -587,7 +587,7 @@ const SellerPage = () => {
                   }}
                   className={`flex-1 px-4 py-3 rounded-xl font-semibold transition-colors ${
                     darkMode 
-                      ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' 
+                      ? 'bg-slate-700 text-neutral-300 hover:bg-neutral-700' 
                       : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
@@ -615,7 +615,7 @@ const SellerPage = () => {
                   isSold ? 'opacity-60' : ''
                 } ${
                   darkMode 
-                    ? 'bg-slate-800 border-slate-700 hover:border-indigo-500 hover:shadow-lg'
+                    ? 'bg-[#212121] border-neutral-700 hover:border-indigo-500 hover:shadow-lg'
                     : 'bg-white border-slate-200 hover:border-indigo-400/40 hover:shadow-card-hover'
                 }`}
                 data-testid={`seller-listing-${product.id}`}
@@ -644,7 +644,7 @@ const SellerPage = () => {
 
                 {/* Content */}
                 <div className="p-5">
-                  <h3 className={`text-lg font-bold mb-2 line-clamp-1 ${darkMode ? 'text-slate-200' : 'text-slate-900'}`} data-testid="seller-listing-title">
+                  <h3 className={`text-lg font-bold mb-2 line-clamp-1 ${darkMode ? 'text-neutral-200' : 'text-slate-900'}`} data-testid="seller-listing-title">
                     {product.title}
                   </h3>
                   <div className="text-2xl font-black text-indigo-600 mb-3" data-testid="seller-listing-price">
@@ -652,11 +652,11 @@ const SellerPage = () => {
                   </div>
 
                   {/* Condition & Location */}
-                  <div className={`flex items-center gap-2 mb-5 pb-5 border-b ${darkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+                  <div className={`flex items-center gap-2 mb-5 pb-5 border-b ${darkMode ? 'border-neutral-700' : 'border-slate-100'}`}>
                     <span className="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-xs font-semibold">
                       {product.condition}
                     </span>
-                    <span className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{product.location}</span>
+                    <span className={`text-sm ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`}>{product.location}</span>
                   </div>
 
                   {/* Actions */}
@@ -665,7 +665,7 @@ const SellerPage = () => {
                       onClick={() => handleEdit(product.id)}
                       className={`flex items-center justify-center py-2 rounded-xl border transition-all text-xs font-medium ${
                         darkMode 
-                          ? 'border-slate-700 hover:border-indigo-500 hover:bg-indigo-900/30 hover:text-indigo-400 text-slate-400'
+                          ? 'border-neutral-700 hover:border-indigo-500 hover:bg-indigo-900/30 hover:text-indigo-400 text-neutral-400'
                           : 'border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 text-slate-600'
                       }`}
                       data-testid="seller-listing-edit-btn"
@@ -677,7 +677,7 @@ const SellerPage = () => {
                       onClick={() => handleDelete(product.id)}
                       className={`flex items-center justify-center py-2 rounded-xl border transition-all text-xs font-medium ${
                         darkMode 
-                          ? 'border-slate-700 hover:border-red-500 hover:bg-red-900/30 hover:text-red-400 text-slate-400'
+                          ? 'border-neutral-700 hover:border-red-500 hover:bg-red-900/30 hover:text-red-400 text-neutral-400'
                           : 'border-slate-200 hover:border-red-400 hover:bg-red-50 hover:text-red-600 text-slate-600'
                       }`}
                       data-testid="seller-listing-delete-btn"
@@ -693,7 +693,7 @@ const SellerPage = () => {
                             ? 'border-emerald-500 bg-emerald-900/30 text-emerald-400'
                             : 'border-emerald-400 bg-emerald-50 text-emerald-700'
                           : darkMode 
-                            ? 'border-slate-700 hover:border-emerald-500 hover:bg-emerald-900/30 hover:text-emerald-400 text-slate-400'
+                            ? 'border-neutral-700 hover:border-emerald-500 hover:bg-emerald-900/30 hover:text-emerald-400 text-neutral-400'
                             : 'border-slate-200 hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-700 text-slate-600'
                       }`}
                       data-testid="seller-listing-sold-btn"
@@ -713,16 +713,16 @@ const SellerPage = () => {
           <>
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 animate-fade-in" onClick={() => setShowDeleteModal(false)} />
             <div className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md p-6 rounded-2xl shadow-2xl animate-scale-in ${
-              darkMode ? 'bg-slate-800' : 'bg-white'
+              darkMode ? 'bg-[#212121]' : 'bg-white'
             }`}>
               <div className="text-center">
                 <div className="mx-auto w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
                   <TrashIcon className="h-6 w-6 text-red-600" />
                 </div>
-                <h3 className={`text-lg font-bold mb-2 ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>
+                <h3 className={`text-lg font-bold mb-2 ${darkMode ? 'text-neutral-200' : 'text-slate-900'}`}>
                   Delete Listing?
                 </h3>
-                <p className={`text-sm mb-6 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                <p className={`text-sm mb-6 ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`}>
                   This action cannot be undone. The listing will be permanently removed.
                 </p>
                 <div className="flex gap-3">
@@ -730,7 +730,7 @@ const SellerPage = () => {
                     onClick={() => setShowDeleteModal(false)}
                     className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-colors ${
                       darkMode 
-                        ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                        ? 'bg-slate-700 text-neutral-300 hover:bg-neutral-700'
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                     }`}
                   >
@@ -751,8 +751,8 @@ const SellerPage = () => {
         {filteredAndSortedListings.length === 0 && !loading && (
           <div className="text-center py-20">
             <div className="text-5xl mb-4">📦</div>
-            <p className={`text-lg font-semibold mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>No listings found</p>
-            <p className={`text-sm mb-6 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+            <p className={`text-lg font-semibold mb-2 ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`}>No listings found</p>
+            <p className={`text-sm mb-6 ${darkMode ? 'text-slate-500' : 'text-neutral-400'}`}>
               {myListings.length === 0 ? 'Post your first item to start selling' : 'Try adjusting your filters'}
             </p>
             {myListings.length === 0 ? (
@@ -777,3 +777,4 @@ const SellerPage = () => {
 };
 
 export default SellerPage;
+

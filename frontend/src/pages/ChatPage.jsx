@@ -674,12 +674,12 @@ const ChatPage = () => {
 
   if (loading) {
     return (
-      <div className={`h-[100dvh] flex flex-col overflow-hidden ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
+      <div className={`h-[100dvh] flex flex-col overflow-hidden ${darkMode ? 'bg-[#0f0f0f]' : 'bg-slate-50'}`}>
         <Header hideSearch />
         <div className="flex items-center justify-center flex-1">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-            <p className={darkMode ? 'text-slate-400' : 'text-slate-600'}>Loading chats...</p>
+            <p className={darkMode ? 'text-neutral-400' : 'text-slate-600'}>Loading chats...</p>
           </div>
         </div>
       </div>
@@ -687,13 +687,13 @@ const ChatPage = () => {
   }
 
   return (
-    <div className={`h-[100dvh] flex flex-col overflow-hidden ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
+    <div className={`h-[100dvh] flex flex-col overflow-hidden ${darkMode ? 'bg-[#0f0f0f]' : 'bg-slate-50'}`}>
       <Header hideSearch />
       
       <div className="flex-1 flex overflow-hidden">
         {/* Chat List - Left Sidebar */}
-        <div className={`${selectedChat ? 'hidden md:flex' : 'flex'} w-full md:w-72 lg:w-80 border-r flex-col shadow-sm h-full ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
-          <div className={`px-4 py-4 border-b flex-shrink-0 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+        <div className={`${selectedChat ? 'hidden md:flex' : 'flex'} w-full md:w-72 lg:w-80 border-r flex-col shadow-sm h-full ${darkMode ? 'bg-[#212121] border-neutral-700' : 'bg-white border-slate-200'}`}>
+          <div className={`px-4 py-4 border-b flex-shrink-0 ${darkMode ? 'bg-[#212121] border-neutral-700' : 'bg-white border-slate-200'}`}>
             <div className="flex items-center justify-between mb-3">
               <h2 className={`text-xl font-bold ${darkMode ? 'text-slate-100' : 'text-slate-900'}`} data-testid="chat-list-title">
                 Chats
@@ -701,10 +701,10 @@ const ChatPage = () => {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className={`rounded-full p-2 ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-100'}`}
+                className={`rounded-full p-2 ${darkMode ? 'hover:bg-neutral-800' : 'hover:bg-slate-100'}`}
                 onClick={() => setShowSearch(!showSearch)}
               >
-                <Search className={`h-5 w-5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`} />
+                <Search className={`h-5 w-5 ${darkMode ? 'text-neutral-400' : 'text-slate-600'}`} />
               </Button>
             </div>
             
@@ -715,10 +715,10 @@ const ChatPage = () => {
                 className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-all ${
                   !friendsOnly
                     ? darkMode
-                      ? 'bg-slate-800 text-indigo-400 shadow-sm'
+                      ? 'bg-[#212121] text-indigo-400 shadow-sm'
                       : 'bg-white text-indigo-600 shadow-sm'
                     : darkMode
-                      ? 'text-slate-400 hover:text-slate-300'
+                      ? 'text-neutral-400 hover:text-neutral-300'
                       : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -729,10 +729,10 @@ const ChatPage = () => {
                 className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-all ${
                   friendsOnly
                     ? darkMode
-                      ? 'bg-slate-800 text-indigo-400 shadow-sm'
+                      ? 'bg-[#212121] text-indigo-400 shadow-sm'
                       : 'bg-white text-indigo-600 shadow-sm'
                     : darkMode
-                      ? 'text-slate-400 hover:text-slate-300'
+                      ? 'text-neutral-400 hover:text-neutral-300'
                       : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -748,7 +748,7 @@ const ChatPage = () => {
                 placeholder="Search chats..."
                 className={`w-full rounded-lg border px-3 py-2 text-sm outline-none transition-all ${
                   darkMode 
-                    ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-400 focus:border-indigo-500'
+                    ? 'bg-slate-700 border-slate-600 text-neutral-200 placeholder-slate-400 focus:border-indigo-500'
                     : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/20'
                 }`}
               />
@@ -756,11 +756,11 @@ const ChatPage = () => {
           </div>
           <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
             {filteredChats.length === 0 ? (
-              <div className={`p-8 text-center flex flex-col items-center justify-center h-full ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+              <div className={`p-8 text-center flex flex-col items-center justify-center h-full ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`}>
                 <div className={`h-20 w-20 rounded-full flex items-center justify-center mb-4 ${darkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
-                  <Send className={`h-10 w-10 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                  <Send className={`h-10 w-10 ${darkMode ? 'text-slate-500' : 'text-neutral-400'}`} />
                 </div>
-                <p className={`font-semibold mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>No messages yet</p>
+                <p className={`font-semibold mb-1 ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`}>No messages yet</p>
                 <p className="text-sm">Start a conversation from a product listing</p>
               </div>
             ) : (
@@ -782,15 +782,15 @@ const ChatPage = () => {
         </div>
 
         {/* Chat Window - Right Side */}
-        <div className={`${selectedChat ? 'flex' : 'hidden md:flex'} flex-1 flex-col overflow-hidden ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
+        <div className={`${selectedChat ? 'flex' : 'hidden md:flex'} flex-1 flex-col overflow-hidden ${darkMode ? 'bg-[#0f0f0f]' : 'bg-slate-50'}`}>
           {selectedChat && otherUser ? (
             <>
               {/* Chat Header */}
-              <div className={`border-b p-3 md:p-4 shadow-sm flex-shrink-0 z-10 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+              <div className={`border-b p-3 md:p-4 shadow-sm flex-shrink-0 z-10 ${darkMode ? 'bg-[#212121] border-neutral-700' : 'bg-white border-slate-200'}`}>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setSelectedChat(null)}
-                    className={`md:hidden p-2 -ml-2 rounded-full transition-all flex items-center justify-center active:scale-95 ${darkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
+                    className={`md:hidden p-2 -ml-2 rounded-full transition-all flex items-center justify-center active:scale-95 ${darkMode ? 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
                     aria-label="Back to chats"
                   >
                     <ArrowLeft className="h-6 w-6" />
@@ -817,7 +817,7 @@ const ChatPage = () => {
                     <p className={`text-xs ${
                       isOnline 
                         ? 'text-green-600' 
-                        : darkMode ? 'text-slate-400' : 'text-slate-500'
+                        : darkMode ? 'text-neutral-400' : 'text-slate-500'
                     }`}>
                       {isOnline ? 'online' : 'offline'}
                     </p>
@@ -826,21 +826,21 @@ const ChatPage = () => {
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className={`rounded-full p-2 ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-100'}`}
+                      className={`rounded-full p-2 ${darkMode ? 'hover:bg-neutral-800' : 'hover:bg-slate-100'}`}
                       onClick={() => setShowChatMenu(!showChatMenu)}
                     >
-                      <MoreVertical className={`h-5 w-5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`} />
+                      <MoreVertical className={`h-5 w-5 ${darkMode ? 'text-neutral-400' : 'text-slate-600'}`} />
                     </Button>
                     
                     {/* Dropdown Menu */}
                     {showChatMenu && (
-                      <div className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg border z-50 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                      <div className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg border z-50 ${darkMode ? 'bg-[#212121] border-neutral-700' : 'bg-white border-slate-200'}`}>
                         <button
                           onClick={() => {
                             setShowChatMenu(false);
                             setShowReportModal(true);
                           }}
-                          className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-50 text-slate-700'}`}
+                          className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${darkMode ? 'hover:bg-neutral-800 text-neutral-300' : 'hover:bg-slate-50 text-slate-700'}`}
                         >
                           <Flag className="h-4 w-4 text-red-500" />
                           <span className="text-sm font-medium">Report User</span>
@@ -873,7 +873,7 @@ const ChatPage = () => {
 
               {/* Messages */}
               <div 
-                className={`flex-1 overflow-y-auto p-3 md:p-4 flex flex-col scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent overscroll-contain ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}
+                className={`flex-1 overflow-y-auto p-3 md:p-4 flex flex-col scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent overscroll-contain ${darkMode ? 'bg-[#0f0f0f]' : 'bg-slate-50'}`}
                 data-testid="messages-container"
               >
                 {messages.length === 0 ? (
@@ -882,8 +882,8 @@ const ChatPage = () => {
                       <div className="bg-indigo-100 h-24 w-24 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Send className="h-12 w-12 text-indigo-600" />
                       </div>
-                      <p className={`text-lg font-semibold mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>No messages yet</p>
-                      <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Start the conversation!</p>
+                      <p className={`text-lg font-semibold mb-1 ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`}>No messages yet</p>
+                      <p className={`text-sm ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`}>Start the conversation!</p>
                     </div>
                   </div>
                 ) : (
@@ -904,7 +904,7 @@ const ChatPage = () => {
                       <React.Fragment key={messageKey}>
                         {showDateSeparator && (
                           <div className={`flex justify-center ${index === 0 ? 'mt-0 mb-4' : 'my-4'}`}>
-                            <span className={`text-xs px-4 py-1.5 rounded-full shadow-sm font-medium ${darkMode ? 'bg-slate-800 text-slate-400' : 'bg-white text-slate-600'}`}>
+                            <span className={`text-xs px-4 py-1.5 rounded-full shadow-sm font-medium ${darkMode ? 'bg-[#212121] text-neutral-400' : 'bg-white text-slate-600'}`}>
                               {formatDateSeparator(msg.timestamp)}
                             </span>
                           </div>
@@ -936,7 +936,7 @@ const ChatPage = () => {
                                 ? `bg-indigo-600 text-white rounded-2xl ${isSameSenderAsPrev ? 'rounded-r-sm' : 'rounded-br-sm'}`
                                 : `border rounded-2xl ${isSameSenderAsPrev ? 'rounded-l-sm' : 'rounded-bl-sm'} ${
                                     darkMode 
-                                      ? 'bg-slate-800 text-slate-200 border-slate-700' 
+                                      ? 'bg-[#212121] text-neutral-200 border-neutral-700' 
                                       : 'bg-white text-slate-900 border-slate-200'
                                   }`
                             }`}
@@ -985,7 +985,7 @@ const ChatPage = () => {
                   if (isMyMessage && isRead && otherUser) {
                     return (
                       <div className="flex justify-end mt-2 mb-1">
-                        <div className={`flex items-center gap-1.5 text-xs ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                        <div className={`flex items-center gap-1.5 text-xs ${darkMode ? 'text-slate-500' : 'text-neutral-400'}`}>
                           <img
                             src={otherUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUser.name || 'User')}`}
                             alt={otherUser.name}
@@ -1003,36 +1003,36 @@ const ChatPage = () => {
               </div>
 
               {/* Input Area */}
-              <div className={`border-t p-2 sm:p-3 shadow-[0_-4px_10px_rgba(0,0,0,0.02)] flex-shrink-0 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:pb-3 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+              <div className={`border-t p-2 sm:p-3 shadow-[0_-4px_10px_rgba(0,0,0,0.02)] flex-shrink-0 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:pb-3 ${darkMode ? 'bg-[#212121] border-neutral-700' : 'bg-white border-slate-200'}`}>
                 <form onSubmit={handleSendMessage} className="flex items-center gap-2">
                   <div className="relative" ref={emojiPickerRef}>
                     <Button 
                       type="button"
                       variant="ghost" 
                       size="sm" 
-                      className={`rounded-full p-2 flex-shrink-0 ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-100'}`}
+                      className={`rounded-full p-2 flex-shrink-0 ${darkMode ? 'hover:bg-neutral-800' : 'hover:bg-slate-100'}`}
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                     >
-                      <Smile className={`h-6 w-6 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                      <Smile className={`h-6 w-6 ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`} />
                     </Button>
                     
                     {/* Emoji Picker */}
                     {showEmojiPicker && (
-                      <div className={`absolute bottom-full left-0 mb-2 w-80 max-h-96 rounded-2xl shadow-2xl border overflow-hidden z-50 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
-                        <div className={`px-4 py-3 border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-                          <h4 className={`text-sm font-semibold ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>Pick an emoji</h4>
+                      <div className={`absolute bottom-full left-0 mb-2 w-80 max-h-96 rounded-2xl shadow-2xl border overflow-hidden z-50 ${darkMode ? 'bg-[#212121] border-neutral-700' : 'bg-white border-slate-200'}`}>
+                        <div className={`px-4 py-3 border-b ${darkMode ? 'border-neutral-700' : 'border-slate-200'}`}>
+                          <h4 className={`text-sm font-semibold ${darkMode ? 'text-neutral-200' : 'text-slate-900'}`}>Pick an emoji</h4>
                         </div>
                         <div className="overflow-y-auto max-h-80 p-3">
                           {Object.entries(EMOJIS).map(([category, emojiList]) => (
                             <div key={category} className="mb-4">
-                              <h5 className={`text-xs font-semibold mb-2 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{category}</h5>
+                              <h5 className={`text-xs font-semibold mb-2 ${darkMode ? 'text-neutral-400' : 'text-slate-600'}`}>{category}</h5>
                               <div className="grid grid-cols-8 gap-1">
                                 {emojiList.map((emoji, idx) => (
                                   <button
                                     key={idx}
                                     type="button"
                                     onClick={() => handleEmojiSelect(emoji)}
-                                    className={`text-2xl p-2 rounded-lg transition-all hover:scale-110 ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-100'}`}
+                                    className={`text-2xl p-2 rounded-lg transition-all hover:scale-110 ${darkMode ? 'hover:bg-neutral-800' : 'hover:bg-slate-100'}`}
                                   >
                                     {emoji}
                                   </button>
@@ -1054,7 +1054,7 @@ const ChatPage = () => {
                     maxLength={5000}
                     className={`flex-1 px-4 py-2.5 sm:py-3 text-[16px] sm:text-sm rounded-full border outline-none transition-all ${
                       darkMode 
-                        ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-400 focus:border-indigo-500 focus:bg-slate-700'
+                        ? 'bg-slate-700 border-slate-600 text-neutral-200 placeholder-slate-400 focus:border-indigo-500 focus:bg-slate-700'
                         : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:bg-white'
                     }`}
                     data-testid="message-input"
@@ -1078,7 +1078,7 @@ const ChatPage = () => {
             </>
           ) : (
             <div className="flex items-center justify-center h-full">
-              <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>Select a chat to start messaging</p>
+              <p className={darkMode ? 'text-neutral-400' : 'text-slate-500'}>Select a chat to start messaging</p>
             </div>
           )}
         </div>
@@ -1087,17 +1087,17 @@ const ChatPage = () => {
       {/* Report Modal */}
       {showReportModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className={`w-full max-w-md rounded-2xl shadow-xl ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
-            <div className={`px-6 py-4 border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+          <div className={`w-full max-w-md rounded-2xl shadow-xl ${darkMode ? 'bg-[#212121]' : 'bg-white'}`}>
+            <div className={`px-6 py-4 border-b ${darkMode ? 'border-neutral-700' : 'border-slate-200'}`}>
               <h3 className={`text-lg font-bold ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>Report User</h3>
-              <p className={`text-sm mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+              <p className={`text-sm mt-1 ${darkMode ? 'text-neutral-400' : 'text-slate-600'}`}>
                 Help us understand what's wrong
               </p>
             </div>
             
             <div className="px-6 py-4 space-y-4">
               <div>
-                <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`}>
                   Reason for reporting <span className="text-red-500">*</span>
                 </label>
                 <select
@@ -1105,7 +1105,7 @@ const ChatPage = () => {
                   onChange={(e) => setReportReason(e.target.value)}
                   className={`w-full px-4 py-2.5 rounded-lg border outline-none transition-all ${
                     darkMode 
-                      ? 'bg-slate-700 border-slate-600 text-slate-200 focus:border-indigo-500' 
+                      ? 'bg-slate-700 border-slate-600 text-neutral-200 focus:border-indigo-500' 
                       : 'bg-white border-slate-300 text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
                   }`}
                 >
@@ -1120,7 +1120,7 @@ const ChatPage = () => {
               </div>
 
               <div>
-                <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`}>
                   Additional details (optional)
                 </label>
                 <textarea
@@ -1131,17 +1131,17 @@ const ChatPage = () => {
                   maxLength={1000}
                   className={`w-full px-4 py-2.5 rounded-lg border outline-none transition-all resize-none ${
                     darkMode 
-                      ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-400 focus:border-indigo-500' 
+                      ? 'bg-slate-700 border-slate-600 text-neutral-200 placeholder-slate-400 focus:border-indigo-500' 
                       : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
                   }`}
                 />
-                <p className={`text-xs mt-1 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                <p className={`text-xs mt-1 ${darkMode ? 'text-slate-500' : 'text-neutral-400'}`}>
                   {reportDetails.length}/1000 characters
                 </p>
               </div>
             </div>
 
-            <div className={`px-6 py-4 border-t flex gap-3 ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+            <div className={`px-6 py-4 border-t flex gap-3 ${darkMode ? 'border-neutral-700' : 'border-slate-200'}`}>
               <button
                 onClick={() => {
                   setShowReportModal(false);
@@ -1151,7 +1151,7 @@ const ChatPage = () => {
                 disabled={reportSubmitting}
                 className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-all ${
                   darkMode 
-                    ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' 
+                    ? 'bg-slate-700 hover:bg-neutral-700 text-neutral-200' 
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                 }`}
               >
@@ -1227,7 +1227,7 @@ const ChatListItem = React.memo(({ chat, currentUserId, isSelected, onClick, for
 
   if (!user) {
     return (
-      <div className={`p-4 border-b animate-pulse ${darkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+      <div className={`p-4 border-b animate-pulse ${darkMode ? 'border-neutral-700' : 'border-slate-100'}`}>
         <div className="flex items-center gap-3">
           <div className={`h-12 w-12 rounded-full ${darkMode ? 'bg-slate-700' : 'bg-slate-200'}`}></div>
           <div className="flex-1">
@@ -1248,7 +1248,7 @@ const ChatListItem = React.memo(({ chat, currentUserId, isSelected, onClick, for
       onClick={onClick}
       className={`p-3 sm:p-4 border-b cursor-pointer transition-all active:bg-slate-100 ${
         darkMode 
-          ? `border-slate-700 hover:bg-slate-700/50 ${isSelected ? 'bg-indigo-900/30 border-l-4 border-l-indigo-600' : ''}`
+          ? `border-neutral-700 hover:bg-neutral-800/50 ${isSelected ? 'bg-indigo-900/30 border-l-4 border-l-indigo-600' : ''}`
           : `border-slate-100 hover:bg-slate-50 ${isSelected ? 'bg-indigo-50 border-l-4 border-l-indigo-600' : ''}`
       }`}
       data-testid={`chat-item-${chat.id}`}
@@ -1268,15 +1268,15 @@ const ChatListItem = React.memo(({ chat, currentUserId, isSelected, onClick, for
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
-            <h3 className={`text-sm font-semibold truncate ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>
+            <h3 className={`text-sm font-semibold truncate ${darkMode ? 'text-neutral-200' : 'text-slate-900'}`}>
               {user.name}
             </h3>
-            <span className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+            <span className={`text-xs ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`}>
               {formatTime(chat.last_message_time)}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <p className={`text-sm truncate flex-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{chat.last_message || 'No messages yet'}</p>
+            <p className={`text-sm truncate flex-1 ${darkMode ? 'text-neutral-400' : 'text-slate-600'}`}>{chat.last_message || 'No messages yet'}</p>
             {unreadCount > 0 && (
               <span className="bg-indigo-600 text-white text-xs rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center ml-2 font-medium" data-testid="unread-badge">
                 {unreadCount}
@@ -1286,7 +1286,7 @@ const ChatListItem = React.memo(({ chat, currentUserId, isSelected, onClick, for
         </div>
       </div>
       {product && (
-        <div className={`text-xs truncate ml-15 flex items-center gap-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+        <div className={`text-xs truncate ml-15 flex items-center gap-1 ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`}>
           <span>📦</span>
           <span>{product.title}</span>
         </div>
@@ -1296,3 +1296,4 @@ const ChatListItem = React.memo(({ chat, currentUserId, isSelected, onClick, for
 });
 
 export default React.memo(ChatPage);
+

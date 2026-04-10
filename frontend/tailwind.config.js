@@ -21,6 +21,14 @@ export default {
         violet: {
           950: '#2e1065',
         },
+        // YouTube-style dark mode colors
+        'yt-dark': {
+          bg: '#0f0f0f',
+          card: '#212121',
+          border: '#3f3f3f',
+          text: '#f1f1f1',
+          'text-secondary': '#aaaaaa',
+        },
       },
       animation: {
         'fade-in-up': 'fadeInUp 0.6s ease-out forwards',

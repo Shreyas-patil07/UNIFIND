@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
-import { ShoppingBag, Package, MessageCircle, BarChart3, Sparkles, List, TrendingUp, Clock, ArrowRight } from 'lucide-react';
+import { ShoppingBag, Package, MessageCircle, BarChart3, Sparkles, TrendingUp, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { getProducts, getUserChats } from '../services/api';
@@ -63,15 +63,38 @@ const DashboardHome = () => {
       type: 'sale',
       title: `Listed ${p.title}`,
       amount: p.price,
-      date: p.posted_date
+      date: p.posted_date || 'Recently'
     })) : []),
     ...(Array.isArray(chats) ? chats.slice(0, 1).map(c => ({
       id: `chat-${c.id}`,
       type: 'message',
       title: 'New message',
-      date: c.last_message_time
+      date: c.last_message_time || 'Recently'
     })) : [])
   ].slice(0, 3);
+
+  // Helper function to format date
+  const formatDate = (dateString) => {
+    if (!dateString || dateString === 'Recently') return 'Recently';
+    
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      if (diffMins < 1) return 'Just now';
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      if (diffDays < 7) return `${diffDays}d ago`;
+      
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    } catch {
+      return 'Recently';
+    }
+  };
 
   const navCards = [
     {
@@ -124,16 +147,6 @@ const DashboardHome = () => {
       iconColor: 'text-pink-600',
       testId: 'nav-card-chat',
     },
-    {
-      icon: List,
-      title: 'Orders',
-      description: 'Purchase history',
-      path: '/analytics',
-      gradient: 'from-teal-500 to-cyan-600',
-      bg: 'bg-teal-50',
-      iconColor: 'text-teal-600',
-      testId: 'nav-card-orders',
-    },
   ];
 
   const timeOfDay = () => {
@@ -144,7 +157,7 @@ const DashboardHome = () => {
   };
 
   return (
-    <div className={`min-h-[100dvh] ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
+    <div className={`min-h-[100dvh] ${darkMode ? 'bg-[#0f0f0f]' : 'bg-slate-50'}`}>
       <Header hideSearch />
 
       <div className="px-4 sm:px-6 md:px-10 lg:px-20 py-8 with-bottom-nav">
@@ -200,7 +213,7 @@ const DashboardHome = () => {
 
         {/* ===== QUICK STATS ===== */}
         <div className="mb-8">
-          <h2 className={`text-base font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+          <h2 className={`text-base font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-neutral-100' : 'text-slate-700'}`}>
             <span className="h-4 w-1 bg-indigo-600 rounded-full inline-block" />
             Quick Stats
           </h2>
@@ -210,9 +223,9 @@ const DashboardHome = () => {
               { label: 'Items Sold', value: itemsSold, color: 'text-emerald-600', bg: 'bg-emerald-50', testId: 'stat-sold' },
               { label: 'Rating', value: `${rating.toFixed(1)}⭐`, color: 'text-amber-600', bg: 'bg-amber-50', testId: 'stat-rating' },
             ].map(({ label, value, color, bg, testId }) => (
-              <div key={label} className={`rounded-2xl border p-4 text-center ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`} data-testid={testId}>
+              <div key={label} className={`rounded-2xl border p-4 text-center ${darkMode ? 'bg-[#212121] border-neutral-700' : 'bg-white border-slate-200 shadow-sm'}`} data-testid={testId}>
                 <div className={`text-xl sm:text-2xl font-black ${color} mb-0.5`}>{value}</div>
-                <div className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{label}</div>
+                <div className={`text-xs ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`}>{label}</div>
               </div>
             ))}
           </div>
@@ -220,25 +233,25 @@ const DashboardHome = () => {
 
         {/* ===== QUICK ACCESS GRID ===== */}
         <div className="mb-8">
-          <h2 className={`text-base font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+          <h2 className={`text-base font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-neutral-100' : 'text-slate-700'}`}>
             <span className="h-4 w-1 bg-indigo-600 rounded-full inline-block" />
             Quick Access
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             {navCards.map((card) => {
               const Icon = card.icon;
               return (
                 <div
                   key={card.title}
                   onClick={() => navigate(card.path)}
-                  className={`rounded-2xl border p-4 cursor-pointer text-center group ${darkMode ? 'bg-slate-800 border-slate-700 hover:border-indigo-500' : 'bg-white border-slate-200 shadow-sm hover:shadow-card-hover'}`}
+                  className={`rounded-2xl border p-4 cursor-pointer text-center group ${darkMode ? 'bg-[#212121] border-neutral-700 hover:border-indigo-500' : 'bg-white border-slate-200 shadow-sm hover:shadow-card-hover'}`}
                   data-testid={card.testId}
                 >
                   <div className={`${card.bg} h-11 w-11 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300`}>
                     <Icon className={`h-5 w-5 ${card.iconColor}`} />
                   </div>
-                  <h3 className={`text-sm font-bold mb-0.5 hidden sm:block ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{card.title}</h3>
-                  <p className={`text-xs hidden sm:block ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{card.description}</p>
+                  <h3 className={`text-sm font-bold mb-0.5 hidden sm:block ${darkMode ? 'text-neutral-200' : 'text-slate-900'}`}>{card.title}</h3>
+                  <p className={`text-xs hidden sm:block ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`}>{card.description}</p>
                 </div>
               );
             })}
@@ -247,53 +260,55 @@ const DashboardHome = () => {
 
         {/* ===== RECENT ACTIVITY ===== */}
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className={`text-base font-bold flex items-center gap-2 ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
-              <span className="h-4 w-1 bg-indigo-600 rounded-full inline-block" />
-              Recent Activity
-            </h2>
-            <button
-              onClick={() => navigate('/analytics')}
-              className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1"
-            >
-              <span className="hidden sm:inline">View all</span> <ArrowRight className="h-3 w-3" />
-            </button>
-          </div>
-          <div className={`rounded-2xl border overflow-hidden ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}>
-            {recentActivity.map((activity, index) => (
-              <div
-                key={activity.id}
-                className={`flex items-center justify-between px-4 sm:px-5 py-4 transition-colors ${
-                  darkMode ? 'hover:bg-slate-700/50' : 'hover:bg-slate-50'
-                } ${
-                  index !== recentActivity.length - 1 ? (darkMode ? 'border-b border-slate-700' : 'border-b border-slate-100') : ''
-                }`}
-                data-testid={`activity-item-${activity.id}`}
-              >
-                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                  <div className={`h-10 w-10 flex-shrink-0 rounded-xl flex items-center justify-center ${
-                    activity.type === 'purchase' ? 'bg-blue-50' :
-                    activity.type === 'sale' ? 'bg-emerald-50' : 'bg-amber-50'
-                  }`}>
-                    {activity.type === 'purchase' && <ShoppingBag className="h-5 w-5 text-blue-600" />}
-                    {activity.type === 'sale' && <Package className="h-5 w-5 text-emerald-600" />}
-                    {activity.type === 'review' && <TrendingUp className="h-5 w-5 text-amber-600" />}
-                  </div>
-                  <div className="min-w-0">
-                    <div className={`text-sm font-medium truncate ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{activity.title}</div>
-                    <div className={`text-xs flex items-center gap-1 mt-0.5 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                      <Clock className="h-3 w-3" />
-                      {activity.date}
+          <h2 className={`text-base font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-neutral-100' : 'text-slate-700'}`}>
+            <span className="h-4 w-1 bg-indigo-600 rounded-full inline-block" />
+            Recent Activity
+          </h2>
+          <div className={`rounded-2xl border overflow-hidden ${darkMode ? 'bg-[#212121] border-neutral-700' : 'bg-white border-slate-200 shadow-sm'}`}>
+            {recentActivity.length > 0 ? (
+              recentActivity.map((activity, index) => (
+                <div
+                  key={activity.id}
+                  className={`flex items-center justify-between px-4 sm:px-5 py-4 transition-colors ${
+                    darkMode ? 'hover:bg-neutral-800/50' : 'hover:bg-slate-50'
+                  } ${
+                    index !== recentActivity.length - 1 ? (darkMode ? 'border-b border-neutral-700' : 'border-b border-slate-100') : ''
+                  }`}
+                  data-testid={`activity-item-${activity.id}`}
+                >
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                    <div className={`h-10 w-10 flex-shrink-0 rounded-xl flex items-center justify-center ${
+                      activity.type === 'purchase' ? 'bg-blue-50' :
+                      activity.type === 'sale' ? 'bg-emerald-50' : 
+                      activity.type === 'message' ? 'bg-pink-50' : 'bg-amber-50'
+                    }`}>
+                      {activity.type === 'purchase' && <ShoppingBag className="h-5 w-5 text-blue-600" />}
+                      {activity.type === 'sale' && <Package className="h-5 w-5 text-emerald-600" />}
+                      {activity.type === 'message' && <MessageCircle className="h-5 w-5 text-pink-600" />}
+                      {activity.type === 'review' && <TrendingUp className="h-5 w-5 text-amber-600" />}
+                    </div>
+                    <div className="min-w-0">
+                      <div className={`text-sm font-medium truncate ${darkMode ? 'text-neutral-200' : 'text-slate-900'}`}>{activity.title}</div>
+                      <div className={`text-xs flex items-center gap-1 mt-0.5 ${darkMode ? 'text-neutral-500' : 'text-slate-400'}`}>
+                        <Clock className="h-3 w-3" />
+                        {formatDate(activity.date)}
+                      </div>
                     </div>
                   </div>
+                  {activity.amount && (
+                    <div className={`text-base font-bold flex-shrink-0 ml-2 ${darkMode ? 'text-neutral-200' : 'text-slate-900'}`}>
+                      ₹{activity.amount.toLocaleString()}
+                    </div>
+                  )}
                 </div>
-                {activity.amount && (
-                  <div className={`text-base font-bold flex-shrink-0 ml-2 ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>
-                    ₹{activity.amount.toLocaleString()}
-                  </div>
-                )}
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <Clock className={`h-12 w-12 mx-auto mb-3 ${darkMode ? 'text-neutral-600' : 'text-slate-300'}`} />
+                <p className={`text-sm font-medium ${darkMode ? 'text-neutral-400' : 'text-slate-600'}`}>No recent activity</p>
+                <p className={`text-xs mt-1 ${darkMode ? 'text-neutral-500' : 'text-slate-500'}`}>Start buying or selling to see your activity here</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>

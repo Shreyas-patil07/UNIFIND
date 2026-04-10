@@ -148,7 +148,7 @@ const NeedBoardPage = () => {
   };
 
   return (
-    <div className={`min-h-[100dvh] pb-20 ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
+    <div className={`min-h-[100dvh] pb-20 ${darkMode ? 'bg-[#0f0f0f]' : 'bg-slate-50'}`}>
       <Header hideSearch />
 
       <div className="px-6 sm:px-8 md:px-12 lg:px-24 py-12">
@@ -165,20 +165,20 @@ const NeedBoardPage = () => {
             >
               What are you looking for?
             </h1>
-            <p className={`text-base ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+            <p className={`text-base ${darkMode ? 'text-neutral-400' : 'text-slate-600'}`}>
               Describe what you need, and our AI will find the perfect matches
             </p>
             {/* Search limit indicator */}
-            <div className={`mt-3 text-sm font-medium ${searchesRemaining <= 1 ? 'text-orange-600' : darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+            <div className={`mt-3 text-sm font-medium ${searchesRemaining <= 1 ? 'text-orange-600' : darkMode ? 'text-slate-500' : 'text-neutral-400'}`}>
               {searchesRemaining} {searchesRemaining === 1 ? 'search' : 'searches'} remaining (resets every 12 hours)
             </div>
           </div>
 
           {/* Search History */}
           {Array.isArray(searchHistory) && searchHistory.length > 0 && (
-            <div className={`rounded-2xl border p-6 mb-6 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+            <div className={`rounded-2xl border p-6 mb-6 ${darkMode ? 'bg-[#212121] border-neutral-700' : 'bg-white border-slate-200'}`}>
               <div className="flex items-center justify-between mb-3">
-                <h3 className={`text-sm font-semibold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                <h3 className={`text-sm font-semibold ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`}>
                   Recent Searches (Last 12 Hours)
                 </h3>
                 <button
@@ -203,17 +203,17 @@ const NeedBoardPage = () => {
                       className={`p-3 rounded-lg ${darkMode ? 'bg-slate-700/50' : 'bg-slate-50'}`}
                     >
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm ${darkMode ? 'text-slate-200' : 'text-slate-900'} truncate`}>
+                        <p className={`text-sm ${darkMode ? 'text-neutral-200' : 'text-slate-900'} truncate`}>
                           {search.query}
                         </p>
                         <div className="flex items-center gap-2 mt-1">
-                          <p className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                          <p className={`text-xs ${darkMode ? 'text-slate-500' : 'text-neutral-400'}`}>
                             {timeAgo}
                           </p>
                           {resultCount > 0 && (
                             <>
-                              <span className={`text-xs ${darkMode ? 'text-slate-600' : 'text-slate-300'}`}>•</span>
-                              <p className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                              <span className={`text-xs ${darkMode ? 'text-slate-600' : 'text-neutral-300'}`}>•</span>
+                              <p className={`text-xs ${darkMode ? 'text-slate-500' : 'text-neutral-400'}`}>
                                 {resultCount} {resultCount === 1 ? 'result' : 'results'}
                               </p>
                             </>
@@ -228,7 +228,7 @@ const NeedBoardPage = () => {
           )}
 
           {/* Input Area */}
-          <div className={`rounded-2xl border p-8 mb-8 shadow-sm ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+          <div className={`rounded-2xl border p-8 mb-8 shadow-sm ${darkMode ? 'bg-[#212121] border-neutral-700' : 'bg-white border-slate-200'}`}>
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -237,12 +237,12 @@ const NeedBoardPage = () => {
               maxLength={500}
               className={`w-full rounded-xl border px-4 py-3 text-[16px] sm:text-base outline-none transition-all resize-none mb-2 ${
                 darkMode 
-                  ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-400 focus:border-blue-500'
+                  ? 'bg-slate-700 border-slate-600 text-neutral-200 placeholder-slate-400 focus:border-blue-500'
                   : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
               }`}
               data-testid="need-board-input"
             />
-            <p className={`text-xs mb-4 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+            <p className={`text-xs mb-4 ${darkMode ? 'text-slate-500' : 'text-neutral-400'}`}>
               {input.length}/500 characters
             </p>
             <Button
@@ -267,13 +267,13 @@ const NeedBoardPage = () => {
 
           {/* Loading State */}
           {loading && (
-            <div className={`rounded-2xl border p-8 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`} data-testid="loading-state">
+            <div className={`rounded-2xl border p-8 ${darkMode ? 'bg-[#212121] border-neutral-700' : 'bg-white border-slate-200'}`} data-testid="loading-state">
               <div className="space-y-4">
                 <div className={`h-4 w-3/4 ${darkMode ? 'bg-slate-700' : 'bg-slate-200'} rounded animate-pulse`} />
                 <div className={`h-4 w-1/2 ${darkMode ? 'bg-slate-700' : 'bg-slate-200'} rounded animate-pulse`} />
                 <div className={`h-4 w-2/3 ${darkMode ? 'bg-slate-700' : 'bg-slate-200'} rounded animate-pulse`} />
               </div>
-              <div className={`mt-6 pt-6 border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+              <div className={`mt-6 pt-6 border-t ${darkMode ? 'border-neutral-700' : 'border-slate-200'}`}>
                 <div className={`h-32 rounded-xl mb-3 ${darkMode ? 'bg-slate-700' : 'bg-slate-200'} animate-pulse`} />
                 <div className={`h-32 rounded-xl ${darkMode ? 'bg-slate-700' : 'bg-slate-200'} animate-pulse`} />
               </div>
@@ -346,12 +346,12 @@ const NeedBoardPage = () => {
                   Top 10 Matches for You
                 </h2>
                 {!Array.isArray(results.rankedResults) || results.rankedResults.length === 0 ? (
-                  <div className={`rounded-2xl border p-8 text-center ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                  <div className={`rounded-2xl border p-8 text-center ${darkMode ? 'bg-[#212121] border-neutral-700' : 'bg-white border-slate-200'}`}>
                     <div className="text-4xl mb-3">🔍</div>
-                    <p className={`text-lg font-semibold mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                    <p className={`text-lg font-semibold mb-2 ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`}>
                       No matches found
                     </p>
-                    <p className={`text-sm ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                    <p className={`text-sm ${darkMode ? 'text-slate-500' : 'text-neutral-400'}`}>
                       We couldn't find any products matching your criteria. Try adjusting your search.
                     </p>
                   </div>
@@ -366,7 +366,7 @@ const NeedBoardPage = () => {
                         onClick={() => navigate(`/listing/${result.id}`)}
                         className={`rounded-2xl border p-4 flex gap-4 cursor-pointer transition-all hover:shadow-lg ${
                           darkMode 
-                            ? 'bg-slate-800 border-slate-700 hover:border-slate-600' 
+                            ? 'bg-[#212121] border-neutral-700 hover:border-slate-600' 
                             : 'bg-white border-slate-200 hover:border-blue-300'
                         }`}
                         data-testid={`match-${result.id}`}
@@ -383,7 +383,7 @@ const NeedBoardPage = () => {
                           </div>
                         ) : (
                           <div className="flex-shrink-0 w-24 h-24 sm:w-32 sm:h-32 bg-slate-200 rounded-xl flex items-center justify-center">
-                            <span className="text-slate-400 text-xs">No image</span>
+                            <span className="text-neutral-400 text-xs">No image</span>
                           </div>
                         )}
                         
@@ -403,7 +403,7 @@ const NeedBoardPage = () => {
                           <div className="text-xl font-black text-blue-600 mb-2" data-testid={`match-price-${result.id}`}>
                             {result.price != null ? `₹${Number(result.price).toLocaleString()}` : '—'}
                           </div>
-                          <p className={`text-sm line-clamp-2 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`} data-testid={`match-reason-${result.id}`}>
+                          <p className={`text-sm line-clamp-2 ${darkMode ? 'text-neutral-400' : 'text-slate-600'}`} data-testid={`match-reason-${result.id}`}>
                             {result.reason}
                           </p>
                         </div>
@@ -422,4 +422,5 @@ const NeedBoardPage = () => {
 };
 
 export default NeedBoardPage;
+
 

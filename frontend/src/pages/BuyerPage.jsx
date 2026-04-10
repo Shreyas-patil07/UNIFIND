@@ -268,7 +268,7 @@ const BuyerPage = () => {
         active
           ? 'bg-indigo-600 text-white shadow-glow-indigo'
           : darkMode 
-            ? 'bg-slate-800 text-slate-300 border border-slate-700 hover:border-indigo-500 hover:text-indigo-400'
+            ? 'bg-[#212121] text-neutral-300 border border-neutral-700 hover:border-indigo-500 hover:text-indigo-400'
             : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
       }`}
       data-testid={testId}
@@ -278,12 +278,12 @@ const BuyerPage = () => {
   );
 
   return (
-    <div className={`min-h-[100dvh] pb-[calc(64px+env(safe-area-inset-bottom))] ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
+    <div className={`min-h-[100dvh] pb-[calc(64px+env(safe-area-inset-bottom))] ${darkMode ? 'bg-[#0f0f0f]' : 'bg-slate-50'}`}>
       <Header />
 
       {/* Sticky Search Bar */}
       <div className={`sticky top-16 sm:top-[72px] z-40 ${
-        darkMode ? 'bg-slate-900' : 'bg-slate-50'
+        darkMode ? 'bg-[#0f0f0f]' : 'bg-slate-50'
       }`}>
         <div className="px-3 sm:px-6 md:px-10 lg:px-20 pt-3 pb-3">
           <div className="relative">
@@ -300,7 +300,7 @@ const BuyerPage = () => {
               }}
               className={`w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-sm font-medium border transition-all duration-200 ${
                 darkMode 
-                  ? 'bg-slate-800 border-slate-700 text-slate-200 placeholder-slate-400 focus:border-indigo-500'
+                  ? 'bg-[#212121] border-neutral-700 text-neutral-200 placeholder-neutral-500 focus:border-indigo-500'
                   : 'bg-white border-slate-200 text-slate-700 placeholder-slate-400 focus:border-indigo-400'
               } focus:outline-none focus:ring-2 focus:ring-indigo-500/20`}
             />
@@ -308,7 +308,7 @@ const BuyerPage = () => {
               <button
                 onClick={() => setSearchQuery('')}
                 className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 sm:p-1.5 rounded-lg transition-all active:scale-95 ${
-                  darkMode ? 'hover:bg-slate-700 text-slate-400 hover:text-slate-200' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-700'
+                  darkMode ? 'hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-700'
                 }`}
               >
                 <X className="h-4 w-4" />
@@ -324,7 +324,7 @@ const BuyerPage = () => {
         {Array.isArray(recentlyViewed) && recentlyViewed.length > 0 && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
-              <h2 className={`text-sm font-bold ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>
+              <h2 className={`text-sm font-bold ${darkMode ? 'text-neutral-100' : 'text-slate-900'}`}>
                 Recently Viewed
               </h2>
               <button
@@ -360,7 +360,7 @@ const BuyerPage = () => {
                   }}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-colors shadow-sm ${
                     darkMode 
-                      ? 'bg-slate-800 border-slate-700 text-slate-300 hover:border-indigo-500'
+                      ? 'bg-[#212121] border-neutral-700 text-neutral-300 hover:border-indigo-500'
                       : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-300'
                   } ${activeFiltersCount > 0 ? 'ring-2 ring-indigo-500/50 border-indigo-500' : ''}`}
                 >
@@ -380,7 +380,7 @@ const BuyerPage = () => {
                   onClick={resetFilters}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-colors shadow-sm flex-shrink-0 ${
                     darkMode 
-                      ? 'bg-slate-800 border-slate-700 text-slate-300 hover:border-red-500 hover:text-red-400'
+                      ? 'bg-[#212121] border-neutral-700 text-neutral-300 hover:border-red-500 hover:text-red-400'
                       : 'bg-white border-slate-200 text-slate-700 hover:border-red-300 hover:text-red-600'
                   }`}
                 >
@@ -400,7 +400,7 @@ const BuyerPage = () => {
                 }}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-colors shadow-sm ${
                   darkMode 
-                    ? 'bg-slate-800 border-slate-700 text-slate-300 hover:border-indigo-500'
+                    ? 'bg-[#212121] border-neutral-700 text-neutral-300 hover:border-indigo-500'
                     : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-300'
                 }`}
               >
@@ -422,7 +422,7 @@ const BuyerPage = () => {
                   />
                   <div className={`absolute top-full right-0 mt-2 rounded-xl border shadow-xl z-[61] min-w-[200px] ${
                     darkMode 
-                      ? 'bg-slate-800 border-slate-700' 
+                      ? 'bg-[#212121] border-neutral-700' 
                       : 'bg-white border-slate-200'
                   }`}>
                     {sortOptions.map((option, index) => (
@@ -439,7 +439,7 @@ const BuyerPage = () => {
                               ? 'bg-indigo-600 text-white'
                               : 'bg-indigo-50 text-indigo-600'
                             : darkMode
-                              ? 'text-slate-300 hover:bg-slate-700'
+                              ? 'text-neutral-300 hover:bg-neutral-800'
                               : 'text-slate-700 hover:bg-slate-50'
                         } ${index === 0 ? 'rounded-t-xl' : ''} ${index === sortOptions.length - 1 ? 'rounded-b-xl' : ''}`}
                       >
@@ -454,8 +454,8 @@ const BuyerPage = () => {
 
           {/* Results Count */}
           <div className="mt-4">
-            <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} data-testid="results-count">
-              <span className={`font-bold ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{sortedProducts.length}</span> results
+            <p className={`text-sm ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`} data-testid="results-count">
+              <span className={`font-bold ${darkMode ? 'text-neutral-200' : 'text-slate-900'}`}>{sortedProducts.length}</span> results
               {selectedCategory !== 'All' && (
                 <span className="ml-1">in <span className="font-semibold text-indigo-600">{selectedCategory}</span></span>
               )}
@@ -470,12 +470,12 @@ const BuyerPage = () => {
               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] animate-fade-in"
               onClick={() => setFilterDrawerOpen(false)}
             />
-            <div className={`fixed bottom-0 left-0 right-0 z-[61] rounded-t-3xl p-6 shadow-2xl animate-slide-in-up max-h-[80vh] overflow-y-auto ${darkMode ? 'bg-slate-800 border-t-2 border-slate-700' : 'bg-white border-t-2 border-slate-200'}`}>
+            <div className={`fixed bottom-0 left-0 right-0 z-[61] rounded-t-3xl p-6 shadow-2xl animate-slide-in-up max-h-[80vh] overflow-y-auto ${darkMode ? 'bg-[#212121] border-t-2 border-neutral-700' : 'bg-white border-t-2 border-slate-200'}`}>
               <div className="flex items-center justify-between mb-6">
                 <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Filters</h3>
                 <button 
                   onClick={() => setFilterDrawerOpen(false)} 
-                  className={`p-2 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}
+                  className={`p-2 rounded-lg transition-colors ${darkMode ? 'hover:bg-neutral-800 text-neutral-300' : 'hover:bg-slate-100 text-slate-600'}`}
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -483,7 +483,7 @@ const BuyerPage = () => {
 
               {/* Category Section */}
               <div className="mb-6">
-                <h4 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Category</h4>
+                <h4 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`}>Category</h4>
                 <div className="flex flex-wrap gap-2">
                   {categories.map((cat) => (
                     <FilterChip
@@ -502,7 +502,7 @@ const BuyerPage = () => {
 
               {/* Condition Section */}
               <div className="mb-6">
-                <h4 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Condition</h4>
+                <h4 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`}>Condition</h4>
                 <div className="flex flex-wrap gap-2">
                   {[
                     { label: 'All Conditions', val: 'all', testId: 'condition-filter-all' },
@@ -566,7 +566,7 @@ const BuyerPage = () => {
         {sortedProducts.length === 0 && !loading && (
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🔍</div>
-            <p className={`text-lg font-semibold mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`} data-testid="no-results-message">
+            <p className={`text-lg font-semibold mb-2 ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`} data-testid="no-results-message">
               No products found
             </p>
             <p className={`text-sm mb-6 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Try adjusting your filters</p>

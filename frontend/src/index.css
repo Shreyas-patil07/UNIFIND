@@ -24,6 +24,9 @@
   * {
     @apply border-slate-200;
   }
+  .dark * {
+    @apply border-neutral-700;
+  }
   html {
     scroll-behavior: smooth;
     -webkit-tap-highlight-color: transparent;
@@ -34,6 +37,10 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overscroll-behavior: none;
+  }
+  .dark body {
+    background-color: #0f0f0f;
+    @apply text-neutral-200;
   }
   /* Safe area for newer iPhones */
   body {
@@ -115,6 +122,11 @@
     animation: shimmer 2s infinite;
   }
 
+  .dark .skeleton {
+    background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+    background-size: 1000px 100%;
+  }
+
   /* Gradient Text */
   .gradient-text {
     background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #2563eb 100%);
@@ -138,6 +150,11 @@
     border: 1px solid rgba(255, 255, 255, 0.15);
   }
 
+  .dark .glass {
+    background: rgba(33, 33, 33, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
   .glass-dark {
     background: rgba(0, 0, 0, 0.2);
     backdrop-filter: blur(20px);
@@ -152,15 +169,29 @@
     border: 1px solid rgba(255, 255, 255, 0.6);
   }
 
+  .dark .glass-white {
+    background: rgba(33, 33, 33, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
   /* Premium Card */
   .card-premium {
     @apply bg-white rounded-2xl border border-slate-200 transition-all duration-300;
     box-shadow: var(--shadow-card);
   }
 
+  .dark .card-premium {
+    background-color: #212121;
+    @apply border-neutral-700;
+  }
+
   .card-premium:hover {
     box-shadow: var(--shadow-card-hover);
     @apply -translate-y-1 border-indigo-500/30;
+  }
+
+  .dark .card-premium:hover {
+    @apply border-indigo-400/30;
   }
 
   /* Gradient Backgrounds */
@@ -198,9 +229,19 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   }
 
+  .dark .input-premium {
+    background-color: #212121;
+    @apply border-neutral-700 text-neutral-200 placeholder-neutral-500;
+  }
+
   .input-premium:focus {
     @apply border-indigo-500;
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15), 0 1px 3px rgba(0,0,0,0.06);
+  }
+
+  .dark .input-premium:focus {
+    @apply border-indigo-400;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25), 0 1px 3px rgba(0,0,0,0.2);
   }
 
   /* Mobile Bottom Nav */
@@ -215,9 +256,9 @@
   }
 
   .dark .mobile-bottom-nav {
-    background: rgba(30, 41, 59, 0.95);
-    border-top: 1px solid rgba(79, 70, 229, 0.2);
-    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.3);
+    background: rgba(33, 33, 33, 0.95);
+    border-top: 1px solid rgba(64, 64, 64, 0.3);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.5);
   }
 
   .mobile-nav-item {
@@ -238,7 +279,7 @@
   }
 
   .dark .mobile-nav-item:not(.active) {
-    @apply text-slate-500;
+    @apply text-neutral-500;
   }
 
   .mobile-nav-item:active {
@@ -273,8 +314,14 @@
   .custom-scrollbar::-webkit-scrollbar-thumb {
     @apply bg-slate-300 rounded-full;
   }
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-neutral-600;
+  }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     @apply bg-slate-400;
+  }
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-neutral-600;
   }
 
   /* Category chip scroll row */

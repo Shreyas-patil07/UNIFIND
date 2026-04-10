@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Sparkles, Shield, Zap } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { getUserCount } from '../services/api';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -13,6 +14,16 @@ const LoginPage = () => {
   const [resetSent, setResetSent] = useState(false);
   const [userNotFound, setUserNotFound] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [userCount, setUserCount] = useState(0);
+
+  // Fetch user count on mount
+  useEffect(() => {
+    const fetchUserCount = async () => {
+      const count = await getUserCount();
+      setUserCount(count);
+    };
+    fetchUserCount();
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -61,7 +72,7 @@ const LoginPage = () => {
   ];
 
   return (
-    <div className="min-h-[100dvh] flex flex-col lg:flex-row bg-slate-900">
+    <div className="min-h-[100dvh] flex flex-col lg:flex-row bg-[#0f0f0f]">
 
       {/* ===== LEFT PANEL - Branding (Desktop Only) ===== */}
       <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 bg-gradient-hero overflow-hidden">
@@ -110,7 +121,9 @@ const LoginPage = () => {
               ))}
             </div>
             <div>
-              <p className="text-white text-xs font-semibold">8,900+ students trading</p>
+              <p className="text-white text-xs font-semibold">
+                {userCount > 0 ? `${userCount.toLocaleString()} students trading` : 'Join the community'}
+              </p>
               <p className="text-slate-500 text-xs">Join the community today</p>
             </div>
           </div>

@@ -25,6 +25,7 @@ import EditProfilePage from './pages/EditProfilePage'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import TermsConditionsPage from './pages/TermsConditionsPage'
 import CommunityGuidelinesPage from './pages/CommunityGuidelinesPage'
+import AboutPage from './pages/AboutPage'
 
 // Profile redirect component
 function ProfileRedirect() {
@@ -45,9 +46,10 @@ function App() {
             <Route path="/" element={<Navigate to="/home" replace />} />
             <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
             <Route path="/signup" element={<PublicRoute><SignupPage /></PublicRoute>} />
-            <Route path="/privacy" element={<PrivacyPolicyPage />} />
-            <Route path="/terms" element={<TermsConditionsPage />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+            <Route path="/terms-conditions" element={<TermsConditionsPage />} />
             <Route path="/community-guidelines" element={<CommunityGuidelinesPage />} />
+            <Route path="/about" element={<AboutPage />} />
             <Route path="/otp-verification" element={<OTPVerificationPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/dashboard" element={<ProtectedRoute><DashboardHome /></ProtectedRoute>} />
