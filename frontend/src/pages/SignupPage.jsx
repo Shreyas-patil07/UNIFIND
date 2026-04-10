@@ -24,7 +24,6 @@ const SignupPage = () => {
     college: '',
     branch: '',
     yearOfAdmission: '',
-    upiId: '',
     password: prefilledPassword
   });
   const [error, setError] = useState('');
