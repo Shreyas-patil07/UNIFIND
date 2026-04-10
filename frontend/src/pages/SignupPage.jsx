@@ -136,23 +136,13 @@ const SignupPage = () => {
       setError('Please enter your branch/department.');
       return;
     }
-    if (!formData.upiId.trim()) {
-      setError('Please enter your UPI ID for receiving payments.');
-      return;
-    }
-    // Basic UPI ID validation
-    const upiRegex = /^[\w.-]+@[\w.-]+$/;
-    if (!upiRegex.test(formData.upiId)) {
-      setError('Please enter a valid UPI ID (e.g., yourname@paytm).');
-      return;
-    }
 
     setLoading(true);
     try {
       // Combine names into full name
       const fullName = `${formData.firstName} ${formData.middleName} ${formData.surname}`.replace(/\s+/g, ' ').trim();
       
-      await signup(formData.email, formData.password, fullName, formData.college, formData.branch, formData.yearOfAdmission, formData.upiId);
+      await signup(formData.email, formData.password, fullName, formData.college, formData.branch, formData.yearOfAdmission);
       if (auth.currentUser) {
         await sendEmailVerification(auth.currentUser, actionCodeSettings);
       }
