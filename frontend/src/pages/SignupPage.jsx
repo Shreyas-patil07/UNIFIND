@@ -385,23 +385,7 @@ const SignupPage = () => {
           {currentStep === 2 && (
             <form onSubmit={handleSignup} className="space-y-4">
               {/* UPI ID */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="upiId">
-                  UPI ID <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <input
-                    id="upiId" type="text" placeholder="yourname@paytm" required
-                    maxLength={100}
-                    pattern="[\w.-]+@[\w.-]+"
-                    title="Enter a valid UPI ID (e.g., yourname@paytm)"
-                    className="input-premium w-full pl-11 pr-4 py-3 text-sm"
-                    data-testid="signup-upi-input" {...field('upiId')}
-                  />
-                </div>
-                <p className="mt-1 text-xs text-slate-400">For receiving payments when you sell items</p>
-              </div>
+              
 
             {/* College */}
             <div>
