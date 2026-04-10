@@ -211,16 +211,32 @@ const ListingDetailPage = () => {
 
               <div className="mb-6 pb-6 border-b border-slate-100 dark:border-neutral-700">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-neutral-100 mb-3">Seller Information</h3>
-                <div className="flex items-center gap-4">
-                  <img src={seller?.avatar} alt={seller?.name} className="h-12 w-12 rounded-full object-cover" />
+                <div 
+                  className="flex items-center gap-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-neutral-800 p-3 -mx-3 rounded-lg transition-colors"
+                  onClick={() => navigate(`/profile/${product.seller_id}`)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      navigate(`/profile/${product.seller_id}`);
+                    }
+                  }}
+                >
+                  <img 
+                    src={seller?.avatar} 
+                    alt={seller?.name} 
+                    className="h-12 w-12 rounded-full object-cover ring-2 ring-slate-200 dark:ring-neutral-700" 
+                  />
                   <div className="flex-1">
-                    <p className="font-semibold text-slate-900 dark:text-neutral-100">{seller?.name}</p>
+                    <p className="font-semibold text-slate-900 dark:text-neutral-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                      {seller?.name}
+                    </p>
                     <p className="text-sm text-slate-500 dark:text-neutral-500">{seller?.college}</p>
                   </div>
-                  <div className="bg-green-50 px-3 py-1.5 rounded-lg">
+                  <div className="bg-green-50 dark:bg-green-500/10 px-3 py-1.5 rounded-lg">
                     <div className="flex items-center gap-1">
-                      <Shield className="h-4 w-4 text-green-600" />
-                      <span className="text-sm font-bold text-green-700">{seller?.trustScore}%</span>
+                      <Shield className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      <span className="text-sm font-bold text-green-700 dark:text-green-400">{seller?.trust_score || 0}%</span>
                     </div>
                   </div>
                 </div>
@@ -228,7 +244,14 @@ const ListingDetailPage = () => {
 
               <div className="flex gap-3">
                 <Button
-                  onClick={() => navigate('/chat')}
+                  onClick={() => {
+                    if (!currentUser) {
+                      navigate('/login');
+                      return;
+                    }
+                    // Navigate to chat with seller and product context
+                    navigate(`/chat?user=${product.seller_id}&product=${product.id}`);
+                  }}
                   className="flex-1 bg-blue-600 text-white font-medium px-6 py-3 rounded-xl hover:bg-blue-700 shadow-[0_0_0_1px_rgba(37,99,235,1)_inset] transition-all duration-200 active:scale-95"
                   data-testid="contact-seller-btn"
                 >

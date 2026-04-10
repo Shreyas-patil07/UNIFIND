@@ -3,12 +3,14 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Search, ShoppingBag, MessageCircle, User, Menu, X, LayoutDashboard, Sparkles, Package, UserPlus, Bell, CheckCircle, AlertCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
-import { getUserChats, searchUsers, getPendingFriendRequests, acceptFriendRequest, rejectFriendRequest, getFriends } from '../services/api'
+import { searchUsers, getPendingFriendRequests, acceptFriendRequest, rejectFriendRequest, getFriends } from '../services/api'
+import { collection, query, where, onSnapshot } from 'firebase/firestore'
+import { db } from '../services/firebase'
 
 export default function Header({ hideSearch = false }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const { currentUser } = useAuth()
+  const { currentUser, getIdToken } = useAuth()
   const { darkMode } = useTheme()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
@@ -39,31 +41,75 @@ export default function Header({ hideSearch = false }) {
     }
   }, []);
 
-  // Fetch unread message count
+  // Fetch unread message count with Firestore realtime listener (NO POLLING)
   useEffect(() => {
     if (!currentUser?.uid) return;
 
-    const fetchUnreadCount = async () => {
-      try {
-        const chats = await getUserChats(currentUser.uid);
-        const totalUnread = chats.reduce((sum, chat) => {
-          const count = chat.user1_id === currentUser.uid 
-            ? chat.unread_count_user1 
-            : chat.unread_count_user2;
-          return sum + count;
-        }, 0);
-        setUnreadCount(totalUnread);
-      } catch (error) {
-        console.error('Failed to fetch unread count:', error);
-      }
+    console.log('[Header] Setting up realtime unread count listener for user:', currentUser.uid);
+
+    let isActive = true;
+    const unsubscribers = [];
+
+    // Listen to chat_rooms where user is user1
+    const q1 = query(
+      collection(db, 'chat_rooms'),
+      where('user1_id', '==', currentUser.uid)
+    );
+
+    // Listen to chat_rooms where user is user2
+    const q2 = query(
+      collection(db, 'chat_rooms'),
+      where('user2_id', '==', currentUser.uid)
+    );
+
+    const calculateUnreadCount = (chats) => {
+      const totalUnread = chats.reduce((sum, chat) => {
+        const count = chat.user1_id === currentUser.uid 
+          ? chat.unread_count_user1 
+          : chat.unread_count_user2;
+        return sum + (count || 0);
+      }, 0);
+      
+      console.log('[Header] Unread count updated:', totalUnread);
+      setUnreadCount(totalUnread);
     };
 
-    fetchUnreadCount();
-    
-    // Poll for updates every 10 seconds
-    const interval = setInterval(fetchUnreadCount, 10000);
-    return () => clearInterval(interval);
-  }, [currentUser]);
+    const chatCache = new Map();
+
+    // Listener for chats where user is user1
+    const unsubscribe1 = onSnapshot(q1, (snapshot) => {
+      if (!isActive) return;
+      
+      snapshot.docs.forEach(doc => {
+        chatCache.set(doc.id, { id: doc.id, ...doc.data() });
+      });
+      
+      calculateUnreadCount(Array.from(chatCache.values()));
+    }, (error) => {
+      console.error('[Header] Error in user1 listener:', error);
+    });
+
+    // Listener for chats where user is user2
+    const unsubscribe2 = onSnapshot(q2, (snapshot) => {
+      if (!isActive) return;
+      
+      snapshot.docs.forEach(doc => {
+        chatCache.set(doc.id, { id: doc.id, ...doc.data() });
+      });
+      
+      calculateUnreadCount(Array.from(chatCache.values()));
+    }, (error) => {
+      console.error('[Header] Error in user2 listener:', error);
+    });
+
+    unsubscribers.push(unsubscribe1, unsubscribe2);
+
+    return () => {
+      isActive = false;
+      unsubscribers.forEach(unsub => unsub());
+      console.log('[Header] Cleaned up realtime listeners');
+    };
+  }, [currentUser?.uid]);
 
   const handleProfileClick = () => {
     if (currentUser?.uid) {

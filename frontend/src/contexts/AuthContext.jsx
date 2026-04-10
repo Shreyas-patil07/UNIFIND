@@ -129,6 +129,13 @@ export const AuthProvider = ({ children }) => {
     return unsubscribe
   }, [])
 
+  const getIdToken = async () => {
+    if (currentUser) {
+      return await currentUser.getIdToken()
+    }
+    return null
+  }
+
   const value = {
     currentUser,
     userProfile,
@@ -139,6 +146,7 @@ export const AuthProvider = ({ children }) => {
     fetchUserProfile,
     refreshUserProfile,
     syncEmailVerificationStatus,
+    getIdToken,
     loading
   }
 

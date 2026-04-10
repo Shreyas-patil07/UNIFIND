@@ -5,7 +5,9 @@ import { Send, MapPin, IndianRupee, ArrowLeft, Check, CheckCheck, Smile, Search,
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { getUserChats, getChatMessages, sendChatMessage, getOrCreateChatRoom, getPublicProfile, getProduct, markChatAsRead } from '../services/api';
+import { getUserChats, sendChatMessage, getOrCreateChatRoom, getPublicProfile, getProduct, markChatAsRead, getFriends } from '../services/api';
+import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../services/firebase';
 
 // Static emoji data - moved outside component to avoid recreation on every render
 const EMOJIS = {
@@ -19,7 +21,7 @@ const EMOJIS = {
 const ChatPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { currentUser } = useAuth();
+  const { currentUser, getIdToken } = useAuth();
   const { darkMode } = useTheme();
   
   const [chats, setChats] = useState([]);
@@ -61,7 +63,8 @@ const ChatPage = () => {
 
     const initializeChat = async () => {
       try {
-        const chatRoom = await getOrCreateChatRoom(currentUser.uid, targetUserId, productId);
+        const token = await getIdToken();
+        const chatRoom = await getOrCreateChatRoom(currentUser.uid, targetUserId, productId, token);
         if (isActive) {
           setSelectedChat(chatRoom);
         }
@@ -112,7 +115,16 @@ const ChatPage = () => {
 
   // Format time for chat list
   const formatChatTime = (timestamp) => {
-    const date = new Date(timestamp);
+    if (!timestamp) return '';
+    
+    // Handle Firestore timestamp format
+    const date = timestamp?.seconds 
+      ? new Date(timestamp.seconds * 1000) 
+      : new Date(timestamp);
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) return '';
+    
     const now = new Date();
     const diffMs = now - date;
     const diffMins = Math.floor(diffMs / 60000);
@@ -162,8 +174,9 @@ const ChatPage = () => {
     try {
       markedAsReadRef.current.add(messageId);
       
+      const token = await getIdToken();
       // Use markChatAsRead API from services
-      await markChatAsRead(selectedChat.id, currentUser.uid);
+      await markChatAsRead(selectedChat.id, currentUser.uid, token);
       
       // Update local state
       setMessages(prev => 
@@ -247,24 +260,9 @@ const ChatPage = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Track page visibility to pause/resume polling
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        console.log('Chat page hidden - pausing updates');
-      } else {
-        console.log('Chat page visible - resuming updates');
-      }
-    };
+  // Removed polling - using Firestore realtime listeners
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
-
-  // Load user's chats with smart polling
+  // Load user's chats with Firestore realtime listener (NO POLLING)
   useEffect(() => {
     if (!currentUser) {
       navigate('/login');
@@ -272,70 +270,159 @@ const ChatPage = () => {
     }
 
     let isActive = true;
-    let pollInterval = null;
+    const unsubscribers = [];
+    const chatCache = new Map(); // Move inside effect so it resets on filter change
 
-    const loadChats = async () => {
-      if (!isActive || document.hidden) return; // Don't load if page is hidden
+    console.log('[ChatPage] Setting up realtime chat list for user:', currentUser.uid, 'friendsOnly:', friendsOnly);
+
+    // Listen to chat_rooms where user is user1
+    const q1 = query(
+      collection(db, 'chat_rooms'),
+      where('user1_id', '==', currentUser.uid)
+    );
+
+    // Listen to chat_rooms where user is user2
+    const q2 = query(
+      collection(db, 'chat_rooms'),
+      where('user2_id', '==', currentUser.uid)
+    );
+
+    // Load friendships for filtering using backend API
+    const loadFriendships = async () => {
       try {
-        const userChats = await getUserChats(currentUser.uid, friendsOnly);
-        if (isActive) {
-          setChats(userChats);
-          setLoading(false);
+        const friends = await getFriends(currentUser.uid);
+        const friendIds = new Set(friends.map(f => f.friend_id || f.user_id));
+        console.log('[ChatPage] Loaded friends from API:', friendIds.size, 'friends');
+        return friendIds;
+      } catch (error) {
+        console.warn('[ChatPage] Failed to load friends:', error);
+        return new Set(); // Return empty set if fails
+      }
+    };
+
+    const setupListeners = async () => {
+      try {
+        // Load initial chats from backend API (has proper authentication)
+        const token = await getIdToken();
+        const initialChats = await getUserChats(currentUser.uid, false, token);
+        console.log('[ChatPage] Loaded initial chats from API:', initialChats.length);
+        
+        // Load friendships for filtering
+        const friendIds = await loadFriendships();
+
+        // Populate cache with initial chats
+        initialChats.forEach(chat => {
+          const otherId = chat.user1_id === currentUser.uid ? chat.user2_id : chat.user1_id;
+          const isFriend = friendIds.has(otherId);
+          chatCache.set(chat.id, { ...chat, is_friend: isFriend });
+        });
+
+        // Initial render
+        const allChats = Array.from(chatCache.values());
+        const filteredChats = friendsOnly 
+          ? allChats.filter(chat => chat.is_friend) 
+          : allChats;
+
+        const sortedChats = filteredChats.sort((a, b) => {
+          const timeA = a.last_message_time?.seconds 
+            ? a.last_message_time.seconds * 1000 
+            : new Date(a.last_message_time).getTime();
+          const timeB = b.last_message_time?.seconds 
+            ? b.last_message_time.seconds * 1000 
+            : new Date(b.last_message_time).getTime();
+          return timeB - timeA;
+        });
+
+        console.log('[ChatPage] Initial filtered chats:', sortedChats.length, '(friendsOnly:', friendsOnly, ')');
+        setChats(sortedChats);
+        setLoading(false);
+
+        // Merge and update chat list
+        const updateChatList = (newChats, source) => {
+          console.log('[ChatPage] Updating chat list from', source, ':', newChats.length, 'chats');
+          
+          // Add/update chats in cache
+          newChats.forEach(chat => {
+            const otherId = chat.user1_id === currentUser.uid ? chat.user2_id : chat.user1_id;
+            const isFriend = friendIds.has(otherId);
+            
+            chatCache.set(chat.id, { ...chat, is_friend: isFriend });
+          });
+
+          // Filter and convert to array
+          const allChats = Array.from(chatCache.values());
+          const filteredChats = friendsOnly 
+            ? allChats.filter(chat => chat.is_friend) 
+            : allChats;
+
+          // Sort by last message time
+          const sortedChats = filteredChats.sort((a, b) => {
+            const timeA = a.last_message_time?.seconds 
+              ? a.last_message_time.seconds * 1000 
+              : new Date(a.last_message_time).getTime();
+            const timeB = b.last_message_time?.seconds 
+              ? b.last_message_time.seconds * 1000 
+              : new Date(b.last_message_time).getTime();
+            return timeB - timeA;
+          });
+
+          console.log('[ChatPage] Filtered chats:', sortedChats.length, '(friendsOnly:', friendsOnly, ')');
+          setChats(sortedChats);
+        };
+
+        // Try to set up Firestore listeners for realtime updates (optional enhancement)
+        // If permissions fail, we'll just rely on the initial load
+        try {
+          // Listener for chats where user is user1
+          const unsubscribe1 = onSnapshot(q1, (snapshot) => {
+            if (!isActive) return;
+            
+            const chats1 = snapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            
+            console.log('[ChatPage] Realtime update - user1 chats:', chats1.length);
+            updateChatList(chats1, 'user1');
+          }, (error) => {
+            console.warn('[ChatPage] Firestore listener not available (using API only):', error.code);
+          });
+
+          // Listener for chats where user is user2
+          const unsubscribe2 = onSnapshot(q2, (snapshot) => {
+            if (!isActive) return;
+            
+            const chats2 = snapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            
+            console.log('[ChatPage] Realtime update - user2 chats:', chats2.length);
+            updateChatList(chats2, 'user2');
+          }, (error) => {
+            console.warn('[ChatPage] Firestore listener not available (using API only):', error.code);
+          });
+
+          unsubscribers.push(unsubscribe1, unsubscribe2);
+        } catch (firestoreError) {
+          console.warn('[ChatPage] Firestore realtime listeners not available, using API only');
         }
       } catch (error) {
-        console.error('Failed to load chats:', error);
-        if (isActive) {
-          setLoading(false);
-        }
+        console.error('[ChatPage] Failed to load chats:', error);
+        setLoading(false);
       }
     };
 
-    // Initial load
-    loadChats();
-    
-    // Start polling only when page is visible
-    const startPolling = () => {
-      if (pollInterval) return; // Already polling
-      
-      pollInterval = setInterval(() => {
-        if (!document.hidden && isActive) {
-          loadChats();
-        }
-      }, 10000); // Poll every 10 seconds when visible
-    };
-
-    const stopPolling = () => {
-      if (pollInterval) {
-        clearInterval(pollInterval);
-        pollInterval = null;
-      }
-    };
-
-    // Handle visibility changes
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        stopPolling();
-      } else {
-        loadChats(); // Refresh immediately when page becomes visible
-        startPolling();
-      }
-    };
-
-    // Start initial polling if page is visible
-    if (!document.hidden) {
-      startPolling();
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    setupListeners();
     
     return () => {
       isActive = false;
-      stopPolling();
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      unsubscribers.forEach(unsub => unsub());
+      console.log('[ChatPage] Cleaned up realtime listeners');
     };
-  }, [currentUser?.uid, friendsOnly, navigate]);
+  }, [currentUser?.uid, friendsOnly, navigate, getIdToken]);
 
-  // Load messages when chat is selected with smart polling
+  // Load messages with Firestore realtime listener (NO POLLING)
   useEffect(() => {
     if (!selectedChat || !currentUser) return;
 
@@ -344,60 +431,6 @@ const ChatPage = () => {
       : selectedChat.user1_id;
 
     let isActive = true;
-    let pollInterval = null;
-
-    const loadMessages = async () => {
-      if (!isActive || document.hidden) return;
-      try {
-        const chatMessages = await getChatMessages(selectedChat.id);
-        if (isActive) {
-          // CRITICAL: Merge logic - never blindly overwrite
-          setMessages(prev => {
-            // Create map with existing messages (preserves optimistic)
-            const messageMap = new Map();
-            
-            // Add existing messages first
-            prev.forEach(msg => {
-              messageMap.set(msg.id, msg);
-            });
-            
-            // Merge backend messages (replaces optimistic if ID matches)
-            chatMessages.forEach(msg => {
-              // If this is a real message from backend, it replaces any optimistic version
-              messageMap.set(msg.id, { ...msg, status: 'sent' });
-            });
-            
-            // Remove optimistic messages that have been confirmed
-            // (Check if backend has a message with same content/sender/time)
-            const optimisticMessages = prev.filter(m => m._optimistic);
-            optimisticMessages.forEach(optMsg => {
-              const isConfirmed = chatMessages.some(backendMsg => 
-                backendMsg.text === optMsg.text &&
-                backendMsg.sender_id === optMsg.sender_id &&
-                Math.abs(new Date(backendMsg.timestamp).getTime() - new Date(optMsg.timestamp).getTime()) < 5000
-              );
-              
-              if (isConfirmed) {
-                messageMap.delete(optMsg.id); // Remove optimistic, keep backend version
-              }
-            });
-            
-            // Convert map to sorted array
-            return Array.from(messageMap.values()).sort((a, b) => {
-              const timeA = a.timestamp?.seconds 
-                ? new Date(a.timestamp.seconds * 1000).getTime()
-                : new Date(a.timestamp).getTime();
-              const timeB = b.timestamp?.seconds 
-                ? new Date(b.timestamp.seconds * 1000).getTime()
-                : new Date(b.timestamp).getTime();
-              return timeA - timeB;
-            });
-          });
-        }
-      } catch (error) {
-        console.error('Failed to load messages:', error);
-      }
-    };
 
     // Load initial data
     const loadInitialData = async () => {
@@ -416,9 +449,6 @@ const ChatPage = () => {
           }
         }
         
-        // Load messages
-        await loadMessages();
-        
         // Reset marked as read tracking when switching chats
         markedAsReadRef.current.clear();
       } catch (error) {
@@ -427,46 +457,91 @@ const ChatPage = () => {
     };
 
     loadInitialData();
+
+    // Setup Firestore realtime listener for messages
+    console.log('[ChatPage] Setting up message listener for chat:', selectedChat.id);
     
-    // Start polling only when page is visible
-    const startPolling = () => {
-      if (pollInterval) return; // Already polling
+    const q = query(
+      collection(db, 'messages'),
+      where('chat_room_id', '==', selectedChat.id),
+      orderBy('timestamp', 'asc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!isActive) return;
+
+      console.log('[ChatPage] Received message update:', snapshot.docs.length, 'messages');
+
+      const realtimeMessages = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        _optimistic: false
+      }));
+
+      console.log('[ChatPage] Realtime messages:', realtimeMessages);
+
+      setMessages(prev => {
+        const messageMap = new Map();
+
+        // Keep optimistic messages temporarily
+        prev.forEach(msg => {
+          if (msg._optimistic) {
+            messageMap.set(msg.id, msg);
+          }
+        });
+
+        // Add/overwrite with real backend data
+        realtimeMessages.forEach(msg => {
+          messageMap.set(msg.id, msg);
+        });
+
+        // Remove optimistic messages that match real messages
+        const optimisticMessages = Array.from(messageMap.values()).filter(m => m._optimistic);
+        optimisticMessages.forEach(optMsg => {
+          const isConfirmed = realtimeMessages.some(realMsg => 
+            realMsg.text === optMsg.text &&
+            realMsg.sender_id === optMsg.sender_id &&
+            Math.abs(
+              (realMsg.timestamp?.seconds ? realMsg.timestamp.seconds * 1000 : new Date(realMsg.timestamp).getTime()) -
+              new Date(optMsg.timestamp).getTime()
+            ) < 5000
+          );
+          
+          if (isConfirmed) {
+            messageMap.delete(optMsg.id);
+          }
+        });
+
+        // Convert to sorted array
+        const sortedMessages = Array.from(messageMap.values()).sort((a, b) => {
+          const timeA = a.timestamp?.seconds 
+            ? a.timestamp.seconds * 1000
+            : new Date(a.timestamp).getTime();
+          const timeB = b.timestamp?.seconds 
+            ? b.timestamp.seconds * 1000
+            : new Date(b.timestamp).getTime();
+          return timeA - timeB;
+        });
+
+        console.log('[ChatPage] Final sorted messages:', sortedMessages.length);
+        return sortedMessages;
+      });
+    }, (error) => {
+      console.error('[ChatPage] Firestore listener error:', error);
+      console.error('[ChatPage] Error code:', error.code);
+      console.error('[ChatPage] Error message:', error.message);
       
-      pollInterval = setInterval(() => {
-        if (!document.hidden && isActive) {
-          loadMessages();
-        }
-      }, 5000); // Poll every 5 seconds when visible
-    };
-
-    const stopPolling = () => {
-      if (pollInterval) {
-        clearInterval(pollInterval);
-        pollInterval = null;
+      // If index error, show helpful message
+      if (error.code === 'failed-precondition') {
+        console.error('❌ FIRESTORE INDEX REQUIRED!');
+        console.error('Click this link to create the index:', error.message);
+        alert('Firestore index required for messages. Check the console for the link to create it.');
       }
-    };
-
-    // Handle visibility changes
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        stopPolling();
-      } else {
-        loadMessages(); // Refresh immediately when page becomes visible
-        startPolling();
-      }
-    };
-
-    // Start initial polling if page is visible
-    if (!document.hidden) {
-      startPolling();
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    });
     
     return () => {
       isActive = false;
-      stopPolling();
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      unsubscribe();
     };
   }, [selectedChat?.id, currentUser?.uid]);
 
@@ -502,7 +577,7 @@ const ChatPage = () => {
       : selectedChat.user1_id;
 
     setSending(true);
-    const messageText = message.trim(); // Capture message before clearing
+    const messageText = message.trim();
     
     // Create optimistic message with temporary ID
     const optimisticMessage = {
@@ -514,7 +589,7 @@ const ChatPage = () => {
       chat_room_id: selectedChat.id,
       timestamp: new Date(),
       is_read: false,
-      _optimistic: true // Flag to identify optimistic messages
+      _optimistic: true
     };
     
     // Add optimistic message immediately
@@ -523,21 +598,20 @@ const ChatPage = () => {
     messageInputRef.current?.focus();
     
     try {
-      const newMessage = await sendChatMessage({
+      const token = await getIdToken();
+      
+      // Only call backend - it will write to Firestore
+      // The Firestore listener will pick up the message automatically
+      await sendChatMessage({
         text: messageText,
         sender_id: currentUser.uid,
         receiver_id: otherId,
         product_id: selectedChat.product_id || null
-      });
+      }, token);
       
-      // Replace optimistic message with real message from backend
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === optimisticMessage.id ? newMessage : msg
-        )
-      );
+      console.log('[ChatPage] Message sent successfully');
       
-      // Update chat list locally instead of reloading from backend
+      // Update chat list locally
       setChats(prevChats => 
         prevChats.map(c => {
           if (c.id === selectedChat.id) {
@@ -562,7 +636,6 @@ const ChatPage = () => {
       // Remove optimistic message on error
       setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
       alert('Failed to send message. Please try again.');
-      // Restore message text so user can retry
       setMessage(messageText);
     } finally {
       setSending(false);

@@ -182,30 +182,42 @@ export const deleteProduct = async (productId, idToken) => {
 }
 
 // Chat API calls via backend
-export const getUserChats = async (userId, friendsOnly = false) => {
+export const getUserChats = async (userId, friendsOnly = false, idToken) => {
   const params = friendsOnly ? { friends_only: true } : {}
-  const response = await api.get(`/chats/${userId}`, { params })
+  const config = {
+    params,
+    headers: { 'Authorization': `Bearer ${idToken}` }
+  }
+  const response = await api.get(`/chats/${userId}`, config)
   return response.data
 }
 
-export const getChatMessages = async (chatRoomId) => {
-  const response = await api.get(`/chats/room/${chatRoomId}/messages`)
+export const getChatMessages = async (chatRoomId, idToken) => {
+  const response = await api.get(`/chats/room/${chatRoomId}/messages`, {
+    headers: { 'Authorization': `Bearer ${idToken}` }
+  })
   return response.data
 }
 
-export const sendChatMessage = async (messageData) => {
-  const response = await api.post('/chats/messages', messageData)
+export const sendChatMessage = async (messageData, idToken) => {
+  const response = await api.post('/chats/messages', messageData, {
+    headers: { 'Authorization': `Bearer ${idToken}` }
+  })
   return response.data
 }
 
-export const getOrCreateChatRoom = async (user1Id, user2Id, productId = null) => {
+export const getOrCreateChatRoom = async (user1Id, user2Id, productId = null, idToken) => {
   const params = productId ? `?product_id=${productId}` : ''
-  const response = await api.get(`/chats/between/${user1Id}/${user2Id}${params}`)
+  const response = await api.get(`/chats/between/${user1Id}/${user2Id}${params}`, {
+    headers: { 'Authorization': `Bearer ${idToken}` }
+  })
   return response.data
 }
 
-export const markChatAsRead = async (chatRoomId, userId) => {
-  const response = await api.put(`/chats/${chatRoomId}/mark-read/${userId}`)
+export const markChatAsRead = async (chatRoomId, userId, idToken) => {
+  const response = await api.put(`/chats/${chatRoomId}/mark-read/${userId}`, {}, {
+    headers: { 'Authorization': `Bearer ${idToken}` }
+  })
   return response.data
 }
 

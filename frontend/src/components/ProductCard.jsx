@@ -187,7 +187,21 @@ const ProductCard = ({ product, onView }) => {
         </div>
 
         {/* Seller row */}
-        <div className={`flex items-center gap-2 mb-3 pb-3 border-b ${darkMode ? 'border-neutral-700' : 'border-slate-100'}`}>
+        <div 
+          className={`flex items-center gap-2 mb-3 pb-3 border-b cursor-pointer hover:bg-opacity-50 transition-colors ${darkMode ? 'border-neutral-700 hover:bg-neutral-800' : 'border-slate-100 hover:bg-slate-50'}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/profile/${product.seller_id}`);
+          }}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.stopPropagation();
+              navigate(`/profile/${product.seller_id}`);
+            }
+          }}
+        >
           <img
             src={seller?.avatar}
             alt={seller?.name}
@@ -195,7 +209,7 @@ const ProductCard = ({ product, onView }) => {
             data-testid="seller-avatar"
           />
           <div className="flex-1 min-w-0">
-            <p className={`text-xs font-semibold truncate ${darkMode ? 'text-neutral-300' : 'text-slate-800'}`} data-testid="seller-name">
+            <p className={`text-xs font-semibold truncate ${darkMode ? 'text-neutral-300 hover:text-indigo-400' : 'text-slate-800 hover:text-indigo-600'}`} data-testid="seller-name">
               {seller?.name?.split(' ')[0] || seller?.name}
             </p>
           </div>
@@ -218,7 +232,15 @@ const ProductCard = ({ product, onView }) => {
             className={`flex-1 text-white text-xs font-semibold py-2 rounded-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 ${
               darkMode ? 'bg-indigo-500 hover:bg-indigo-600' : 'bg-indigo-600 hover:bg-indigo-700'
             }`}
-            onClick={(e) => { e.stopPropagation(); navigate('/chat'); }}
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              if (!currentUser) {
+                navigate('/login');
+                return;
+              }
+              // Navigate to chat with seller and product context
+              navigate(`/chat?user=${product.seller_id}&product=${product.id}`); 
+            }}
             data-testid="product-chat-btn"
           >
             <MessageCircle className="h-3.5 w-3.5" />

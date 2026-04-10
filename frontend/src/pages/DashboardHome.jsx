@@ -8,7 +8,7 @@ import { getProducts, getUserChats } from '../services/api';
 
 const DashboardHome = () => {
   const navigate = useNavigate();
-  const { currentUser, userProfile } = useAuth();
+  const { currentUser, userProfile, getIdToken } = useAuth();
   const { darkMode } = useTheme();
   const [products, setProducts] = useState([]);
   const [chats, setChats] = useState([]);
@@ -27,9 +27,10 @@ const DashboardHome = () => {
       if (!currentUser) return;
 
       try {
+        const token = await getIdToken();
         const [userProducts, userChats] = await Promise.all([
           getProducts({ seller_id: currentUser.uid }),
-          getUserChats(currentUser.uid)
+          getUserChats(currentUser.uid, false, token)
         ]);
         
         setProducts(Array.isArray(userProducts) ? userProducts : []);
@@ -44,7 +45,7 @@ const DashboardHome = () => {
     };
 
     loadData();
-  }, [currentUser]);
+  }, [currentUser, getIdToken]);
 
   // Calculate stats from real data
   const userStats = {
