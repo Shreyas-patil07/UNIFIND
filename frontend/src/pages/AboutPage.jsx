@@ -92,10 +92,14 @@ function useAboutStyles() {
         @keyframes uf-fadein { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
         .uf-reveal { animation: uf-fadein 0.65s ease both; }
         /* Mobile overrides */
+        @media (min-width:769px) {
+          .uf-mobile-btn { display:none !important; }
+        }
         @media (max-width:768px) {
           .uf-desktop-nav { display:none !important; }
           .uf-hero-grid { grid-template-columns:1fr !important; }
           .uf-hero-grid > div:last-child { display:none; }
+          .uf-story-grid { grid-template-columns:1fr !important; }
           .uf-team-grid { grid-template-columns: repeat(2,1fr) !important; }
           .uf-pillars-grid { grid-template-columns: 1fr !important; }
           .uf-stats-row { flex-wrap: wrap; gap: 32px !important; }
@@ -148,6 +152,8 @@ const GitHubSVG = () => (
    NAVBAR
 ============================================================ */
 function Navbar({ currentUser, onProfile, onLogin, onSignup, navigate }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <nav
       className="uf-glass-header"
@@ -204,8 +210,28 @@ function Navbar({ currentUser, onProfile, onLogin, onSignup, navigate }) {
               >Get Started</button>
             </>
           )}
+          {/* Mobile Menu Toggle Button */}
+          <button
+            className="uf-mobile-btn"
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' }}
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            <Icon name={mobileMenuOpen ? "close" : "menu"} size={28} />
+          </button>
         </div>
       </div>
+
+      {/* Mobile Nav Dropdown */}
+      {mobileMenuOpen && (
+        <div className="uf-mobile-btn" style={{ padding: '16px 24px', background: C.surfaceContainerLowest, borderBottom: `1px solid ${C.outlineVariant}22` }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <button onClick={() => { navigate('/buyer'); setMobileMenuOpen(false); }} className="uf-nav-link" style={{ textAlign: 'left', background: 'none', border: 'none', padding: 0, color: C.onSurfaceVariant, fontWeight: 700, fontSize: 16 }}>Marketplace</button>
+            <button onClick={() => { navigate('/home'); setMobileMenuOpen(false); }} className="uf-nav-link" style={{ textAlign: 'left', background: 'none', border: 'none', padding: 0, color: C.onSurfaceVariant, fontWeight: 500, fontSize: 16 }}>Notes</button>
+            <button onClick={() => { navigate('/need-board'); setMobileMenuOpen(false); }} className="uf-nav-link" style={{ textAlign: 'left', background: 'none', border: 'none', padding: 0, color: C.onSurfaceVariant, fontWeight: 500, fontSize: 16 }}>Events</button>
+            <span style={{ color: C.primary, fontWeight: 700, fontSize: 16 }}>About</span>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
@@ -368,7 +394,7 @@ function MissionSection() {
 function StorySection() {
   return (
     <section style={{ padding: '96px 0' }}>
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center' }} className="uf-hero-grid">
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center' }} className="uf-story-grid">
         {/* Timeline */}
         <div>
           <h2 style={{ fontSize: 'clamp(1.8rem,3vw,2.8rem)', fontWeight: 900, color: C.primary, letterSpacing: '-0.02em', marginBottom: 8 }}>

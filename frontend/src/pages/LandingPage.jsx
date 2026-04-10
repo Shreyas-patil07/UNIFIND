@@ -73,6 +73,12 @@ function usePageStyles() {
         .uf-footer-social:hover { background: #90eff0 !important; }
         .uf-nav-link { transition: color 0.2s; }
         .uf-nav-link:hover { color: #00696a !important; }
+        @media (max-width: 768px) {
+          .uf-search-bar { flex-direction: column !important; }
+        }
+        @media (min-width: 769px) {
+          .uf-mobile-btn { display: none !important; }
+        }
       `;
       document.head.appendChild(tag);
     }
@@ -101,6 +107,8 @@ function Icon({ name, fill = 0, size = 24, className = '', style = {} }) {
    NAVBAR
 ============================================================ */
 function Navbar({ currentUser, onProfile, onLogin, onSignup }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <nav
       className="uf-glass-header"
@@ -185,8 +193,27 @@ function Navbar({ currentUser, onProfile, onLogin, onSignup }) {
               </button>
             </>
           )}
+          {/* Mobile Menu Toggle Button */}
+          <button
+            className="uf-mobile-btn"
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' }}
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            <Icon name={mobileMenuOpen ? "close" : "menu"} size={28} />
+          </button>
         </div>
       </div>
+
+      {/* Mobile Nav Dropdown */}
+      {mobileMenuOpen && (
+        <div className="uf-mobile-btn" style={{ padding: '16px 24px', background: COLORS.surfaceContainerLowest, borderBottom: `1px solid ${COLORS.outlineVariant}22` }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <a href="#market" className="uf-nav-link" style={{ color: COLORS.primary, fontWeight: 700, fontSize: 16, textDecoration: 'none' }} onClick={() => setMobileMenuOpen(false)}>Market</a>
+            <a href="#library" className="uf-nav-link" style={{ color: '#475569', fontWeight: 500, fontSize: 16, textDecoration: 'none' }} onClick={() => setMobileMenuOpen(false)}>Library</a>
+            <a href="#community" className="uf-nav-link" style={{ color: '#475569', fontWeight: 500, fontSize: 16, textDecoration: 'none' }} onClick={() => setMobileMenuOpen(false)}>Community</a>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
@@ -251,7 +278,7 @@ function HeroSection({ onSignup, onBrowse, userCount }) {
           </p>
 
           {/* Dual Search Bar */}
-          <div style={{ background: COLORS.surfaceContainerLowest, padding: 8, borderRadius: 16, boxShadow: ghostShadow, display: 'flex', gap: 8, maxWidth: 640, border: `1px solid ${COLORS.outlineVariant}26` }}>
+          <div className="uf-search-bar" style={{ background: COLORS.surfaceContainerLowest, padding: 8, borderRadius: 16, boxShadow: ghostShadow, display: 'flex', gap: 8, maxWidth: 640, border: `1px solid ${COLORS.outlineVariant}26` }}>
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '10px 16px', background: COLORS.surfaceContainer, borderRadius: 10 }}>
               <Icon name="search" size={20} style={{ color: COLORS.onSurfaceVariant, marginRight: 10, flexShrink: 0 }} />
               <input
