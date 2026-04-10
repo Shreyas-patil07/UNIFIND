@@ -264,7 +264,7 @@ function HeroSection() {
 
           <p style={{ fontSize: 17, color: C.onSurfaceVariant, lineHeight: 1.75, maxWidth: 460, marginBottom: 40 }}>
             Empowering students through campus commerce and intentional resource sharing.
-            We're building the digital bulletin board for the modern scholar — curated by students, for students.
+            We&apos;re building the digital bulletin board for the modern scholar — curated by students, for students.
           </p>
 
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
