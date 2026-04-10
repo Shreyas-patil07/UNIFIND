@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { Mail, Lock, User, GraduationCap, Eye, EyeOff, Calendar, CheckCircle, Smartphone } from 'lucide-react';
+import { Mail, Lock, User, GraduationCap, Eye, EyeOff, Calendar, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { sendEmailVerification } from 'firebase/auth';
 import { auth, actionCodeSettings, db } from '../services/firebase';
@@ -24,7 +24,6 @@ const SignupPage = () => {
     college: '',
     branch: '',
     yearOfAdmission: '',
-    upiId: '',
     password: prefilledPassword
   });
   const [error, setError] = useState('');
@@ -137,23 +136,13 @@ const SignupPage = () => {
       setError('Please enter your branch/department.');
       return;
     }
-    if (!formData.upiId.trim()) {
-      setError('Please enter your UPI ID for receiving payments.');
-      return;
-    }
-    // Basic UPI ID validation
-    const upiRegex = /^[\w.-]+@[\w.-]+$/;
-    if (!upiRegex.test(formData.upiId)) {
-      setError('Please enter a valid UPI ID (e.g., yourname@paytm).');
-      return;
-    }
 
     setLoading(true);
     try {
       // Combine names into full name
       const fullName = `${formData.firstName} ${formData.middleName} ${formData.surname}`.replace(/\s+/g, ' ').trim();
       
-      await signup(formData.email, formData.password, fullName, formData.college, formData.branch, formData.yearOfAdmission, formData.upiId);
+      await signup(formData.email, formData.password, fullName, formData.college, formData.branch, formData.yearOfAdmission);
       if (auth.currentUser) {
         await sendEmailVerification(auth.currentUser, actionCodeSettings);
       }
@@ -384,24 +373,6 @@ const SignupPage = () => {
           {/* STEP 2: Academic Details */}
           {currentStep === 2 && (
             <form onSubmit={handleSignup} className="space-y-4">
-              {/* UPI ID */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="upiId">
-                  UPI ID <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <input
-                    id="upiId" type="text" placeholder="yourname@paytm" required
-                    maxLength={100}
-                    pattern="[\w.-]+@[\w.-]+"
-                    title="Enter a valid UPI ID (e.g., yourname@paytm)"
-                    className="input-premium w-full pl-11 pr-4 py-3 text-sm"
-                    data-testid="signup-upi-input" {...field('upiId')}
-                  />
-                </div>
-                <p className="mt-1 text-xs text-slate-400">For receiving payments when you sell items</p>
-              </div>
 
             {/* College */}
             <div>
