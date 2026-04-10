@@ -214,46 +214,54 @@ export default function Header({ hideSearch = false }) {
   }
 
   useEffect(() => {
+    if (!currentUser?.uid) return
+    
     fetchFriendRequests()
     
-    // Poll for new requests every 30 seconds
-    const interval = setInterval(fetchFriendRequests, 30000)
+    // Poll for new requests every 60 seconds (reduced frequency)
+    const interval = setInterval(fetchFriendRequests, 60000)
     return () => clearInterval(interval)
-  }, [currentUser])
+  }, [currentUser?.uid])
 
   const handleAcceptRequest = async (friendId) => {
     if (!currentUser?.uid) return
     
-    setRequestsLoading(true)
+    // Optimistic update - remove from UI immediately
+    setFriendRequests(prev => prev.filter(req => req.id !== friendId))
+    
     try {
       await acceptFriendRequest(currentUser.uid, friendId)
-      await fetchFriendRequests()
       setSuccessMessage('Friend request accepted!')
       setShowSuccessModal(true)
+      // Refresh friends list if showing
+      if (showFriends) {
+        fetchFriends()
+      }
     } catch (error) {
       console.error('Failed to accept request:', error)
       setErrorMessage('Failed to accept friend request. Please try again.')
       setShowErrorModal(true)
-    } finally {
-      setRequestsLoading(false)
+      // Revert optimistic update on error
+      fetchFriendRequests()
     }
   }
 
   const handleRejectRequest = async (friendId) => {
     if (!currentUser?.uid) return
     
-    setRequestsLoading(true)
+    // Optimistic update - remove from UI immediately
+    setFriendRequests(prev => prev.filter(req => req.id !== friendId))
+    
     try {
       await rejectFriendRequest(currentUser.uid, friendId)
-      await fetchFriendRequests()
       setSuccessMessage('Friend request declined')
       setShowSuccessModal(true)
     } catch (error) {
       console.error('Failed to reject request:', error)
       setErrorMessage('Failed to decline friend request. Please try again.')
       setShowErrorModal(true)
-    } finally {
-      setRequestsLoading(false)
+      // Revert optimistic update on error
+      fetchFriendRequests()
     }
   }
 
@@ -597,15 +605,13 @@ export default function Header({ hideSearch = false }) {
                                 <div className="flex gap-2">
                                   <button
                                     onClick={() => handleAcceptRequest(request.id)}
-                                    disabled={requestsLoading}
-                                    className="flex-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-all disabled:opacity-50"
+                                    className="flex-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-all active:scale-95"
                                   >
                                     Accept
                                   </button>
                                   <button
                                     onClick={() => handleRejectRequest(request.id)}
-                                    disabled={requestsLoading}
-                                    className={`flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all disabled:opacity-50 ${
+                                    className={`flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all active:scale-95 ${
                                       darkMode 
                                         ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200' 
                                         : 'bg-slate-100 hover:bg-slate-200 text-slate-700'

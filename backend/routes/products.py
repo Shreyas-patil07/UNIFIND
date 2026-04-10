@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from google.cloud.firestore_v1.base_query import FieldFilter
+from google.cloud.firestore import Increment, ArrayUnion
 from database import get_db
 from models import Product, ProductCreate, ProductUpdate
 from auth import get_current_user, get_optional_user
@@ -160,16 +161,17 @@ async def get_product(product_id: str, user_id: Optional[str] = Depends(get_opti
         
         # Only increment view count if this user hasn't viewed before
         if user_id not in viewed_by:
-            viewed_by.append(user_id)
-            new_view_count = len(viewed_by)
+            # Use atomic operations to prevent race conditions
             doc_ref.update({
-                'views': new_view_count,
-                'viewed_by': viewed_by
+                'viewed_by': ArrayUnion([user_id]),  # Atomic array add
+                'views': Increment(1)  # Atomic increment
             })
-            product_data['views'] = new_view_count
-            product_data['viewed_by'] = viewed_by
             
-            logger.info(f"New view tracked for product {product_id} by user {user_id}. Total views: {new_view_count}")
+            # Fetch updated data
+            updated_doc = doc_ref.get()
+            product_data = updated_doc.to_dict()
+            
+            logger.info(f"New view tracked for product {product_id} by user {user_id}. Total views: {product_data.get('views', 0)}")
         else:
             logger.info(f"User {user_id} already viewed product {product_id}. View not counted.")
     

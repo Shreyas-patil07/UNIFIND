@@ -1,16 +1,22 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Dict, Any
 from datetime import datetime, timezone
+from google.cloud.firestore import Increment
 from database import get_db
 from models import Message, MessageCreate, ChatRoom
+from auth import get_current_user
 
 router = APIRouter()
 
 
 @router.post("/chats/messages", response_model=Message)
-async def send_message(message: MessageCreate):
+async def send_message(message: MessageCreate, authenticated_user: str = Depends(get_current_user)):
     """Send a message and create/update chat room"""
     db = get_db()
+    
+    # SECURITY: Verify sender_id matches authenticated user
+    if message.sender_id != authenticated_user:
+        raise HTTPException(status_code=403, detail="Cannot send message as another user")
     
     # Find or create chat room
     chat_room_id = f"{min(message.sender_id, message.receiver_id)}_{max(message.sender_id, message.receiver_id)}"
@@ -38,13 +44,13 @@ async def send_message(message: MessageCreate):
         chat_room_ref.set(chat_room_data)
         print(f"[SEND_MESSAGE] Created new chat room: {chat_room_id}")
     else:
-        # Update existing chat room
+        # Update existing chat room with ATOMIC increment
         chat_data = chat_room.to_dict()
         unread_field = 'unread_count_user1' if message.receiver_id == chat_data['user1_id'] else 'unread_count_user2'
         chat_room_ref.update({
             'last_message': message.text,
             'last_message_time': datetime.now(timezone.utc),
-            unread_field: chat_data.get(unread_field, 0) + 1
+            unread_field: Increment(1)  # Atomic increment - no race condition
         })
         print(f"[SEND_MESSAGE] Updated existing chat room: {chat_room_id}")
     
@@ -53,6 +59,8 @@ async def send_message(message: MessageCreate):
     message_data['timestamp'] = datetime.now(timezone.utc)
     message_data['is_read'] = False
     message_data['chat_room_id'] = chat_room_id
+    
+    print(f"[SEND_MESSAGE] Message data to store: {message_data}")
     
     # Add message to messages collection
     message_ref = db.collection('messages').document()
@@ -65,9 +73,13 @@ async def send_message(message: MessageCreate):
 
 
 @router.get("/chats/{user_id}", response_model=List[ChatRoom])
-async def get_user_chats(user_id: str, friends_only: bool = False):
+async def get_user_chats(user_id: str, friends_only: bool = False, authenticated_user: str = Depends(get_current_user)):
     """Get all chat rooms for a user, optionally filtered to friends only"""
     db = get_db()
+    
+    # SECURITY: Verify user can only access their own chats
+    if user_id != authenticated_user:
+        raise HTTPException(status_code=403, detail="Cannot access other user's chats")
     
     print(f"[CHATS] Getting chats for user {user_id}, friends_only={friends_only}")
     
@@ -77,14 +89,13 @@ async def get_user_chats(user_id: str, friends_only: bool = False):
     
     chat_rooms = []
     
-    # If friends_only, get list of friends first
+    # Load all friendships once (optimization - avoid N+1 queries)
     friend_ids = set()
-    if friends_only:
-        friendships = db.collection('friendships').where('user_id', '==', user_id).where('status', '==', 'active').stream()
-        for friendship in friendships:
-            friend_data = friendship.to_dict()
-            friend_ids.add(friend_data.get('friend_id'))
-        print(f"[CHATS] Found {len(friend_ids)} friends: {friend_ids}")
+    friendships = db.collection('friendships').where('user_id', '==', user_id).where('status', '==', 'active').stream()
+    for friendship in friendships:
+        friend_data = friendship.to_dict()
+        friend_ids.add(friend_data.get('friend_id'))
+    print(f"[CHATS] Found {len(friend_ids)} friends: {friend_ids}")
     
     for doc in list(chats1) + list(chats2):
         chat_data = doc.to_dict()
@@ -95,25 +106,14 @@ async def get_user_chats(user_id: str, friends_only: bool = False):
         
         print(f"[CHATS] Processing chat with user {other_user_id}")
         
-        # Check if other user is a friend
-        is_friend = False
-        if not friends_only:
-            # Check friendship status for all chats
-            friendships = list(db.collection('friendships')
-                             .where('user_id', '==', user_id)
-                             .where('friend_id', '==', other_user_id)
-                             .where('status', '==', 'active')
-                             .limit(1)
-                             .stream())
-            is_friend = len(friendships) > 0
-            print(f"[CHATS]   is_friend={is_friend} (checked database)")
-        else:
-            # If friends_only filter is on, only include friends
-            is_friend = other_user_id in friend_ids
-            print(f"[CHATS]   is_friend={is_friend} (checked friend_ids set)")
-            if not is_friend:
-                print(f"[CHATS]   Skipping non-friend")
-                continue
+        # Check if other user is a friend (optimized - single set lookup)
+        is_friend = other_user_id in friend_ids
+        print(f"[CHATS]   is_friend={is_friend}")
+        
+        # If friends_only filter is on, skip non-friends
+        if friends_only and not is_friend:
+            print(f"[CHATS]   Skipping non-friend")
+            continue
         
         chat_data['is_friend'] = is_friend
         chat_rooms.append(chat_data)
@@ -128,11 +128,24 @@ async def get_user_chats(user_id: str, friends_only: bool = False):
 
 
 @router.get("/chats/room/{chat_room_id}/messages", response_model=List[Message])
-async def get_chat_messages(chat_room_id: str):
+async def get_chat_messages(chat_room_id: str, authenticated_user: str = Depends(get_current_user)):
     """Get all messages in a chat room"""
     db = get_db()
     
     print(f"[GET_MESSAGES] Fetching messages for chat_room_id: {chat_room_id}")
+    
+    # SECURITY: Verify user is a participant in this chat room
+    chat_room_ref = db.collection('chat_rooms').document(chat_room_id)
+    chat_room = chat_room_ref.get()
+    
+    if not chat_room.exists:
+        raise HTTPException(status_code=404, detail="Chat room not found")
+    
+    chat_data = chat_room.to_dict()
+    
+    # Check if authenticated user is either user1 or user2
+    if authenticated_user not in [chat_data.get('user1_id'), chat_data.get('user2_id')]:
+        raise HTTPException(status_code=403, detail="Not authorized to view this chat")
     
     messages = []
     for doc in db.collection('messages').where('chat_room_id', '==', chat_room_id).stream():
@@ -149,9 +162,13 @@ async def get_chat_messages(chat_room_id: str):
 
 
 @router.get("/chats/between/{user1_id}/{user2_id}")
-async def get_or_create_chat_room(user1_id: str, user2_id: str, product_id: str = None):
+async def get_or_create_chat_room(user1_id: str, user2_id: str, product_id: str = None, authenticated_user: str = Depends(get_current_user)):
     """Get or create a chat room between two users"""
     db = get_db()
+    
+    # SECURITY: Verify authenticated user is one of the participants
+    if authenticated_user not in [user1_id, user2_id]:
+        raise HTTPException(status_code=403, detail="Cannot create/access chat room for other users")
     
     # Generate consistent chat room ID
     chat_room_id = f"{min(user1_id, user2_id)}_{max(user1_id, user2_id)}"
@@ -183,9 +200,13 @@ async def get_or_create_chat_room(user1_id: str, user2_id: str, product_id: str 
 
 
 @router.put("/chats/{chat_room_id}/mark-read/{user_id}")
-async def mark_messages_read(chat_room_id: str, user_id: str):
+async def mark_messages_read(chat_room_id: str, user_id: str, authenticated_user: str = Depends(get_current_user)):
     """Mark all messages in a chat room as read for a user"""
     db = get_db()
+    
+    # SECURITY: Verify user can only mark their own messages as read
+    if user_id != authenticated_user:
+        raise HTTPException(status_code=403, detail="Cannot mark messages as read for another user")
     
     chat_room_ref = db.collection('chat_rooms').document(chat_room_id)
     chat_room = chat_room_ref.get()
@@ -194,6 +215,11 @@ async def mark_messages_read(chat_room_id: str, user_id: str):
         raise HTTPException(status_code=404, detail="Chat room not found")
     
     chat_data = chat_room.to_dict()
+    
+    # SECURITY: Verify user is a participant
+    if user_id not in [chat_data.get('user1_id'), chat_data.get('user2_id')]:
+        raise HTTPException(status_code=403, detail="Not authorized to access this chat")
+    
     unread_field = 'unread_count_user1' if user_id == chat_data['user1_id'] else 'unread_count_user2'
     
     # Reset unread count in chat room

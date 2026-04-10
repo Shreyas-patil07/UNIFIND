@@ -12,7 +12,8 @@ export const sendMessage = async ({
   chatId,
   senderId,
   receiverId,
-  text
+  text,
+  replyTo = null
 }) => {
   if (!text.trim()) return;
 
@@ -24,7 +25,8 @@ export const sendMessage = async ({
     sender_id: senderId,
     text: text.trim(),
     timestamp: serverTimestamp(),
-    read_by: [senderId]
+    read_by: [senderId],
+    reply_to: replyTo || null
   });
 
   // 2. Update chat room

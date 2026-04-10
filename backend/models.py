@@ -247,6 +247,7 @@ class MessageBase(BaseModel):
 class MessageCreate(MessageBase):
     receiver_id: str
     product_id: Optional[str] = None
+    reply_to: Optional[str] = None  # ID of message being replied to
 
 
 class Message(MessageBase):
@@ -256,6 +257,7 @@ class Message(MessageBase):
     chat_room_id: str
     timestamp: datetime
     is_read: bool = False
+    reply_to: Optional[str] = None  # ID of message being replied to
 
 
 class ChatRoom(BaseModel):

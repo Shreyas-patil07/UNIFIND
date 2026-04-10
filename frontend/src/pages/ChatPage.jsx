@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Header from '../components/Header';
-import { Send, MapPin, IndianRupee, ArrowLeft, Check, CheckCheck, Smile, Search, MoreVertical, Flag, UserPlus } from 'lucide-react';
+import { Send, MapPin, IndianRupee, ArrowLeft, Check, CheckCheck, Smile, Search, MoreVertical, Flag, UserPlus, Reply, Users } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -42,6 +42,7 @@ const ChatPage = () => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [friendsOnly, setFriendsOnly] = useState(false);
   const [chatUserProfiles, setChatUserProfiles] = useState({}); // Cache user profiles for search
+  const [replyingTo, setReplyingTo] = useState(null); // Reply state
   
   const messagesEndRef = useRef(null);
   const messageInputRef = useRef(null);
@@ -291,8 +292,8 @@ const ChatPage = () => {
     const loadFriendships = async () => {
       try {
         const friends = await getFriends(currentUser.uid);
-        const friendIds = new Set(friends.map(f => f.friend_id || f.user_id));
-        console.log('[ChatPage] Loaded friends from API:', friendIds.size, 'friends');
+        const friendIds = new Set(friends.map(f => f.id));
+        console.log('[ChatPage] Loaded friends from API:', friendIds.size, 'friends', Array.from(friendIds));
         return friendIds;
       } catch (error) {
         console.warn('[ChatPage] Failed to load friends:', error);
@@ -479,6 +480,7 @@ const ChatPage = () => {
       }));
 
       console.log('[ChatPage] Realtime messages:', realtimeMessages);
+      console.log('[ChatPage] Sample message with reply_to:', realtimeMessages.find(m => m.reply_to));
 
       setMessages(prev => {
         const messageMap = new Map();
@@ -578,6 +580,7 @@ const ChatPage = () => {
 
     setSending(true);
     const messageText = message.trim();
+    const replyData = replyingTo; // Capture reply data before clearing
     
     // Create optimistic message with temporary ID
     const optimisticMessage = {
@@ -589,12 +592,14 @@ const ChatPage = () => {
       chat_room_id: selectedChat.id,
       timestamp: new Date(),
       is_read: false,
+      reply_to: replyData ? replyData.message_id : null,
       _optimistic: true
     };
     
     // Add optimistic message immediately
     setMessages(prev => [...prev, optimisticMessage]);
     setMessage('');
+    setReplyingTo(null); // Clear reply preview immediately
     messageInputRef.current?.focus();
     
     try {
@@ -602,12 +607,21 @@ const ChatPage = () => {
       
       // Only call backend - it will write to Firestore
       // The Firestore listener will pick up the message automatically
-      await sendChatMessage({
+      const messagePayload = {
         text: messageText,
         sender_id: currentUser.uid,
         receiver_id: otherId,
         product_id: selectedChat.product_id || null
-      }, token);
+      };
+      
+      // Add reply_to if replying to a message
+      if (replyData) {
+        messagePayload.reply_to = replyData.message_id;
+      }
+      
+      console.log('[ChatPage] Sending message with payload:', messagePayload);
+      
+      await sendChatMessage(messagePayload, token);
       
       console.log('[ChatPage] Message sent successfully');
       
@@ -637,6 +651,7 @@ const ChatPage = () => {
       setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
       alert('Failed to send message. Please try again.');
       setMessage(messageText);
+      setReplyingTo(replyData); // Restore reply preview on error
     } finally {
       setSending(false);
     }
@@ -991,7 +1006,7 @@ const ChatPage = () => {
                           data-message-id={msg.id}
                           data-sender-id={msg.sender_id}
                           data-is-read={msg.is_read}
-                          className={`flex gap-2 ${mtClass} ${isCurrentUser ? 'justify-end' : 'justify-start'} ${msg._optimistic ? 'opacity-70' : ''}`}
+                          className={`flex items-center gap-2 ${mtClass} ${isCurrentUser ? 'justify-end' : 'justify-start'} ${msg._optimistic ? 'opacity-70' : ''}`}
                           data-testid={`message-${msg.id}`}
                         >
                           {!isCurrentUser && showAvatar && (
@@ -1004,7 +1019,7 @@ const ChatPage = () => {
                           {!isCurrentUser && !showAvatar && <div className="w-8 flex-shrink-0" />}
                           
                           <div 
-                            className={`inline-flex items-end gap-2 px-3.5 py-2 shadow-sm max-w-[85%] md:max-w-[75%] ${
+                            className={`inline-flex flex-col gap-2 px-3.5 py-2 shadow-sm max-w-[85%] md:max-w-[75%] ${
                               isCurrentUser
                                 ? `bg-indigo-600 text-white rounded-2xl ${isSameSenderAsPrev ? 'rounded-r-sm' : 'rounded-br-sm'}`
                                 : `border rounded-2xl ${isSameSenderAsPrev ? 'rounded-l-sm' : 'rounded-bl-sm'} ${
@@ -1014,35 +1029,92 @@ const ChatPage = () => {
                                   }`
                             }`}
                           >
-                            <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">{msg.text}</p>
-                            <div className="flex items-center gap-1 flex-shrink-0 pb-0.5">
-                              <span className={`text-[10px] whitespace-nowrap ${
-                                isCurrentUser ? 'text-indigo-200' : 'text-slate-500'
-                              }`}>
-                                {(() => {
-                                  const timestamp = msg.timestamp?.seconds 
-                                    ? new Date(msg.timestamp.seconds * 1000) 
-                                    : new Date(msg.timestamp);
-                                  
-                                  const hours = timestamp.getHours().toString().padStart(2, '0');
-                                  const minutes = timestamp.getMinutes().toString().padStart(2, '0');
-                                  
-                                  return `${hours}:${minutes}`;
-                                })()}
-                              </span>
-                              {isCurrentUser && status && (
-                                <span className="inline-flex" title={
-                                  status === 'sent' ? 'Sent' : 
-                                  status === 'delivered' ? 'Delivered' : 
-                                  'Read'
-                                }>
-                                  {status === 'sent' && <Check className="h-3 w-3 text-indigo-200 opacity-70" />}
-                                  {status === 'delivered' && <CheckCheck className="h-3 w-3 text-indigo-200" />}
-                                  {status === 'read' && <CheckCheck className="h-3 w-3 text-orange-400 drop-shadow-sm" />}
+                            {/* Reply Context */}
+                            {msg.reply_to && (() => {
+                              const repliedMsg = messages.find(m => m.id === msg.reply_to);
+                              if (repliedMsg) {
+                                const repliedSenderName = repliedMsg.sender_id === currentUser.uid 
+                                  ? 'You' 
+                                  : otherUser?.name || 'User';
+                                return (
+                                  <div className={`px-2 py-1.5 rounded-lg border-l-2 ${
+                                    isCurrentUser 
+                                      ? 'bg-indigo-700/50 border-indigo-400' 
+                                      : darkMode 
+                                        ? 'bg-neutral-800 border-neutral-600' 
+                                        : 'bg-gray-100 border-gray-400'
+                                  }`}>
+                                    <div className={`text-[10px] font-medium mb-0.5 ${
+                                      isCurrentUser ? 'text-indigo-200' : darkMode ? 'text-neutral-400' : 'text-gray-600'
+                                    }`}>
+                                      <Reply size={10} className="inline mr-1" />
+                                      {repliedSenderName}
+                                    </div>
+                                    <div className={`text-xs truncate ${
+                                      isCurrentUser ? 'text-indigo-100' : darkMode ? 'text-neutral-300' : 'text-gray-700'
+                                    }`}>
+                                      {repliedMsg.text}
+                                    </div>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            })()}
+                            
+                            <div className="flex items-end gap-2">
+                              <p className="text-sm whitespace-pre-wrap break-words leading-relaxed flex-1">{msg.text}</p>
+                              <div className="flex items-center gap-1 flex-shrink-0 pb-0.5">
+                                <span className={`text-[10px] whitespace-nowrap ${
+                                  isCurrentUser ? 'text-indigo-200' : 'text-slate-500'
+                                }`}>
+                                  {(() => {
+                                    const timestamp = msg.timestamp?.seconds 
+                                      ? new Date(msg.timestamp.seconds * 1000) 
+                                      : new Date(msg.timestamp);
+                                    
+                                    const hours = timestamp.getHours().toString().padStart(2, '0');
+                                    const minutes = timestamp.getMinutes().toString().padStart(2, '0');
+                                    
+                                    return `${hours}:${minutes}`;
+                                  })()}
                                 </span>
-                              )}
+                                {isCurrentUser && status && (
+                                  <span className="inline-flex" title={
+                                    status === 'sent' ? 'Sent' : 
+                                    status === 'delivered' ? 'Delivered' : 
+                                    'Read'
+                                  }>
+                                    {status === 'sent' && <Check className="h-3 w-3 text-indigo-200 opacity-70" />}
+                                    {status === 'delivered' && <CheckCheck className="h-3 w-3 text-indigo-200" />}
+                                    {status === 'read' && <CheckCheck className="h-3 w-3 text-orange-400 drop-shadow-sm" />}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
+
+                          {/* Reply button (right side, only for received messages) */}
+                          {!isCurrentUser && (
+                            <button
+                              onClick={() => {
+                                setReplyingTo({
+                                  message_id: msg.id,
+                                  text: msg.text,
+                                  sender_id: msg.sender_id,
+                                  sender_name: otherUser?.name || 'User'
+                                });
+                                messageInputRef.current?.focus();
+                              }}
+                              className={`p-1 rounded transition-colors ${
+                                darkMode 
+                                  ? 'text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200' 
+                                  : 'text-gray-400 hover:bg-gray-200 hover:text-gray-600'
+                              }`}
+                              aria-label="Reply to message"
+                            >
+                              <Reply size={16} />
+                            </button>
+                          )}
                         </div>
                       </React.Fragment>
                     );
@@ -1077,6 +1149,37 @@ const ChatPage = () => {
 
               {/* Input Area */}
               <div className={`border-t p-2 sm:p-3 shadow-[0_-4px_10px_rgba(0,0,0,0.02)] flex-shrink-0 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:pb-3 ${darkMode ? 'bg-[#212121] border-neutral-700' : 'bg-white border-slate-200'}`}>
+                {/* Reply Preview */}
+                {replyingTo && (
+                  <div className={`mb-2 px-3 py-2 rounded-lg flex justify-between items-start border-l-4 border-indigo-500 ${
+                    darkMode ? 'bg-neutral-800' : 'bg-gray-100'
+                  }`}>
+                    <div className="flex-1 min-w-0">
+                      <div className={`text-xs font-medium mb-1 ${
+                        darkMode ? 'text-indigo-400' : 'text-indigo-600'
+                      }`}>
+                        Replying to {replyingTo.sender_name}
+                      </div>
+                      <div className={`text-sm truncate ${
+                        darkMode ? 'text-neutral-300' : 'text-gray-600'
+                      }`}>
+                        {replyingTo.text}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setReplyingTo(null)}
+                      className={`ml-2 p-1 rounded-full transition-colors ${
+                        darkMode 
+                          ? 'hover:bg-neutral-700 text-neutral-400' 
+                          : 'hover:bg-gray-200 text-gray-500'
+                      }`}
+                      aria-label="Cancel reply"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+                
                 <form onSubmit={handleSendMessage} className="flex items-center gap-2">
                   <div className="relative" ref={emojiPickerRef}>
                     <Button 
@@ -1262,8 +1365,8 @@ const ChatListItem = React.memo(({ chat, currentUserId, isSelected, onClick, for
         if (isActive) {
           setUser(userProfile);
           
-          // Cache the profile for search filtering
-          if (onUserProfileLoaded) {
+          // Cache the profile for search filtering (only if not deleted)
+          if (onUserProfileLoaded && !userProfile._deleted) {
             onUserProfileLoaded(otherId, userProfile);
           }
         }
@@ -1276,6 +1379,17 @@ const ChatListItem = React.memo(({ chat, currentUserId, isSelected, onClick, for
         }
       } catch (error) {
         console.error('Failed to load chat data:', error);
+        // Set a fallback user profile so the chat still displays
+        if (isActive) {
+          const otherId = chat.user1_id === currentUserId ? chat.user2_id : chat.user1_id;
+          setUser({
+            id: otherId,
+            user_id: otherId,
+            name: 'Unknown User',
+            avatar: null,
+            _deleted: true
+          });
+        }
       }
     };
 
@@ -1328,42 +1442,49 @@ const ChatListItem = React.memo(({ chat, currentUserId, isSelected, onClick, for
     >
       <div className="flex items-center gap-3 mb-1.5 sm:mb-2 text-sm sm:text-base">
         <div className="relative">
-          <img
-            src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}`}
-            alt={user.name}
-            className={`h-11 w-11 sm:h-12 sm:w-12 rounded-full object-cover ${isFriend ? 'ring-2 ring-indigo-500' : 'ring-2 ring-slate-100'}`}
-          />
-          {isFriend && (
+          {product ? (
+            <img
+              src={product.images?.[0] || '/placeholder.png'}
+              alt={product.title}
+              className="h-11 w-11 sm:h-12 sm:w-12 rounded-lg object-cover ring-2 ring-slate-100"
+            />
+          ) : (
+            <img
+              src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}`}
+              alt={user.name}
+              className={`h-11 w-11 sm:h-12 sm:w-12 rounded-full object-cover ${isFriend ? 'ring-2 ring-indigo-500' : 'ring-2 ring-slate-100'}`}
+            />
+          )}
+          {isFriend && !product && (
             <div className="absolute -top-1 -right-1 h-5 w-5 bg-indigo-600 rounded-full flex items-center justify-center border-2 border-white">
-              <UserPlus className="h-3 w-3 text-white" />
+              <Users className="h-3 w-3 text-white" />
             </div>
           )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
             <h3 className={`text-sm font-semibold truncate ${darkMode ? 'text-neutral-200' : 'text-slate-900'}`}>
-              {user.name}
+              {product ? product.title : user.name}
             </h3>
             <span className={`text-xs ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`}>
               {formatTime(chat.last_message_time)}
             </span>
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
+            {product && (
+              <span className={`text-xs font-medium ${darkMode ? 'text-neutral-400' : 'text-slate-600'}`}>
+                {user.name}
+              </span>
+            )}
             <p className={`text-sm truncate flex-1 ${darkMode ? 'text-neutral-400' : 'text-slate-600'}`}>{chat.last_message || 'No messages yet'}</p>
             {unreadCount > 0 && (
-              <span className="bg-indigo-600 text-white text-xs rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center ml-2 font-medium" data-testid="unread-badge">
+              <span className="bg-indigo-600 text-white text-xs rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center ml-2 font-medium flex-shrink-0" data-testid="unread-badge">
                 {unreadCount}
               </span>
             )}
           </div>
         </div>
       </div>
-      {product && (
-        <div className={`text-xs truncate ml-15 flex items-center gap-1 ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`}>
-          <span>📦</span>
-          <span>{product.title}</span>
-        </div>
-      )}
     </div>
   );
 });

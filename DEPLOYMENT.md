@@ -147,48 +147,101 @@ Update Firestore security rules in Firebase Console:
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user owns the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
     // Users collection - read public, write own
     match /users/{userId} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == resource.data.firebase_uid;
+      allow read: if true;  // Public read for user discovery
+      allow write: if isOwner(userId) || isOwner(resource.data.firebase_uid);
     }
     
     // User profiles - read public, write own
     match /user_profiles/{profileId} {
-      allow read: if true;
-      allow write: if request.auth != null;
+      allow read: if true;  // Public read for profiles
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() 
+        && request.auth.uid == resource.data.user_id;
     }
     
     // Products - read all, write own
     match /products/{productId} {
-      allow read: if true;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null && request.auth.uid == resource.data.seller_id;
+      allow read: if true;  // Public read for marketplace
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() 
+        && request.auth.uid == resource.data.seller_id;
     }
     
     // Chat rooms - read/write if participant
-    match /chat_rooms/{roomId} {
-      allow read, write: if request.auth != null;
+    match /chat_rooms/{chatId} {
+      allow read: if isAuthenticated() 
+        && (request.auth.uid == resource.data.user1_id 
+            || request.auth.uid == resource.data.user2_id);
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() 
+        && (request.auth.uid == resource.data.user1_id 
+            || request.auth.uid == resource.data.user2_id);
+      allow delete: if false;  // Prevent deletion
     }
     
-    // Messages - read/write if authenticated
+    // Messages - read/write if authenticated (chat room access controlled by backend)
     match /messages/{messageId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isAuthenticated();
+    }
+    
+    // Friendships - read/write if participant
+    match /friendships/{friendshipId} {
+      allow read: if isAuthenticated() 
+        && (request.auth.uid == resource.data.user_id 
+            || request.auth.uid == resource.data.friend_id);
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() 
+        && (request.auth.uid == resource.data.user_id 
+            || request.auth.uid == resource.data.friend_id);
+      allow delete: if isAuthenticated() 
+        && (request.auth.uid == resource.data.user_id 
+            || request.auth.uid == resource.data.friend_id);
     }
     
     // Reviews - read all, write if authenticated
     match /reviews/{reviewId} {
-      allow read: if true;
-      allow create: if request.auth != null;
+      allow read: if true;  // Public read for trust system
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() 
+        && request.auth.uid == resource.data.reviewer_id;
     }
     
     // Transaction history - read/write own
     match /transaction_history/{transactionId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.user_id;
+      allow read, write: if isAuthenticated() 
+        && request.auth.uid == resource.data.user_id;
+    }
+    
+    // Need board searches - read/write own
+    match /need_board_searches/{searchId} {
+      allow read, write: if isAuthenticated() 
+        && request.auth.uid == resource.data.user_id;
     }
   }
 }
 ```
+
+**Security Notes**:
+- All write operations require authentication
+- Users can only modify their own data
+- Chat rooms accessible only to participants
+- Products editable only by seller
+- Reviews editable only by reviewer
+- Public read access for marketplace discovery
+- Transaction history private to user
 
 ### Firebase Indexes
 Create these composite indexes in Firebase Console → Firestore → Indexes:
@@ -196,13 +249,28 @@ Create these composite indexes in Firebase Console → Firestore → Indexes:
 1. **products**
    - category (Ascending) + posted_date (Descending)
    - seller_id (Ascending) + posted_date (Descending)
+   - is_active (Ascending) + posted_date (Descending)
 
 2. **messages**
    - chat_room_id (Ascending) + timestamp (Ascending)
+   - sender_id (Ascending) + timestamp (Descending)
 
 3. **reviews**
    - reviewed_user_id (Ascending) + created_at (Descending)
    - product_id (Ascending) + created_at (Descending)
+
+4. **chat_rooms**
+   - user1_id (Ascending) + last_message_time (Descending)
+   - user2_id (Ascending) + last_message_time (Descending)
+
+5. **friendships**
+   - user_id (Ascending) + status (Ascending) + created_at (Descending)
+   - friend_id (Ascending) + status (Ascending) + created_at (Descending)
+
+6. **need_board_searches**
+   - user_id (Ascending) + created_at (Descending)
+
+**Note**: Firebase will prompt you to create indexes when queries fail. Click the provided link to auto-create the required index.
 
 ---
 
