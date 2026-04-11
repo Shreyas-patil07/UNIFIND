@@ -181,6 +181,27 @@ export const deleteProduct = async (productId, idToken) => {
   return response.data
 }
 
+// Mark product as sold
+export const markProductAsSold = async (productId, buyerId, idToken) => {
+  const response = await api.patch(`/products/${productId}/mark-sold`,
+    { buyer_id: buyerId || null },
+    {
+      headers: { 'Authorization': `Bearer ${idToken}` }
+    }
+  )
+  return response.data
+}
+
+// Mark product as active again
+export const markProductAsActive = async (productId, idToken) => {
+  const response = await api.patch(`/products/${productId}/mark-active`, {},
+    {
+      headers: { 'Authorization': `Bearer ${idToken}` }
+    }
+  )
+  return response.data
+}
+
 // Chat API calls via backend
 export const getUserChats = async (userId, friendsOnly = false, idToken) => {
   const params = friendsOnly ? { friends_only: true } : {}

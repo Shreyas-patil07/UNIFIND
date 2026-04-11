@@ -244,31 +244,51 @@ service cloud.firestore {
 - Transaction history private to user
 
 ### Firebase Indexes
-Create these composite indexes in Firebase Console → Firestore → Indexes:
+Firebase requires composite indexes for multi-field queries. Deploy using the provided configuration file:
+
+```bash
+# Deploy all indexes at once (recommended)
+firebase deploy --only firestore:indexes
+```
+
+The `firestore.indexes.json` file includes optimized indexes for all collections. Key indexes:
 
 1. **products**
-   - category (Ascending) + posted_date (Descending)
-   - seller_id (Ascending) + posted_date (Descending)
-   - is_active (Ascending) + posted_date (Descending)
+   - category + posted_date (browsing)
+   - seller_id + posted_date (seller dashboard)
+   - is_active + mark_as_sold + created_at (listing queries)
+   - category + is_active + created_at (filtered browsing)
 
 2. **messages**
-   - chat_room_id (Ascending) + timestamp (Ascending)
-   - sender_id (Ascending) + timestamp (Descending)
+   - chat_room_id + timestamp (chat ordering)
+   - sender_id + timestamp (user messages)
 
 3. **reviews**
-   - reviewed_user_id (Ascending) + created_at (Descending)
-   - product_id (Ascending) + created_at (Descending)
+   - reviewed_user_id + created_at (user reviews)
+   - product_id + created_at (product reviews)
 
 4. **chat_rooms**
-   - user1_id (Ascending) + last_message_time (Descending)
-   - user2_id (Ascending) + last_message_time (Descending)
+   - user1_id + last_message_time (user chats)
+   - user2_id + last_message_time (user chats)
 
 5. **friendships**
-   - user_id (Ascending) + status (Ascending) + created_at (Descending)
-   - friend_id (Ascending) + status (Ascending) + created_at (Descending)
+   - user_id + status + created_at (friend lists)
+   - friend_id + status + created_at (friend lists)
 
 6. **need_board_searches**
-   - user_id (Ascending) + created_at (Descending)
+   - user_id + created_at (search history)
+
+7. **needs** (demand-supply engine)
+   - user_id + created_at (user needs)
+   - status + created_at (active needs)
+
+8. **transaction_history**
+   - seller_id + created_at (seller transactions)
+   - buyer_id + created_at (buyer transactions)
+
+**Index Build Time**: 5-30 minutes depending on data size
+
+**Monitoring**: Firebase Console → Firestore → Indexes (wait for "Enabled" status)
 
 **Note**: Firebase will prompt you to create indexes when queries fail. Click the provided link to auto-create the required index.
 

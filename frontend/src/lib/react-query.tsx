@@ -10,7 +10,7 @@ import { ReactNode } from 'react'
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 30, // 30 seconds (reduced from 5 minutes for faster updates)
+      staleTime: 1000 * 5, // 5 seconds
       gcTime: 1000 * 60 * 5, // 5 minutes (reduced from 10 minutes)
       retry: (failureCount, error: any) => {
         // Don't retry on 4xx errors

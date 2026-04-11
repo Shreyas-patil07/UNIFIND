@@ -190,14 +190,40 @@ async def need_board(
     try:
         logger.info(f"Processing need board query for user {user_id}: {request.query[:50]}...")
         
-        # Fetch active products from database
+        # Extract intent FIRST to pre-filter products (OPTIMIZATION)
+        intent = await extract_intent(request.query)
+        logger.debug(f"Extracted intent: {intent}")
+        
+        # Fetch active products from database with pre-filtering
         products_ref = db.collection('products')
-        query = products_ref.where('is_active', '==', True).limit(100)
+        query = products_ref.where('is_active', '==', True)
+        
+        # Pre-filter by category if extracted (reduces AI load)
+        extracted_category = intent.get('category')
+        if extracted_category and extracted_category != 'Other':
+            logger.info(f"Pre-filtering by category: {extracted_category}")
+            query = query.where('category', '==', extracted_category).limit(50)
+        else:
+            query = query.limit(100)
+        
+        # Pre-filter by price if max_price specified (reduces AI load)
+        max_price = intent.get('max_price')
+        if max_price and isinstance(max_price, (int, float)) and max_price > 0:
+            logger.info(f"Pre-filtering by max price: {max_price}")
+            # Note: Firestore doesn't support multiple inequality filters on different fields
+            # So we'll filter in Python after fetching
         
         # Convert products to listing format
         listings = []
         for doc in query.stream():
             product_data = doc.to_dict()
+            
+            # Apply price filter in Python if needed
+            if max_price and isinstance(max_price, (int, float)) and max_price > 0:
+                product_price = product_data.get("price", 0)
+                if product_price > max_price:
+                    continue  # Skip products over budget
+            
             listings.append({
                 "id": doc.id,
                 "title": product_data.get("title", ""),
@@ -208,11 +234,7 @@ async def need_board(
                 "images": product_data.get("images", []),
             })
         
-        logger.debug(f"Fetched {len(listings)} active products from database")
-        
-        # Extract intent from query
-        intent = await extract_intent(request.query)
-        logger.debug(f"Extracted intent: {intent}")
+        logger.debug(f"Fetched {len(listings)} active products after pre-filtering")
         
         # Rank listings against intent
         ranked = await rank_listings(request.query, intent, listings)

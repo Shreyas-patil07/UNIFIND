@@ -133,6 +133,8 @@ const SellerPage = () => {
   }, [navigate]);
 
   const handleDelete = useCallback((productId) => {
+    console.log('[SellerPage] handleDelete called with productId:', productId);
+    console.log('[SellerPage] productId type:', typeof productId);
     setDeleteProductId(productId);
     setShowDeleteModal(true);
   }, []);
@@ -142,11 +144,19 @@ const SellerPage = () => {
     setConfirmingAction(true);
     
     try {
+      console.log('[SellerPage] Deleting product:', deleteProductId);
       await deleteProductMutation.mutateAsync(deleteProductId);
+      console.log('[SellerPage] Delete successful');
       setShowDeleteModal(false);
       setDeleteProductId(null);
     } catch (error) {
-      console.error('Failed to delete product:', error);
+      console.error('[SellerPage] Failed to delete product:', error);
+      console.error('[SellerPage] Error details:', {
+        message: error?.message,
+        detail: error?.detail,
+        error: error?.error
+      });
+      // The toast is already shown by the hook's onError
     } finally {
       setConfirmingAction(false);
     }

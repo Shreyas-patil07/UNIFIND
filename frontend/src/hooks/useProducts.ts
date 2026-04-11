@@ -64,6 +64,7 @@ export function useSellerProducts() {
     },
     staleTime: 0, // Always consider data stale
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    refetchOnMount: true, // Always refetch on mount
   })
 }
 
@@ -140,36 +141,52 @@ export function useDeleteProduct() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (productId: string) => api.deleteProduct(productId),
-    onMutate: async (productId) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: productKeys.seller() })
-      await queryClient.cancelQueries({ queryKey: productKeys.lists() })
-
-      // Snapshot the previous value
-      const previousSellerProducts = queryClient.getQueryData(productKeys.seller())
-
-      // Optimistically remove the product
+    mutationFn: (productId: string) => {
+      console.log('[Hook] useDeleteProduct mutationFn called:', { productId })
+      return api.deleteProduct(productId)
+    },
+    onSuccess: (data, productId) => {
+      console.log('[Hook] useDeleteProduct onSuccess:', data)
+      
+      // Immediately update the cache by removing the product
       queryClient.setQueryData(productKeys.seller(), (old: any) => {
-        if (!Array.isArray(old)) return old
-        return old.filter((p: any) => p.id !== productId)
+        if (!Array.isArray(old)) {
+          console.log('[Hook] No old data to update')
+          return old
+        }
+        const filtered = old.filter((p: any) => p.id !== productId)
+        console.log('[Hook] Removed product from cache, new count:', filtered.length)
+        return filtered
       })
-
-      return { previousSellerProducts }
-    },
-    onError: (err, productId, context) => {
-      // Roll back on error
-      if (context?.previousSellerProducts) {
-        queryClient.setQueryData(productKeys.seller(), context.previousSellerProducts)
-      }
-      toast.error('Failed to delete product')
-    },
-    onSuccess: () => {
+      
       toast.success('Product deleted successfully!')
     },
+    onError: (err: any, productId) => {
+      console.error('[Hook] useDeleteProduct onError:', err)
+      
+      // If product not found (404), it's already deleted - remove from cache anyway
+      if (err?.detail?.error === 'Not found' || err?.error === 'Not Found') {
+        console.log('[Hook] Product already deleted (404), removing from cache')
+        queryClient.setQueryData(productKeys.seller(), (old: any) => {
+          if (!Array.isArray(old)) return old
+          return old.filter((p: any) => p.id !== productId)
+        })
+        toast.success('Product removed')
+      } else {
+        toast.error('Failed to delete product')
+      }
+    },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: productKeys.lists() })
-      queryClient.invalidateQueries({ queryKey: productKeys.seller() })
+      console.log('[Hook] useDeleteProduct onSettled - invalidating queries')
+      // Force refetch
+      queryClient.invalidateQueries({ 
+        queryKey: productKeys.seller(),
+        refetchType: 'active'
+      })
+      queryClient.invalidateQueries({ 
+        queryKey: productKeys.lists(),
+        refetchType: 'active'
+      })
     },
   })
 }

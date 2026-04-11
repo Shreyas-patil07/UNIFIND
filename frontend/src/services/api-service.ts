@@ -54,8 +54,13 @@ export const createProduct = (product: ProductCreate) =>
 export const updateProduct = (productId: string, product: ProductUpdate) =>
   patch<Product>(`/products/${productId}`, product)
 
-export const deleteProduct = (productId: string) =>
-  del<{ message: string }>(`/products/${productId}`)
+export const deleteProduct = (productId: string) => {
+  console.log('[API] deleteProduct called:', { productId })
+  return del<{ message: string }>(`/products/${productId}`).then(response => {
+    console.log('[API] deleteProduct response:', response)
+    return response
+  })
+}
 
 export const getInterestedBuyers = (productId: string) =>
   get<Array<{
