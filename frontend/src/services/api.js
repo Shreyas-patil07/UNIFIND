@@ -243,3 +243,70 @@ export const getNeedBoardHistory = async (idToken) => {
   })
   return response.data // { searches, searches_remaining }
 }
+
+// Needs API (Demand → Supply Engine)
+export const createNeed = async (rawText, idToken) => {
+  const response = await api.post('/needs', { raw_text: rawText }, {
+    headers: {
+      'Authorization': `Bearer ${idToken}`
+    }
+  })
+  return response.data // { need, matched_listings }
+}
+
+export const getNeedMatches = async (needId, idToken) => {
+  const response = await api.get(`/needs/match/${needId}`, {
+    headers: {
+      'Authorization': `Bearer ${idToken}`
+    }
+  })
+  return response.data // { matches }
+}
+
+export const getSellerNeedFeed = async (idToken) => {
+  const response = await api.get('/needs/seller-feed', {
+    headers: {
+      'Authorization': `Bearer ${idToken}`
+    }
+  })
+  return response.data // { needs, total_count }
+}
+
+export const getSellerDemandBanner = async (idToken) => {
+  const response = await api.get('/needs/seller-banner', {
+    headers: {
+      'Authorization': `Bearer ${idToken}`
+    }
+  })
+  return response.data // { total_relevant_needs, top_categories, message }
+}
+
+export const fulfillNeed = async (needId, productId, idToken) => {
+  const response = await api.post(`/needs/${needId}/fulfill`, 
+    { product_id: productId }, 
+    {
+      headers: {
+        'Authorization': `Bearer ${idToken}`
+      }
+    }
+  )
+  return response.data
+}
+
+export const saveNeed = async (needId, idToken) => {
+  const response = await api.post(`/needs/${needId}/save`, {}, {
+    headers: {
+      'Authorization': `Bearer ${idToken}`
+    }
+  })
+  return response.data
+}
+
+export const getMyNeeds = async (idToken) => {
+  const response = await api.get('/needs/my-needs', {
+    headers: {
+      'Authorization': `Bearer ${idToken}`
+    }
+  })
+  return response.data // { needs }
+}

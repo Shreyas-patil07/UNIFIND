@@ -274,7 +274,36 @@ Create these composite indexes in Firebase Console → Firestore → Indexes:
 
 ---
 
-## Part 4: Monitoring & Maintenance
+## Part 4: Transaction History Setup
+
+### Migration (One-Time)
+After deploying the backend, run the migration script to populate transaction history for existing products:
+
+```bash
+# Local
+cd backend
+python migrate_transaction_history.py
+
+# Production (Render)
+# Use Render Shell or run via deployment script
+```
+
+Expected output:
+```
+Migration Summary:
+Total products: X
+Transaction histories created: Y
+Skipped (already exists): Z
+Errors: 0
+```
+
+### Verification
+1. Check Firestore Console for `transaction_history` collection
+2. Verify records have all required fields
+3. Test marking a product as sold/active
+4. Confirm new transaction history records are created
+
+## Part 5: Monitoring & Maintenance
 
 ### Health Checks
 - Backend health: `https://unifind-backend.onrender.com/api/health`
@@ -330,7 +359,7 @@ Create these composite indexes in Firebase Console → Firestore → Indexes:
 
 ---
 
-## Part 5: Scaling Considerations
+## Part 6: Scaling Considerations
 
 ### Current Limits (Free Tier)
 - Render: 512MB RAM, sleeps after 15min inactivity
@@ -362,7 +391,7 @@ Create these composite indexes in Firebase Console → Firestore → Indexes:
 
 ---
 
-## Part 6: Security Checklist
+## Part 7: Security Checklist
 
 - [ ] All API keys in environment variables (not in code)
 - [ ] Firebase security rules configured
@@ -375,7 +404,7 @@ Create these composite indexes in Firebase Console → Firestore → Indexes:
 
 ---
 
-## Part 7: Rollback Procedure
+## Part 8: Rollback Procedure
 
 ### Backend Rollback (Render)
 1. Go to Render dashboard → Your Service

@@ -13,7 +13,7 @@ from fastapi.exceptions import RequestValidationError
 from slowapi.errors import RateLimitExceeded
 from config import settings
 from database import init_firebase
-from routes import products, users, chats, reviews, need_board, uploads, auth
+from routes import products, users, chats, reviews, need_board, uploads, auth, needs, transactions
 from security.headers import SecurityHeadersMiddleware
 from security.rate_limiter import limiter, _rate_limit_exceeded_handler
 
@@ -216,6 +216,8 @@ app.include_router(users.router, prefix="/api", tags=["users"])
 app.include_router(chats.router, prefix="/api", tags=["chats"])
 app.include_router(reviews.router, prefix="/api", tags=["reviews"])
 app.include_router(need_board.router, prefix="/api", tags=["need-board"])
+app.include_router(needs.router, prefix="/api", tags=["needs"])
+app.include_router(transactions.router, prefix="/api", tags=["transactions"])
 
 # Include routers without /api prefix (fallback for misconfigured clients)
 app.include_router(auth.router, prefix="/auth", tags=["auth-fallback"])
@@ -225,6 +227,8 @@ app.include_router(users.router, tags=["users-fallback"])
 app.include_router(chats.router, tags=["chats-fallback"])
 app.include_router(reviews.router, tags=["reviews-fallback"])
 app.include_router(need_board.router, tags=["need-board-fallback"])
+app.include_router(needs.router, tags=["needs-fallback"])
+app.include_router(transactions.router, tags=["transactions-fallback"])
 
 
 # Health check endpoints

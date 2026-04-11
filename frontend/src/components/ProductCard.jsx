@@ -93,18 +93,37 @@ const ProductCard = ({ product, onView }) => {
         {/* Gradient overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-        {/* Condition Badge */}
+        {/* Status and Condition Badges */}
         <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5">
+          {/* Status Badge - SOLD or ACTIVE */}
+          {!product.is_active ? (
+            <span
+              className="bg-red-600 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-white shadow-sm"
+              data-testid="product-status-badge"
+            >
+              SOLD
+            </span>
+          ) : (
+            <span
+              className="bg-green-600 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-white shadow-sm"
+              data-testid="product-status-badge"
+            >
+              ACTIVE
+            </span>
+          )}
+          
+          {/* Condition Badge */}
           <span
             className={`${condition.color} px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-white shadow-sm`}
             data-testid="product-condition-badge"
           >
             {condition.label}
           </span>
+          
           {/* Negotiable Badge */}
           {product.negotiable && (
             <span
-              className="bg-green-500 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-white shadow-sm"
+              className="bg-blue-500 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-white shadow-sm"
               data-testid="product-negotiable-badge"
             >
               Negotiable

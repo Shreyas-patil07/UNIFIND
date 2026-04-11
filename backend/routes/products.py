@@ -71,7 +71,7 @@ async def get_products(
     page_size: int = Query(20, ge=1, le=100, description="Items per page")
 ):
     """
-    Get active products with server-side filtering, sorting, and pagination.
+    Get all products (active and sold) with server-side filtering, sorting, and pagination.
     
     Returns:
         {
@@ -86,8 +86,8 @@ async def get_products(
         db = get_db()
         products_ref = db.collection('products')
         
-        # Start with active products only
-        query = products_ref.where(filter=FieldFilter('is_active', '==', True))
+        # Fetch all products (both active and sold)
+        query = products_ref
         
         # Apply Firestore filters (limited to avoid composite index requirements)
         if category:
@@ -441,7 +441,7 @@ async def mark_product_as_sold(
     request_body: dict = Body({}),
     user_id: str = Depends(get_current_user)
 ):
-    """Mark a product as sold and optionally create a transaction record"""
+    """Mark a product as sold and create a transaction history record"""
     buyer_id = request_body.get('buyer_id')
     
     logger.info(f"[mark-sold] Request received: product_id={product_id}, buyer_id={buyer_id}, user_id={user_id}")
@@ -481,6 +481,18 @@ async def mark_product_as_sold(
     
     logger.info(f"[mark-sold] Product {product_id} marked as sold" + (f" to buyer {buyer_id}" if buyer_id else " (no buyer specified)"))
     
+    # Create product transaction history record
+    transaction_history_data = {
+        'amount': existing_product.get('price', 0),
+        'product_id': product_id,
+        'seller_id': user_id,
+        'status': 'completed',
+        'transaction_type_sold': True,
+        'created_at': datetime.now()
+    }
+    db.collection('transaction_history').add(transaction_history_data)
+    logger.info(f"Created transaction history record for product {product_id} marked as sold")
+    
     # Create transaction records if buyer is specified
     if buyer_id:
         transaction_data = {
@@ -518,7 +530,7 @@ async def mark_product_as_sold(
 
 @router.patch("/{product_id}/mark-active")
 async def mark_product_as_active(product_id: str, user_id: str = Depends(get_current_user)):
-    """Mark a product as active again (clear sold status)"""
+    """Mark a product as active again and create a transaction history record"""
     logger.info(f"[mark-active] Request received: product_id={product_id}, user_id={user_id}")
     
     db = get_db()
@@ -555,6 +567,18 @@ async def mark_product_as_active(product_id: str, user_id: str = Depends(get_cur
     
     doc_ref.update(update_data)
     
+    # Create product transaction history record
+    transaction_history_data = {
+        'amount': existing_product.get('price', 0),
+        'product_id': product_id,
+        'seller_id': user_id,
+        'status': 'completed',
+        'transaction_type_sold': False,
+        'created_at': datetime.now()
+    }
+    db.collection('transaction_history').add(transaction_history_data)
+    logger.info(f"Created transaction history record for product {product_id} marked as active")
+    
     logger.info(f"[mark-active] Product {product_id} marked as active successfully")
     
     return {"message": "Product marked as active successfully"}
@@ -562,7 +586,7 @@ async def mark_product_as_active(product_id: str, user_id: str = Depends(get_cur
 
 @router.delete("/{product_id}")
 async def delete_product(product_id: str, user_id: str = Depends(get_current_user)):
-    """Delete a product listing (soft delete)"""
+    """Delete a product listing and all related data (chats, messages, transaction history)"""
     db = get_db()
     doc_ref = db.collection('products').document(product_id)
     doc = doc_ref.get()
@@ -581,19 +605,67 @@ async def delete_product(product_id: str, user_id: str = Depends(get_current_use
             detail={"error": "Forbidden", "detail": "Unauthorized to modify this product"}
         )
     
-    # Soft delete
-    doc_ref.update({'is_active': False})
-
-    # Best-effort Cloudinary cleanup — log failures but don't block the response
-    for url in existing_product.get('images', []):
-        public_id = extract_public_id(url)
-        if public_id:
-            try:
-                delete_product_image(public_id)
-            except Exception as e:
-                logger.warning(
-                    "Failed to delete Cloudinary image %s for product %s: %s",
-                    public_id, product_id, e
-                )
-
-    return {"message": "Product deleted successfully"}
+    try:
+        # Delete all related chat rooms
+        chat_rooms_query = db.collection('chat_rooms').where('product_id', '==', product_id)
+        chat_rooms = list(chat_rooms_query.stream())
+        
+        logger.info(f"Deleting {len(chat_rooms)} chat rooms for product {product_id}")
+        
+        for chat_room_doc in chat_rooms:
+            chat_room_id = chat_room_doc.id
+            
+            # Delete all messages in this chat room
+            messages_query = db.collection('messages').where('chat_room_id', '==', chat_room_id)
+            messages = list(messages_query.stream())
+            
+            logger.info(f"Deleting {len(messages)} messages in chat room {chat_room_id}")
+            
+            for message_doc in messages:
+                message_doc.reference.delete()
+            
+            # Delete the chat room itself
+            chat_room_doc.reference.delete()
+        
+        # Delete all transaction history records
+        transaction_history_query = db.collection('transaction_history').where('product_id', '==', product_id)
+        transaction_history = list(transaction_history_query.stream())
+        
+        logger.info(f"Deleting {len(transaction_history)} transaction history records for product {product_id}")
+        
+        for transaction_doc in transaction_history:
+            transaction_doc.reference.delete()
+        
+        # Delete the product itself (hard delete)
+        doc_ref.delete()
+        
+        logger.info(f"Successfully deleted product {product_id} and all related data")
+        
+        # Best-effort Cloudinary cleanup — log failures but don't block the response
+        for url in existing_product.get('images', []):
+            public_id = extract_public_id(url)
+            if public_id:
+                try:
+                    delete_product_image(public_id)
+                except Exception as e:
+                    logger.warning(
+                        "Failed to delete Cloudinary image %s for product %s: %s",
+                        public_id, product_id, e
+                    )
+        
+        return {
+            "message": "Product and all related data deleted successfully",
+            "deleted": {
+                "product": product_id,
+                "chat_rooms": len(chat_rooms),
+                "messages": sum(len(list(db.collection('messages').where('chat_room_id', '==', cr.id).stream())) for cr in chat_rooms),
+                "transaction_history": len(transaction_history)
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error deleting product {product_id}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": "Failed to delete product", "detail": str(e)}
+        )

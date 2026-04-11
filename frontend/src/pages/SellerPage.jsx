@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
+import SellerDemandBanner from '../components/SellerDemandBanner';
 import { categories } from '../data/categories';
 import { Edit2, Trash2, CheckCircle2, Plus, Eye, Search, X, ChevronDown, ArrowUpDown, SlidersHorizontal, User } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
@@ -82,7 +83,7 @@ const SellerPage = () => {
 
       // Status filter
       if (filters.status !== 'all') {
-        const isActive = product.is_active !== false;
+        const isActive = product.is_active === true; // Explicitly check for true
         if (filters.status === 'active' && !isActive) return false;
         if (filters.status === 'sold' && isActive) return false;
       }
@@ -109,7 +110,7 @@ const SellerPage = () => {
     });
   }, [myListings, searchQuery, filters, sortBy]);
 
-  const activeCount = myListings.filter(p => p.is_active !== false).length;
+  const activeCount = myListings.filter(p => p.is_active === true).length;
   const soldCount = myListings.filter(p => p.is_active === false).length;
   const totalRevenue = myListings.filter(p => p.is_active === false).reduce((sum, p) => sum + p.price, 0);
 
@@ -280,6 +281,11 @@ const SellerPage = () => {
             <div className="text-xl sm:text-2xl font-black text-amber-600 mb-0.5">₹{(totalRevenue / 1000).toFixed(0)}k</div>
             <div className={`text-xs ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`}>Revenue</div>
           </div>
+        </div>
+
+        {/* Seller Demand Banner */}
+        <div className="mb-7">
+          <SellerDemandBanner />
         </div>
 
         {/* Search Bar */}
@@ -529,7 +535,7 @@ const SellerPage = () => {
         {/* Listings Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {filteredAndSortedListings.map((product) => {
-            const isSold = product.is_active === false;
+            const isSold = product.is_active === false; // Explicitly check for false
             return (
               <div
                 key={product.id}
@@ -608,7 +614,7 @@ const SellerPage = () => {
                       <Trash2 className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => handleMarkAsSold(product.id, product.is_active !== false)}
+                      onClick={() => handleMarkAsSold(product.id, product.is_active === true)}
                       className={`flex items-center justify-center py-2 rounded-xl border transition-all text-xs font-medium ${
                         isSold
                           ? darkMode

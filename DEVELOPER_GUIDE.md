@@ -184,6 +184,133 @@ const YourPage = () => {
 }
 ```
 
+### NeedBoard AI - Demand → Supply Engine
+
+UNIFIND includes an AI-powered demand-supply matching system that connects buyers posting needs with sellers who can fulfill them.
+
+**Key Features**:
+- Buyers post needs in natural language (e.g., "need laptop for coding budget 70k")
+- AI extracts structured data (category, tags, price range)
+- Automatic matching to existing listings and relevant sellers
+- Seller demand feed showing ranked buyer needs
+- Real-time notifications to relevant sellers
+
+**Architecture**:
+
+**Backend Components**:
+1. **Matching Engine** (`backend/services/need_matcher.py`):
+   - Text normalization and keyword extraction
+   - Scoring algorithm (0-100 points):
+     - Category match: 30 points
+     - Tag overlap: 25 points
+     - Keyword overlap: 30 points
+     - Price match: 15 points
+   - Functions: `match_need_to_listings()`, `match_need_to_sellers()`, `rank_needs_for_seller()`
+
+2. **API Routes** (`backend/routes/needs.py`):
+   ```bash
+   POST   /api/needs                  # Create need (5/day limit)
+   GET    /api/needs/match/:id        # Get matches for need
+   GET    /api/needs/seller-feed      # Get relevant needs for seller
+   GET    /api/needs/seller-banner    # Get demand banner data
+   POST   /api/needs/:id/fulfill      # Mark need as fulfilled
+   POST   /api/needs/:id/save         # Save need (seller interest)
+   GET    /api/needs/my-needs         # Get user's needs
+   ```
+
+**Frontend Components**:
+1. **PostNeedPage** (`/post-need`): Buyers post needs and see instant matches
+2. **SellerDemandFeedPage** (`/seller/demand-feed`): Sellers view ranked buyer needs
+3. **SellerDemandBanner**: Shows need count on seller dashboard
+
+**Database Schema** (`needs` collection):
+```javascript
+{
+  id: string,
+  user_id: string,
+  raw_text: string,
+  title: string,
+  category: string,
+  tags: string[],
+  price_range: { min: number, max: number },
+  college: string,
+  status: "open" | "fulfilled" | "expired",
+  matched_listings: string[],
+  interested_sellers: string[],
+  created_at: timestamp
+}
+```
+
+**How It Works**:
+1. Buyer posts need → AI extracts intent (category, tags, price)
+2. System matches need to active listings (keyword + category + price scoring)
+3. System identifies relevant sellers based on their inventory
+4. Top 10 sellers receive notifications
+5. Need stored in database with matched listings
+6. Sellers view ranked needs in demand feed with relevance scores
+
+**Rate Limiting**: 5 needs per day per user to prevent spam
+
+**Testing**:
+```bash
+# Test as buyer
+# 1. Navigate to /post-need
+# 2. Enter: "need laptop for coding budget 70k"
+# 3. Verify: structured data extracted, matched listings shown
+
+# Test as seller
+# 1. Navigate to /seller (see demand banner if relevant needs exist)
+# 2. Click banner → /seller/demand-feed
+# 3. Verify: ranked needs shown with relevance scores
+# 4. Test actions: Message, Save, Post Item
+```
+
+**Performance**: Fast keyword-based matching (<3s), efficient queries (limits to 100 products, 50 needs)
+
+**Security**: All endpoints authenticated, input validation (max 500 chars), rate limiting enforced
+
+### Transaction History System
+
+UNIFIND includes a comprehensive transaction history system that automatically tracks every product status change.
+
+**Key Features**:
+- Automatic tracking when products are marked as sold/active
+- Complete audit trail of all status changes
+- Analytics-ready data for revenue and sales reports
+- Seller-specific transaction history
+
+**Database Schema** (`transaction_history` collection):
+```javascript
+{
+  id: "auto-generated",
+  amount: 80000.0,                    // Product price
+  product_id: "product_id",           // Product ID
+  seller_id: "seller_id",             // Seller's user ID
+  status: "completed",                // Always "completed"
+  transaction_type_sold: true,        // true = sold, false = active
+  created_at: Timestamp               // When it happened
+}
+```
+
+**API Endpoints**:
+```bash
+# Get transaction history
+GET /api/transactions/history?limit=50
+
+# Get statistics
+GET /api/transactions/stats?days=30
+
+# Get product history
+GET /api/transactions/product/{product_id}
+```
+
+**How It Works**:
+- When seller marks product as sold → Creates record with `transaction_type_sold: true`
+- When seller marks product as active → Creates record with `transaction_type_sold: false`
+- Multiple status changes create multiple records, tracking complete lifecycle
+
+**Migration**: Run `python backend/migrate_transaction_history.py` to populate history for existing products.
+
 ### Testing
 
 **Backend**
@@ -1116,6 +1243,17 @@ test('message appears immediately', async () => {
    - Check CORS_ORIGINS includes frontend URL
    - Restart backend after changing .env
 
+5. **404 errors on new endpoints**
+   - Backend server needs restart to load new routes
+   - Stop server (Ctrl+C) and restart: `python main.py`
+   - Verify routes are registered in `main.py`
+   - Check `backend/routes/__init__.py` includes all route modules
+
+6. **Module import errors**
+   - Verify file exists in correct location
+   - Check `__init__.py` files exist in all package directories
+   - Restart backend server after adding new modules
+
 ### Frontend Issues
 
 **Check Browser Console**
@@ -1145,6 +1283,47 @@ console.error('Error:', error)
 4. **Build fails**
    - Delete node_modules and reinstall
    - Check for syntax errors
+
+5. **Products not displaying**
+   - Check if backend returns paginated response: `{items: [], total, page}`
+   - Frontend should extract `items` array from response
+   - Verify `is_active` field filtering is correct
+
+6. **Status checks not working**
+   - Use explicit checks: `is_active === true` (not `!== false`)
+   - Buyers should only see `is_active === true` products
+   - Sellers can see all products with proper filtering
+
+### Quick Restart Procedures
+
+**Backend Restart** (fixes most 404 and module errors):
+```bash
+# Stop current server (Ctrl+C)
+cd backend
+python main.py
+```
+
+**Frontend Restart**:
+```bash
+# Stop current server (Ctrl+C)
+cd frontend
+npm run dev
+```
+
+**Complete Reset**:
+```bash
+# Backend
+cd backend
+rm -rf __pycache__ */__pycache__
+pip install -r requirements.txt
+python main.py
+
+# Frontend
+cd frontend
+rm -rf node_modules package-lock.json
+npm install
+npm run dev
+```
 
 ---
 

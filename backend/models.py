@@ -104,6 +104,24 @@ class Transaction(TransactionBase):
     completed_at: Optional[datetime] = None
 
 
+# Product Transaction History Models (for mark as sold/active tracking)
+class ProductTransactionHistoryBase(BaseModel):
+    amount: float
+    product_id: str
+    seller_id: str
+    status: str  # "completed"
+    transaction_type_sold: bool  # True when marked as sold, False when marked as active
+
+
+class ProductTransactionHistoryCreate(ProductTransactionHistoryBase):
+    pass
+
+
+class ProductTransactionHistory(ProductTransactionHistoryBase):
+    id: str
+    created_at: datetime
+
+
 # Product Models
 class ProductBase(BaseModel):
     title: str = Field(..., max_length=200, min_length=1)
@@ -303,7 +321,7 @@ class Review(ReviewBase):
     created_at: datetime
 
 
-# AI Need Board Models
+# AI Need Board Models (Existing Search)
 class NeedBoardRequest(BaseModel):
     query: str = Field(..., max_length=500, min_length=1)
     
@@ -339,3 +357,60 @@ class NeedBoardResponse(BaseModel):
     extracted: ExtractedIntent
     rankedResults: List[RankedResult]
     searches_remaining: int
+
+
+# NEW: Need Posting Models (Demand → Supply Engine)
+class NeedCreate(BaseModel):
+    """Request model for creating a new need"""
+    raw_text: str = Field(..., max_length=500, min_length=1)
+    
+    @field_validator('raw_text')
+    @classmethod
+    def validate_raw_text(cls, v):
+        if not v or not v.strip():
+            raise ValueError('Need description cannot be empty')
+        if len(v) > 500:
+            raise ValueError('Need description must be 500 characters or less')
+        return v.strip()
+
+
+class Need(BaseModel):
+    """Structured need object stored in database"""
+    id: str
+    user_id: str
+    raw_text: str
+    title: str
+    category: str
+    tags: List[str]
+    price_range: Optional[Dict[str, float]] = None  # {"min": 0, "max": 5000}
+    college: str
+    location: Optional[str] = None
+    created_at: datetime
+    status: str = "open"  # open, fulfilled, expired
+    matched_listings: List[str] = []  # List of product IDs
+    interested_sellers: List[str] = []  # List of user IDs who saved this need
+
+
+class NeedResponse(BaseModel):
+    """Response after creating a need"""
+    need: Need
+    matched_listings: List[RankedResult]
+
+
+class SellerDemandBanner(BaseModel):
+    """Banner data for seller dashboard"""
+    total_relevant_needs: int
+    top_categories: List[str]
+    message: str
+
+
+class SellerNeedFeed(BaseModel):
+    """Feed of relevant needs for a seller"""
+    needs: List[Dict]  # List of needs with relevance scores
+    total_count: int
+
+
+class NeedFulfillRequest(BaseModel):
+    """Request to mark a need as fulfilled"""
+    product_id: Optional[str] = None
+

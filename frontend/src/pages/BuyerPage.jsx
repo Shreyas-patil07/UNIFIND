@@ -44,8 +44,10 @@ const BuyerPage = () => {
 
   // Fetch products - Backend does ALL filtering/sorting
   const { data: productsResponse, isLoading: loading } = useProducts(queryParams);
-  const products = productsResponse?.items || [];
-  const total = productsResponse?.total || 0;
+  // Filter to only show active products (is_active === true)
+  const allProducts = productsResponse?.items || [];
+  const products = allProducts.filter(product => product.is_active !== false);
+  const total = products.length;
   
   // Fetch recently viewed in ONE batch request
   const { data: recentlyViewedProducts = [] } = useProductsBatch(recentlyViewedIds.slice(0, 6));
