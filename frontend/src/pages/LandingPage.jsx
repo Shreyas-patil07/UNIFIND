@@ -107,12 +107,38 @@ function Icon({ name, fill = 0, size = 24, className = '', style = {} }) {
    NAVBAR
 ============================================================ */
 function Navbar({ currentUser, onProfile, onLogin, onSignup }) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState('market');
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = ['market', 'library', 'community'];
+      const scrollPosition = window.scrollY + 100; // Offset for fixed navbar
+
+      for (const section of sections) {
+        const element = document.getElementById(section);
+        if (element) {
+          const { offsetTop, offsetHeight } = element;
+          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+            setActiveSection(section);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Check initial position
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleNavClick = (section) => {
+    setActiveSection(section);
+  };
 
   return (
     <nav
       className="uf-glass-header"
-      style={{ position: 'sticky', top: 0, zIndex: 50, boxShadow: '0 1px 0 rgba(0,0,0,0.06)' }}
+      style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, boxShadow: '0 1px 0 rgba(0,0,0,0.06)' }}
     >
       <div
         style={{
@@ -135,13 +161,49 @@ function Navbar({ currentUser, onProfile, onLogin, onSignup }) {
 
         {/* Desktop nav links */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 32 }} className="uf-desktop-nav">
-          <a href="#market" className="uf-nav-link" style={{ color: COLORS.primary, fontWeight: 700, fontSize: 13, borderBottom: `2px solid ${COLORS.tertiaryFixedDim}`, paddingBottom: 4, textDecoration: 'none' }}>
+          <a 
+            href="#market" 
+            className="uf-nav-link" 
+            onClick={() => handleNavClick('market')}
+            style={{ 
+              color: activeSection === 'market' ? COLORS.primary : '#475569', 
+              fontWeight: activeSection === 'market' ? 700 : 500, 
+              fontSize: 13, 
+              borderBottom: activeSection === 'market' ? `2px solid ${COLORS.tertiaryFixedDim}` : 'none', 
+              paddingBottom: 4, 
+              textDecoration: 'none' 
+            }}
+          >
             Market
           </a>
-          <a href="#library" className="uf-nav-link" style={{ color: '#475569', fontWeight: 500, fontSize: 13, textDecoration: 'none' }}>
+          <a 
+            href="#library" 
+            className="uf-nav-link" 
+            onClick={() => handleNavClick('library')}
+            style={{ 
+              color: activeSection === 'library' ? COLORS.primary : '#475569', 
+              fontWeight: activeSection === 'library' ? 700 : 500, 
+              fontSize: 13, 
+              borderBottom: activeSection === 'library' ? `2px solid ${COLORS.tertiaryFixedDim}` : 'none', 
+              paddingBottom: 4, 
+              textDecoration: 'none' 
+            }}
+          >
             Library
           </a>
-          <a href="#community" className="uf-nav-link" style={{ color: '#475569', fontWeight: 500, fontSize: 13, textDecoration: 'none' }}>
+          <a 
+            href="#community" 
+            className="uf-nav-link" 
+            onClick={() => handleNavClick('community')}
+            style={{ 
+              color: activeSection === 'community' ? COLORS.primary : '#475569', 
+              fontWeight: activeSection === 'community' ? 700 : 500, 
+              fontSize: 13, 
+              borderBottom: activeSection === 'community' ? `2px solid ${COLORS.tertiaryFixedDim}` : 'none', 
+              paddingBottom: 4, 
+              textDecoration: 'none' 
+            }}
+          >
             Community
           </a>
         </div>
@@ -164,56 +226,23 @@ function Navbar({ currentUser, onProfile, onLogin, onSignup }) {
               Profile
             </button>
           ) : (
-            <>
-              <button
-                onClick={onLogin}
-                style={{
-                  padding: '8px 14px', borderRadius: 10,
-                  background: 'transparent', color: COLORS.onSurfaceVariant,
-                  fontWeight: 600, fontSize: 13, border: 'none', cursor: 'pointer',
-                  transition: 'background 0.2s',
-                }}
-                onMouseEnter={e => (e.currentTarget.style.background = COLORS.surfaceContainer)}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                data-testid="landing-login-btn"
-              >
-                Login
-              </button>
-              <button
-                onClick={onSignup}
-                className="uf-primary-gradient"
-                style={{
-                  padding: '9px 20px', borderRadius: 10,
-                  color: '#fff', fontWeight: 700, fontSize: 13,
-                  border: 'none', cursor: 'pointer',
-                }}
-                data-testid="landing-signup-btn"
-              >
-                Get Started
-              </button>
-            </>
+            <button
+              onClick={onLogin}
+              style={{
+                padding: '8px 14px', borderRadius: 10,
+                background: 'transparent', color: COLORS.onSurfaceVariant,
+                fontWeight: 600, fontSize: 13, border: 'none', cursor: 'pointer',
+                transition: 'background 0.2s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = COLORS.surfaceContainer)}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              data-testid="landing-login-btn"
+            >
+              Login
+            </button>
           )}
-          {/* Mobile Menu Toggle Button */}
-          <button
-            className="uf-mobile-btn"
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' }}
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            <Icon name={mobileMenuOpen ? "close" : "menu"} size={28} />
-          </button>
         </div>
       </div>
-
-      {/* Mobile Nav Dropdown */}
-      {mobileMenuOpen && (
-        <div className="uf-mobile-btn" style={{ padding: '16px 24px', background: COLORS.surfaceContainerLowest, borderBottom: `1px solid ${COLORS.outlineVariant}22` }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <a href="#market" className="uf-nav-link" style={{ color: COLORS.primary, fontWeight: 700, fontSize: 16, textDecoration: 'none' }} onClick={() => setMobileMenuOpen(false)}>Market</a>
-            <a href="#library" className="uf-nav-link" style={{ color: '#475569', fontWeight: 500, fontSize: 16, textDecoration: 'none' }} onClick={() => setMobileMenuOpen(false)}>Library</a>
-            <a href="#community" className="uf-nav-link" style={{ color: '#475569', fontWeight: 500, fontSize: 16, textDecoration: 'none' }} onClick={() => setMobileMenuOpen(false)}>Community</a>
-          </div>
-        </div>
-      )}
     </nav>
   );
 }
@@ -223,7 +252,7 @@ function Navbar({ currentUser, onProfile, onLogin, onSignup }) {
 ============================================================ */
 function SIGCEBanner() {
   return (
-    <div style={{ background: COLORS.surfaceContainerLow, borderBottom: `1px solid ${COLORS.outlineVariant}22`, padding: '8px 0' }}>
+    <div style={{ background: COLORS.surfaceContainerLow, borderBottom: `1px solid ${COLORS.outlineVariant}22`, padding: '8px 0', marginTop: 64 }}>
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
         <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: COLORS.onSurfaceVariant }}>
           Active Campus
@@ -246,7 +275,7 @@ function SIGCEBanner() {
 /* ============================================================
    HERO SECTION
 ============================================================ */
-function HeroSection({ onSignup, onBrowse, userCount }) {
+function HeroSection({ onSignup, onBrowse, onAbout, userCount }) {
   return (
     <section style={{ position: 'relative', overflow: 'hidden', paddingTop: 72, paddingBottom: 96 }}>
       <div
@@ -277,49 +306,61 @@ function HeroSection({ onSignup, onBrowse, userCount }) {
             The curated marketplace for textbooks, electronics, and study guides. Verified by peers, matched by AI.
           </p>
 
-          {/* Dual Search Bar */}
-          <div className="uf-search-bar" style={{ background: COLORS.surfaceContainerLowest, padding: 8, borderRadius: 16, boxShadow: ghostShadow, display: 'flex', gap: 8, maxWidth: 640, border: `1px solid ${COLORS.outlineVariant}26` }}>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '10px 16px', background: COLORS.surfaceContainer, borderRadius: 10 }}>
-              <Icon name="search" size={20} style={{ color: COLORS.onSurfaceVariant, marginRight: 10, flexShrink: 0 }} />
-              <input
-                type="text"
-                placeholder="Search textbooks, calculators, gear..."
-                style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 13, width: '100%', color: COLORS.onSurface }}
-              />
-            </div>
-            <div style={{ width: 1, background: `${COLORS.outlineVariant}33` }} />
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '10px 16px', background: COLORS.surfaceContainer, borderRadius: 10 }}>
-              <Icon name="description" size={20} style={{ color: COLORS.onSurfaceVariant, marginRight: 10, flexShrink: 0 }} />
-              <input
-                type="text"
-                placeholder="Search class notes, PDFs..."
-                style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 13, width: '100%', color: COLORS.onSurface }}
-              />
-            </div>
+          {/* Get Started Button */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-start' }}>
             <button
-              onClick={onBrowse}
+              onClick={onSignup}
               className="uf-primary-gradient"
-              style={{ padding: '10px 28px', borderRadius: 10, color: '#fff', fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', flexShrink: 0 }}
+              style={{
+                padding: '16px 48px',
+                borderRadius: 12,
+                color: '#fff',
+                fontWeight: 700,
+                fontSize: 16,
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: ghostShadow,
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                display: 'inline-block',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 16px 48px rgba(0,74,124,0.12)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = ghostShadow;
+              }}
             >
-              Find
+              Get Started
             </button>
-          </div>
 
-          {/* Social proof */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 28 }}>
-            <div style={{ display: 'flex' }}>
-              {['#4f46e5', '#00696a', '#f59e0b', '#2563eb'].map((c, i) => (
-                <div
-                  key={i}
-                  style={{ height: 30, width: 30, borderRadius: '50%', background: c, border: '2px solid #f8f9ff', marginLeft: i > 0 ? -10 : 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11, fontWeight: 700 }}
-                >
-                  {['R', 'A', 'P', 'S'][i]}
-                </div>
-              ))}
-            </div>
-            <span style={{ fontSize: 13, color: COLORS.onSurfaceVariant }}>
-              <strong style={{ color: COLORS.primary }}>{userCount > 0 ? userCount.toLocaleString() : '8,900+'}</strong> students already joined
-            </span>
+            {/* About Us Button */}
+            <button
+              onClick={onAbout}
+              style={{
+                padding: '16px 48px',
+                borderRadius: 12,
+                color: COLORS.onSurface,
+                fontWeight: 600,
+                fontSize: 16,
+                border: 'none',
+                cursor: 'pointer',
+                background: COLORS.surfaceContainerHigh,
+                transition: 'transform 0.2s, background 0.2s',
+                display: 'inline-block',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.background = COLORS.surfaceContainerHighest;
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.background = COLORS.surfaceContainerHigh;
+              }}
+            >
+              About Us
+            </button>
           </div>
         </div>
 
@@ -365,7 +406,7 @@ function HeroSection({ onSignup, onBrowse, userCount }) {
 ============================================================ */
 function DualPath({ onMarket, onLibrary }) {
   return (
-    <section style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px 48px' }}>
+    <section id="market" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px 48px' }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }} className="uf-dual-grid">
         <style>{`@media (max-width: 640px) { .uf-dual-grid { grid-template-columns: 1fr !important; } }`}</style>
         {/* Marketplace */}
@@ -404,116 +445,6 @@ function DualPath({ onMarket, onLibrary }) {
           <h3 style={{ fontSize: 26, fontWeight: 900, color: COLORS.primary, marginBottom: 8 }}>Academic Library</h3>
           <p style={{ color: COLORS.onSurfaceVariant, marginBottom: 20, fontSize: 14, maxWidth: 280 }}>Access high-quality study guides, notes, and digital resources.</p>
           <span className="uf-sig-underline" style={{ color: COLORS.primary, fontWeight: 700, fontSize: 13 }}>Explore Library</span>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ============================================================
-   FEATURED GEAR SECTION
-============================================================ */
-const GEAR_ITEMS = [
-  {
-    label: 'NEARLY NEW',
-    labelBg: `${COLORS.primaryContainer}`,
-    labelColor: '#fff',
-    image: 'https://images.unsplash.com/photo-1564466809058-bf4114d55352?w=400&q=80',
-    title: 'TI-84 Plus CE Edition',
-    price: '₹4,500',
-    seller: 'Rahul M.',
-    rating: '4.8',
-  },
-  {
-    label: 'HOT ITEM',
-    labelBg: COLORS.tertiaryFixedDim,
-    labelColor: '#281800',
-    image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&q=80',
-    title: 'Organic Chemistry 10th Ed',
-    price: '₹850',
-    seller: 'Priya S.',
-    rating: '4.9',
-  },
-  {
-    label: null,
-    image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&q=80',
-    title: 'iPad Air (4th Gen) 64GB',
-    price: '₹28,000',
-    seller: 'Amit K.',
-    rating: '4.7',
-  },
-  {
-    label: null,
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&q=80',
-    title: 'Bose Noise Cancelling 700',
-    price: '₹12,000',
-    seller: 'Sarah L.',
-    rating: '5.0',
-  },
-];
-
-function GearCard({ item, onContactSeller }) {
-  return (
-    <div
-      className="uf-bulletin-card"
-      style={{ background: COLORS.surfaceContainerLowest, borderRadius: 16, overflow: 'hidden' }}
-    >
-      <div style={{ height: 176, overflow: 'hidden', position: 'relative' }}>
-        <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        {item.label && (
-          <div style={{ position: 'absolute', top: 10, left: 10, background: item.labelBg, color: item.labelColor, fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 4 }}>
-            {item.label}
-          </div>
-        )}
-      </div>
-      <div style={{ padding: 20 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-          <h4 style={{ fontWeight: 700, color: COLORS.primary, fontSize: 14, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</h4>
-          <span style={{ color: COLORS.secondary, fontWeight: 900, fontSize: 14, marginLeft: 14, flexShrink: 0 }}>{item.price}</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-          <div style={{ height: 18, width: 18, borderRadius: '50%', background: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 9, fontWeight: 700 }}>
-            {item.seller[0]}
-          </div>
-          <span style={{ fontSize: 11, color: COLORS.onSurfaceVariant }}>Seller: {item.seller}</span>
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 3, color: '#614100' }}>
-            <Icon name="star" fill={1} size={14} style={{ color: '#614100' }} />
-            <span style={{ fontSize: 10, fontWeight: 700 }}>{item.rating}</span>
-          </div>
-        </div>
-        <button
-          onClick={onContactSeller}
-          className="uf-btn-contact"
-          style={{ width: '100%', padding: '8px 0', background: COLORS.secondaryContainer, color: COLORS.onSecondaryContainer, fontWeight: 700, fontSize: 12, borderRadius: 10, border: 'none', cursor: 'pointer' }}
-        >
-          Contact Seller
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function FeaturedGear({ onViewAll, onContactSeller }) {
-  return (
-    <section id="market" style={{ background: COLORS.background, padding: '72px 0' }}>
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 48 }}>
-          <div>
-            <h2 style={{ fontSize: 36, fontWeight: 900, color: COLORS.primary, marginBottom: 8, letterSpacing: '-0.02em' }}>Featured Gear</h2>
-            <p style={{ color: COLORS.onSurfaceVariant, fontSize: 14 }}>Top-rated items from verified students at SIGCE</p>
-          </div>
-          <button
-            onClick={onViewAll}
-            className="uf-sig-underline"
-            style={{ color: COLORS.secondary, fontWeight: 700, fontSize: 14, background: 'none', border: 'none', cursor: 'pointer' }}
-          >
-            View All Gear
-          </button>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }} className="uf-gear-grid">
-          <style>{`@media (max-width: 1024px) { .uf-gear-grid { grid-template-columns: repeat(2,1fr) !important; } }
-                   @media (max-width: 580px)  { .uf-gear-grid { grid-template-columns: 1fr !important; } }`}</style>
-          {GEAR_ITEMS.map((item, i) => <GearCard key={i} item={item} onContactSeller={onContactSeller} />)}
         </div>
       </div>
     </section>
@@ -843,14 +774,6 @@ const LandingPage = () => {
     fetchUserCount();
   }, []);
 
-  const handleContactSeller = () => {
-    if (currentUser) {
-      navigate('/buyer');
-    } else {
-      navigate('/signup');
-    }
-  };
-
   const handleUploadNotes = () => {
     if (currentUser) {
       navigate('/seller');
@@ -868,9 +791,8 @@ const LandingPage = () => {
         onSignup={() => navigate('/signup')}
       />
       <SIGCEBanner />
-      <HeroSection onSignup={() => navigate('/signup')} onBrowse={() => navigate('/buyer')} userCount={userCount} />
+      <HeroSection onSignup={() => navigate('/signup')} onBrowse={() => navigate('/buyer')} onAbout={() => navigate('/about')} userCount={userCount} />
       <DualPath onMarket={() => navigate('/buyer')} onLibrary={() => navigate('/buyer')} />
-      <FeaturedGear onViewAll={() => navigate('/buyer')} onContactSeller={handleContactSeller} />
       <DigitalLibrary onUploadNotes={handleUploadNotes} />
       <ValueProps />
       <TrustSection onSignup={() => navigate('/signup')} userCount={userCount} />

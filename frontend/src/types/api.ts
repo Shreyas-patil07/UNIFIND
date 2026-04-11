@@ -44,11 +44,18 @@ export interface Product {
   images: string[]
   specifications?: Record<string, any>
   seller_id: string
+  seller?: {
+    id: string
+    name: string
+    avatar: string | null
+  }
   views: number
   viewed_by: string[]
   posted_date: string
   updated_at: string
   is_active: boolean
+  sold_to?: string
+  sold_at?: string
 }
 
 export interface ProductCreate {

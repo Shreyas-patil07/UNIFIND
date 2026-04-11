@@ -233,6 +233,22 @@ const SignupPage = () => {
             </span>
           </div>
 
+          {/* Back to Home Link */}
+          <Link 
+            to="/" 
+            className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-indigo-600 transition-colors mb-6 group"
+          >
+            <svg 
+              className="w-4 h-4 transition-transform group-hover:-translate-x-1" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Home
+          </Link>
+
           <div className="mb-7">
             <h1 className="font-['Outfit'] text-2xl sm:text-3xl font-black text-slate-900 mb-1.5" data-testid="signup-title">
               Create Account
@@ -511,11 +527,11 @@ const SignupPage = () => {
               />
               <label htmlFor="terms" className="text-sm text-slate-700 leading-relaxed">
                 I agree to the{' '}
-                <Link to="/terms" target="_blank" className="text-indigo-600 hover:text-indigo-700 font-semibold underline">
+                <Link to="/terms-conditions" target="_blank" className="text-indigo-600 hover:text-indigo-700 font-semibold underline">
                   Terms & Conditions
                 </Link>
                 {' '}and{' '}
-                <Link to="/privacy" target="_blank" className="text-indigo-600 hover:text-indigo-700 font-semibold underline">
+                <Link to="/privacy-policy" target="_blank" className="text-indigo-600 hover:text-indigo-700 font-semibold underline">
                   Privacy Policy
                 </Link>
                 . I understand that UNIFIND is a marketplace platform connecting buyers and sellers, and is not responsible for transactions between users.
@@ -560,11 +576,11 @@ const SignupPage = () => {
           </p>
 
           <div className="mt-6 pt-6 border-t border-slate-200 flex flex-wrap justify-center gap-4 text-xs text-slate-500">
-            <Link to="/privacy" target="_blank" className="hover:text-indigo-600 transition-colors">
+            <Link to="/privacy-policy" target="_blank" className="hover:text-indigo-600 transition-colors">
               Privacy Policy
             </Link>
             <span>•</span>
-            <Link to="/terms" target="_blank" className="hover:text-indigo-600 transition-colors">
+            <Link to="/terms-conditions" target="_blank" className="hover:text-indigo-600 transition-colors">
               Terms & Conditions
             </Link>
             <span>•</span>

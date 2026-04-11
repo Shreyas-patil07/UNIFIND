@@ -3,263 +3,93 @@ import Header from '../components/Header';
 import ProductCard from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/SkeletonLoader';
 import { categories } from '../data/categories';
-import { getProducts } from '../services/api';
+import { useProducts, useProductsBatch } from '../hooks/useProducts';
 import { SlidersHorizontal, X, ChevronDown, Search, ArrowUpDown, Clock, Trash2 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
-import { getRecentlyViewed, addToRecentlyViewed, clearRecentlyViewed } from '../utils/recentlyViewed';
+import { getRecentlyViewedIds, addToRecentlyViewed, clearRecentlyViewed } from '../utils/recentlyViewed';
 
 const BuyerPage = () => {
   const { darkMode } = useTheme();
-  const [loading, setLoading] = useState(true);
-  const [products, setProducts] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedSubject, setSelectedSubject] = useState('all');
-  const [selectedMathsLevel, setSelectedMathsLevel] = useState('all');
-  const [selectedMaterial, setSelectedMaterial] = useState('all');
-  const [selectedGraphicsItem, setSelectedGraphicsItem] = useState('all');
-  const [condition, setCondition] = useState('all');
-  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
-  const [subjectDropdownOpen, setSubjectDropdownOpen] = useState(false);
-  const [mathsDropdownOpen, setMathsDropdownOpen] = useState(false);
-  const [materialDropdownOpen, setMaterialDropdownOpen] = useState(false);
-  const [graphicsDropdownOpen, setGraphicsDropdownOpen] = useState(false);
+  
+  // Clean state management
+  const [filters, setFilters] = useState({
+    category: 'All',
+    condition: 'all',
+  });
   const [sortBy, setSortBy] = useState('newest');
-  const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [recentlyViewed, setRecentlyViewed] = useState([]);
-  const [searchHistory, setSearchHistory] = useState([]);
+  const [appliedSearch, setAppliedSearch] = useState('');
+  
+  // UI State
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+  
+  // Recently viewed IDs
+  const [recentlyViewedIds, setRecentlyViewedIds] = useState(() => getRecentlyViewedIds());
 
-  const subjects = [
-    'All Subjects',
-    'Maths',
-    'Mechanics',
-    'BEEE',
-    'Physics',
-    'Chemistry',
-    'DBMS',
-    'AOA',
-    'DSA',
-    'OS',
-    'CT',
-    'DSGT'
-  ];
+  // Build query params for backend
+  const queryParams = useMemo(() => {
+    const params = {
+      sort: sortBy,
+      page: 1,
+      page_size: 100,
+    };
+    
+    if (appliedSearch) params.q = appliedSearch;
+    if (filters.category !== 'All') params.category = filters.category;
+    if (filters.condition !== 'all') params.condition = filters.condition;
+    
+    return params;
+  }, [appliedSearch, filters, sortBy]);
 
-  const mathsLevels = [
-    'All Maths',
-    'Maths-1',
-    'Maths-2',
-    'Maths-3',
-    'Maths-4'
-  ];
-
-  const materials = [
-    'All Materials',
-    'Laptop',
-    'Lab Coat',
-    'Scientific Calculator',
-    'Graphics Kit'
-  ];
-
-  const graphicsKitItems = [
-    'All Graphics Items',
-    'Graphics Drawing Kit',
-    'Drawing Board',
-    'T-square or Mini Drafter',
-    'Set Squares',
-    'Instrument Box',
-    'Pencils and Leads',
-    'Scales',
-    'Protractors',
-    'French Curves',
-    'Stencils',
-    'Ruling Pens'
-  ];
+  // Fetch products - Backend does ALL filtering/sorting
+  const { data: productsResponse, isLoading: loading } = useProducts(queryParams);
+  const products = productsResponse?.items || [];
+  const total = productsResponse?.total || 0;
+  
+  // Fetch recently viewed in ONE batch request
+  const { data: recentlyViewedProducts = [] } = useProductsBatch(recentlyViewedIds.slice(0, 6));
 
   const sortOptions = [
     { value: 'newest', label: 'Newest First' },
     { value: 'oldest', label: 'Oldest First' },
     { value: 'price-low', label: 'Price: Low to High' },
     { value: 'price-high', label: 'Price: High to Low' },
-    { value: 'condition-best', label: 'Condition: Best First' },
     { value: 'most-viewed', label: 'Most Viewed' }
   ];
 
-  // Load recently viewed and search history on mount
-  useEffect(() => {
-    const viewed = getRecentlyViewed();
-    setRecentlyViewed(Array.isArray(viewed) ? viewed : []);
-    try {
-      const history = JSON.parse(localStorage.getItem('unifind_search_history') || '[]');
-      setSearchHistory(Array.isArray(history) ? history : []);
-    } catch (e) {
-      setSearchHistory([]);
-    }
-  }, []);
+  // Handle search submission
+  const handleSearch = useCallback(() => {
+    setAppliedSearch(searchQuery);
+  }, [searchQuery]);
 
-  // Close sort dropdown when filter drawer opens
-  useEffect(() => {
-    if (filterDrawerOpen) {
-      setSortDropdownOpen(false);
-    }
-  }, [filterDrawerOpen]);
-
-  // Close filter drawer when sort dropdown opens
-  useEffect(() => {
-    if (sortDropdownOpen) {
-      setFilterDrawerOpen(false);
-    }
-  }, [sortDropdownOpen]);
-
-  // Load products from API with caching
-  useEffect(() => {
-    let isMounted = true;
-    
-    const loadProducts = async () => {
-      try {
-        setLoading(true);
-        const fetchedProducts = await getProducts({
-          category: selectedCategory !== 'All' ? selectedCategory : undefined
-        });
-        if (isMounted) {
-          setProducts(Array.isArray(fetchedProducts) ? fetchedProducts : []);
-          console.log('Products loaded:', Array.isArray(fetchedProducts) ? fetchedProducts.length : 0);
-        }
-      } catch (error) {
-        console.error('Failed to load products:', error);
-        console.error('Error details:', error.response?.data || error.message);
-        if (isMounted) {
-          setProducts([]);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadProducts();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedCategory]);
-
-  // Debug: Log condition changes (remove in production)
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Condition filter changed to:', condition);
-    }
-  }, [condition]);
-
-  // Handle product view (memoized)
+  // Handle product view
   const handleProductView = useCallback((product) => {
     addToRecentlyViewed(product);
-    setRecentlyViewed(getRecentlyViewed());
+    setRecentlyViewedIds(getRecentlyViewedIds());
   }, []);
 
-  // Handle search submission (memoized)
-  const handleSearch = useCallback((query) => {
-    setSearchHistory(prev => {
-      const historyArray = Array.isArray(prev) ? prev : [];
-      if (query.trim() && !historyArray.includes(query.trim())) {
-        const updated = [query.trim(), ...historyArray].slice(0, 10);
-        localStorage.setItem('unifind_search_history', JSON.stringify(updated));
-        return updated;
-      }
-      return prev;
-    });
-  }, []);
-
-  // Clear search history (memoized)
-  const clearSearchHistory = useCallback(() => {
-    setSearchHistory([]);
-    localStorage.removeItem('unifind_search_history');
-  }, []);
-
-  // Clear recently viewed (memoized)
+  // Clear recently viewed
   const handleClearRecentlyViewed = useCallback(() => {
     clearRecentlyViewed();
-    setRecentlyViewed([]);
+    setRecentlyViewedIds([]);
   }, []);
 
-  // Memoize filtered and sorted products for better performance
-  const sortedProducts = useMemo(() => {
-    const filtered = (Array.isArray(products) ? products : []).filter(product => {
-      // Search filter
-      if (searchQuery.trim() !== '') {
-        const query = searchQuery.toLowerCase();
-        const matchesSearch = 
-          product.title.toLowerCase().includes(query) ||
-          product.description.toLowerCase().includes(query) ||
-          product.location.toLowerCase().includes(query);
-        if (!matchesSearch) return false;
-      }
-
-      if (selectedCategory !== 'All' && product.category !== selectedCategory) return false;
-      
-      // Printed Notes filtering
-      if (selectedCategory === 'Printed Notes') {
-        if (selectedSubject !== 'all' && selectedSubject !== 'Maths' && product.subject !== selectedSubject) return false;
-        if (selectedSubject === 'Maths' && selectedMathsLevel !== 'all' && product.subject !== selectedMathsLevel) return false;
-        if (selectedSubject === 'Maths' && selectedMathsLevel === 'all' && !['Maths-1', 'Maths-2', 'Maths-3', 'Maths-4'].includes(product.subject)) return false;
-      }
-      
-      // Materials filtering
-      if (selectedCategory === 'Materials') {
-        if (selectedMaterial !== 'all' && selectedMaterial !== 'Graphics Kit' && product.materialType !== selectedMaterial) return false;
-        if (selectedMaterial === 'Graphics Kit' && selectedGraphicsItem !== 'all' && product.materialType !== selectedGraphicsItem) return false;
-        if (selectedMaterial === 'Graphics Kit' && selectedGraphicsItem === 'all') {
-          const graphicsItems = ['Graphics Drawing Kit', 'Drawing Board', 'T-square or Mini Drafter', 'Set Squares', 'Instrument Box', 'Pencils and Leads', 'Scales', 'Protractors', 'French Curves', 'Stencils', 'Ruling Pens'];
-          if (!graphicsItems.includes(product.materialType)) return false;
-        }
-      }
-      
-      if (condition !== 'all' && product.condition !== condition) {
-        console.log(`Filtering out product: ${product.title}, condition: ${product.condition}, filter: ${condition}`);
-        return false;
-      }
-      return true;
-    });
-
-    // Sort filtered products
-    return [...filtered].sort((a, b) => {
-      switch (sortBy) {
-        case 'newest':
-          return new Date(b.postedDate) - new Date(a.postedDate);
-        case 'oldest':
-          return new Date(a.postedDate) - new Date(b.postedDate);
-        case 'price-low':
-          return a.price - b.price;
-        case 'price-high':
-          return b.price - a.price;
-        case 'condition-best':
-          return b.conditionScore - a.conditionScore;
-        case 'most-viewed':
-          return b.views - a.views;
-        default:
-          return 0;
-      }
-    });
-  }, [products, searchQuery, selectedCategory, selectedSubject, selectedMathsLevel, selectedMaterial, selectedGraphicsItem, condition, sortBy]);
-
-  const activeFiltersCount = [
-    selectedCategory !== 'All',
-    selectedSubject !== 'all',
-    selectedMathsLevel !== 'all',
-    selectedMaterial !== 'all',
-    selectedGraphicsItem !== 'all',
-    condition !== 'all'
-  ].filter(Boolean).length;
-
-  const resetFilters = () => {
-    setSelectedCategory('All');
-    setSelectedSubject('all');
-    setSelectedMathsLevel('all');
-    setSelectedMaterial('all');
-    setSelectedGraphicsItem('all');
-    setCondition('all');
+  // Reset filters
+  const resetFilters = useCallback(() => {
+    setFilters({ category: 'All', condition: 'all' });
     setSortBy('newest');
-  };
+    setSearchQuery('');
+    setAppliedSearch('');
+  }, []);
+
+  // Count active filters
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (filters.category !== 'All') count++;
+    if (filters.condition !== 'all') count++;
+    return count;
+  }, [filters]);
 
   const FilterChip = ({ label, active, onClick, testId }) => (
     <button
@@ -294,9 +124,7 @@ const BuyerPage = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSearch(searchQuery);
-                }
+                if (e.key === 'Enter') handleSearch();
               }}
               className={`w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-sm font-medium border transition-all duration-200 ${
                 darkMode 
@@ -306,7 +134,10 @@ const BuyerPage = () => {
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery('')}
+                onClick={() => {
+                  setSearchQuery('');
+                  setAppliedSearch('');
+                }}
                 className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 sm:p-1.5 rounded-lg transition-all active:scale-95 ${
                   darkMode ? 'hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-700'
                 }`}
@@ -321,7 +152,7 @@ const BuyerPage = () => {
       <div className="px-3 sm:px-6 md:px-10 lg:px-20 with-bottom-nav">
 
         {/* ===== RECENTLY VIEWED ===== */}
-        {Array.isArray(recentlyViewed) && recentlyViewed.length > 0 && (
+        {recentlyViewedProducts.length > 0 && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
               <h2 className={`text-sm font-bold ${darkMode ? 'text-neutral-100' : 'text-slate-900'}`}>
@@ -337,7 +168,7 @@ const BuyerPage = () => {
             </div>
             <div className="overflow-x-auto pb-2">
               <div className="flex gap-3" style={{ minWidth: 'min-content' }}>
-                {recentlyViewed.slice(0, 6).map((product) => (
+                {recentlyViewedProducts.map((product) => (
                   <div key={product.id} className="w-40 flex-shrink-0">
                     <ProductCard product={product} onView={handleProductView} />
                   </div>
@@ -455,9 +286,9 @@ const BuyerPage = () => {
           {/* Results Count */}
           <div className="mt-4">
             <p className={`text-sm ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`} data-testid="results-count">
-              <span className={`font-bold ${darkMode ? 'text-neutral-200' : 'text-slate-900'}`}>{sortedProducts.length}</span> results
-              {selectedCategory !== 'All' && (
-                <span className="ml-1">in <span className="font-semibold text-indigo-600">{selectedCategory}</span></span>
+              <span className={`font-bold ${darkMode ? 'text-neutral-200' : 'text-slate-900'}`}>{total}</span> results
+              {filters.category !== 'All' && (
+                <span className="ml-1">in <span className="font-semibold text-indigo-600">{filters.category}</span></span>
               )}
             </p>
           </div>
@@ -489,11 +320,8 @@ const BuyerPage = () => {
                     <FilterChip
                       key={cat}
                       label={cat}
-                      active={selectedCategory === cat}
-                      onClick={() => {
-                        console.log('Category selected:', cat);
-                        setSelectedCategory(cat);
-                      }}
+                      active={filters.category === cat}
+                      onClick={() => setFilters(prev => ({ ...prev, category: cat }))}
                       testId={`category-filter-${cat.toLowerCase()}`}
                     />
                   ))}
@@ -514,11 +342,8 @@ const BuyerPage = () => {
                     <FilterChip
                       key={val}
                       label={label}
-                      active={condition === val}
-                      onClick={() => { 
-                        console.log('Condition selected:', val);
-                        setCondition(val); 
-                      }}
+                      active={filters.condition === val}
+                      onClick={() => setFilters(prev => ({ ...prev, condition: val }))}
                       testId={testId}
                     />
                   ))}
@@ -556,14 +381,14 @@ const BuyerPage = () => {
           {loading ? (
             Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />)
           ) : (
-            sortedProducts.map((product) => (
+            products.map((product) => (
               <ProductCard key={product.id} product={product} onView={handleProductView} />
             ))
           )}
         </div>
 
         {/* Empty state */}
-        {sortedProducts.length === 0 && !loading && (
+        {products.length === 0 && !loading && (
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🔍</div>
             <p className={`text-lg font-semibold mb-2 ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`} data-testid="no-results-message">

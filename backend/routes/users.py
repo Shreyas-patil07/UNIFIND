@@ -368,13 +368,22 @@ async def get_pending_friend_requests(user_id: str):
     if not requests:
         return []
     
-    # Batch fetch all requester data
-    requester_ids = [doc.to_dict()['user_id'] for doc in requests]
-    
+    # Track seen requester IDs to avoid duplicates
+    seen_requesters = set()
     pending_requests = []
+    
     for doc in requests:
         request_data = doc.to_dict()
         requester_id = request_data['user_id']
+        
+        # Skip if we've already seen this requester (duplicate request)
+        if requester_id in seen_requesters:
+            print(f"[PENDING_REQUESTS] Skipping duplicate request from {requester_id}")
+            # Delete the duplicate
+            doc.reference.delete()
+            continue
+        
+        seen_requesters.add(requester_id)
         
         # Get requester's user data
         requester_doc = db.collection('users').document(requester_id).get()
@@ -490,13 +499,15 @@ async def add_friend(user_id: str, friend_id: str):
         print(f"[ADD_FRIEND] Error: Friend {friend_id} not found")
         raise HTTPException(status_code=404, detail=f"Friend {friend_id} not found")
     
-    # Check if friendship already exists
-    existing = db.collection('friendships').where('user_id', '==', user_id).where('friend_id', '==', friend_id).limit(1).stream()
+    # Check if friendship already exists (any status)
+    existing = list(db.collection('friendships').where('user_id', '==', user_id).where('friend_id', '==', friend_id).stream())
     for doc in existing:
         friendship_data = doc.to_dict()
         if friendship_data.get('status') == 'pending':
+            print(f"[ADD_FRIEND] Error: Friend request already pending")
             raise HTTPException(status_code=400, detail="Friend request already sent")
         elif friendship_data.get('status') == 'active':
+            print(f"[ADD_FRIEND] Error: Already friends")
             raise HTTPException(status_code=400, detail="Already friends")
     
     # Check if there's a pending request from the other user
@@ -541,10 +552,13 @@ async def accept_friend_request(user_id: str, friend_id: str):
     """Accept a friend request"""
     db = get_db()
     
+    print(f"[ACCEPT_FRIEND] Accepting request: {friend_id} -> {user_id}")
+    
     # Find the pending request
     requests = list(db.collection('friendships').where('user_id', '==', friend_id).where('friend_id', '==', user_id).where('status', '==', 'pending').limit(1).stream())
     
     if not requests:
+        print(f"[ACCEPT_FRIEND] Error: No pending request found from {friend_id} to {user_id}")
         raise HTTPException(status_code=404, detail="Friend request not found")
     
     doc = requests[0]
@@ -561,10 +575,18 @@ async def accept_friend_request(user_id: str, friend_id: str):
         'accepted_at': accepted_at
     })
     
-    # Check if reciprocal friendship already exists
+    # Check if reciprocal friendship already exists (any status)
     existing_reciprocal = list(db.collection('friendships').where('user_id', '==', user_id).where('friend_id', '==', friend_id).limit(1).stream())
     
-    if not existing_reciprocal:
+    if existing_reciprocal:
+        print(f"[ACCEPT_FRIEND] Updating existing reciprocal friendship")
+        # Update existing reciprocal to active
+        batch.update(existing_reciprocal[0].reference, {
+            'status': 'active',
+            'accepted_at': accepted_at
+        })
+    else:
+        print(f"[ACCEPT_FRIEND] Creating new reciprocal friendship")
         # Create reciprocal friendship with SAME created_at as original
         reciprocal_ref = db.collection('friendships').document()
         batch.set(reciprocal_ref, {
@@ -578,6 +600,7 @@ async def accept_friend_request(user_id: str, friend_id: str):
     # Commit all changes atomically
     batch.commit()
     
+    print(f"[ACCEPT_FRIEND] Successfully accepted friend request")
     return {"message": "Friend request accepted", "status": "success"}
 
 

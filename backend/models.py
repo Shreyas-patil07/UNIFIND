@@ -171,6 +171,8 @@ class ProductUpdate(BaseModel):
     location: Optional[str] = Field(None, max_length=200, min_length=1)
     images: Optional[List[str]] = Field(None, min_length=1, max_length=5)
     specifications: Optional[Dict] = None
+    mark_as_sold: Optional[bool] = None
+    sold_to: Optional[str] = None  # Firebase UID of the buyer
 
     @field_validator('images')
     @classmethod
@@ -227,6 +229,8 @@ class Product(ProductBase):
     posted_date: datetime
     updated_at: datetime
     is_active: bool = True
+    mark_as_sold: bool = False
+    sold_to: Optional[str] = None  # Firebase UID of the buyer
 
 
 # Chat Models

@@ -26,15 +26,23 @@ export const healthCheck = () => get<HealthCheck>('/health')
 // ============= PRODUCTS =============
 
 export const getProducts = async (filters?: {
+  q?: string
   category?: string
+  subcategory?: string
+  condition?: string
   min_price?: number
   max_price?: number
-  condition?: string
-  seller_id?: string
+  sort?: string
+  page?: number
+  page_size?: number
 }) => {
   const response = await get<{ items: Product[]; total: number; page: number; page_size: number; pages: number }>('/products', { params: filters })
-  // Backend returns paginated response, extract items array
-  return response.items || []
+  return response
+}
+
+export const getProductsBatch = async (productIds: string[]) => {
+  if (!productIds || productIds.length === 0) return []
+  return post<Product[]>('/products/batch', { product_ids: productIds })
 }
 
 export const getProduct = (productId: string) =>
@@ -49,7 +57,42 @@ export const updateProduct = (productId: string, product: ProductUpdate) =>
 export const deleteProduct = (productId: string) =>
   del<{ message: string }>(`/products/${productId}`)
 
-export const getSellerProducts = () => get<Product[]>('/products/seller/me')
+export const getInterestedBuyers = (productId: string) =>
+  get<Array<{
+    id: string
+    name: string
+    email: string
+    avatar: string | null
+    last_message: string
+    last_message_time: string
+  }>>(`/products/${productId}/interested-buyers`)
+
+export const markProductAsSold = (productId: string, buyerId?: string) => {
+  // Only include buyer_id if it's a valid string (not null or undefined)
+  const body = buyerId && typeof buyerId === 'string' ? { buyer_id: buyerId } : {}
+  console.log('[API] markProductAsSold called:', { productId, buyerId, body })
+  return patch<{ message: string; buyer_id?: string }>(`/products/${productId}/mark-sold`, body)
+}
+
+export const markProductAsActive = (productId: string) => {
+  console.log('[API] markProductAsActive called:', { productId })
+  return patch<{ message: string }>(`/products/${productId}/mark-active`, {})
+}
+
+export const getSellerProducts = () => {
+  console.log('[API] getSellerProducts called')
+  return get<Product[]>('/products/seller/me').then(data => {
+    console.log('[API] getSellerProducts RAW response:', data)
+    console.log('[API] getSellerProducts parsed:', data.map(p => ({
+      id: p.id,
+      title: p.title,
+      is_active: p.is_active,
+      sold_to: p.sold_to,
+      sold_at: p.sold_at
+    })))
+    return data
+  })
+}
 
 // ============= USERS =============
 

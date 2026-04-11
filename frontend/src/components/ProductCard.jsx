@@ -17,26 +17,12 @@ const ProductCard = ({ product, onView }) => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const { darkMode } = useTheme();
-  const [seller, setSeller] = useState(null);
   const [isLiked, setIsLiked] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const condition = conditionConfig[product.condition] || { color: 'bg-slate-500', label: product.condition };
 
-  // Load seller info
-  useEffect(() => {
-    const loadSeller = async () => {
-      if (product.seller_id) {
-        try {
-          const sellerProfile = await getPublicProfile(product.seller_id);
-          setSeller(sellerProfile);
-        } catch (error) {
-          console.error('Failed to load seller:', error);
-        }
-      }
-    };
-
-    loadSeller();
-  }, [product.seller_id]);
+  // Seller info is now embedded in product (no API call needed!)
+  const seller = product.seller || { id: product.seller_id, name: 'Unknown', avatar: null };
 
   // Load liked state from localStorage
   useEffect(() => {

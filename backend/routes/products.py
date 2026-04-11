@@ -1,8 +1,12 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+"""
+Refactored Products API - Backend-Driven Architecture
+All filtering, sorting, and pagination handled server-side
+"""
+from fastapi import APIRouter, HTTPException, Depends, status, Query, Body
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from google.cloud.firestore_v1.base_query import FieldFilter
-from google.cloud.firestore import Increment, ArrayUnion
+from google.cloud.firestore import Increment, ArrayUnion, DELETE_FIELD
 from database import get_db
 from models import Product, ProductCreate, ProductUpdate
 from auth import get_current_user, get_optional_user
@@ -13,70 +17,142 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/products")
 
 
+def enrich_product_with_seller(db, product_data: dict) -> dict:
+    """
+    Enrich product with seller summary to avoid N+1 queries
+    """
+    seller_id = product_data.get('seller_id')
+    if not seller_id:
+        product_data['seller'] = None
+        return product_data
+    
+    try:
+        # Fetch seller user data
+        user_doc = db.collection('users').document(seller_id).get()
+        if not user_doc.exists:
+            product_data['seller'] = None
+            return product_data
+        
+        user_data = user_doc.to_dict()
+        
+        # Fetch seller profile for avatar
+        profile_query = db.collection('user_profiles').where('user_id', '==', seller_id).limit(1)
+        profile_docs = list(profile_query.stream())
+        
+        avatar = None
+        if profile_docs:
+            profile_data = profile_docs[0].to_dict()
+            avatar = profile_data.get('avatar')
+        
+        # Build seller summary
+        product_data['seller'] = {
+            'id': seller_id,
+            'name': user_data.get('name'),
+            'avatar': avatar
+        }
+        
+    except Exception as e:
+        logger.error(f"Error enriching product {product_data.get('id')} with seller: {e}")
+        product_data['seller'] = None
+    
+    return product_data
+
+
 @router.get("", response_model=Dict[str, Any])
 async def get_products(
-    category: Optional[str] = None,
-    min_price: Optional[float] = None,
-    max_price: Optional[float] = None,
-    condition: Optional[str] = None,
-    seller_id: Optional[str] = None,
-    page: int = 1,
-    page_size: int = 20
+    q: Optional[str] = Query(None, description="Search query"),
+    category: Optional[str] = Query(None, description="Filter by category"),
+    subcategory: Optional[str] = Query(None, description="Filter by subcategory"),
+    condition: Optional[str] = Query(None, description="Filter by condition"),
+    min_price: Optional[float] = Query(None, ge=0, description="Minimum price"),
+    max_price: Optional[float] = Query(None, ge=0, description="Maximum price"),
+    sort: Optional[str] = Query("newest", description="Sort order: newest, oldest, price-low, price-high, most-viewed"),
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(20, ge=1, le=100, description="Items per page")
 ):
     """
-    Get active products with pagination and filters.
-    Returns: { items: Product[], total: int, page: int, page_size: int, pages: int }
+    Get active products with server-side filtering, sorting, and pagination.
+    
+    Returns:
+        {
+            items: Product[] (with seller info embedded),
+            total: int,
+            page: int,
+            page_size: int,
+            pages: int
+        }
     """
     try:
         db = get_db()
         products_ref = db.collection('products')
         
-        # Validate pagination params
-        page = max(1, page)
-        page_size = min(100, max(1, page_size))  # Max 100 items per page
-        
-        # Build query with filters
+        # Start with active products only
         query = products_ref.where(filter=FieldFilter('is_active', '==', True))
         
-        # Only add one additional where clause to avoid index requirements
-        if seller_id:
-            query = query.where(filter=FieldFilter('seller_id', '==', seller_id))
-        elif category:
+        # Apply Firestore filters (limited to avoid composite index requirements)
+        if category:
             query = query.where(filter=FieldFilter('category', '==', category))
         
-        # Fetch all matching documents (apply limit after filtering)
+        # Fetch all matching documents
         products = []
         for doc in query.stream():
             product_data = doc.to_dict()
             product_data['id'] = doc.id
-            
-            # Apply remaining filters in Python
-            if category and not seller_id and product_data.get('category') != category:
-                continue
-            if condition and product_data.get('condition') != condition:
-                continue
-            if min_price and product_data.get('price', 0) < min_price:
-                continue
-            if max_price and product_data.get('price', float('inf')) > max_price:
-                continue
-                
             products.append(product_data)
         
-        # Sort by posted_date
-        products.sort(key=lambda x: x.get('posted_date', datetime.min), reverse=True)
+        # Apply Python-side filters
+        filtered_products = []
+        for product in products:
+            # Search filter
+            if q:
+                search_query = q.lower()
+                searchable_text = f"{product.get('title', '')} {product.get('description', '')} {product.get('location', '')}".lower()
+                if search_query not in searchable_text:
+                    continue
+            
+            # Subcategory filter
+            if subcategory and product.get('subcategory') != subcategory:
+                continue
+            
+            # Condition filter
+            if condition and product.get('condition') != condition:
+                continue
+            
+            # Price filters
+            if min_price is not None and product.get('price', 0) < min_price:
+                continue
+            if max_price is not None and product.get('price', float('inf')) > max_price:
+                continue
+            
+            filtered_products.append(product)
+        
+        # Sort products
+        if sort == 'newest':
+            filtered_products.sort(key=lambda x: x.get('posted_date', datetime.min), reverse=True)
+        elif sort == 'oldest':
+            filtered_products.sort(key=lambda x: x.get('posted_date', datetime.min))
+        elif sort == 'price-low':
+            filtered_products.sort(key=lambda x: x.get('price', 0))
+        elif sort == 'price-high':
+            filtered_products.sort(key=lambda x: x.get('price', 0), reverse=True)
+        elif sort == 'most-viewed':
+            filtered_products.sort(key=lambda x: x.get('views', 0), reverse=True)
         
         # Apply pagination
-        total = len(products)
+        total = len(filtered_products)
         start_idx = (page - 1) * page_size
         end_idx = start_idx + page_size
-        paginated_products = products[start_idx:end_idx]
+        paginated_products = filtered_products[start_idx:end_idx]
+        
+        # Enrich with seller info (solve N+1 problem)
+        enriched_products = [enrich_product_with_seller(db, p) for p in paginated_products]
         
         return {
-            "items": paginated_products,
+            "items": enriched_products,
             "total": total,
             "page": page,
             "page_size": page_size,
-            "pages": (total + page_size - 1) // page_size
+            "pages": (total + page_size - 1) // page_size if total > 0 else 0
         }
         
     except Exception as e:
@@ -87,6 +163,46 @@ async def get_products(
         )
 
 
+@router.post("/batch", response_model=List[Product])
+async def get_products_batch(
+    product_ids: List[str] = Body(..., embed=True, max_length=50),
+    user_id: Optional[str] = Depends(get_optional_user)
+):
+    """
+    Batch fetch products by IDs (for recently viewed, etc.)
+    Maximum 50 IDs per request
+    """
+    if not product_ids:
+        return []
+    
+    try:
+        db = get_db()
+        products = []
+        
+        # Fetch all products in batch
+        for product_id in product_ids[:50]:  # Limit to 50
+            doc_ref = db.collection('products').document(product_id)
+            doc = doc_ref.get()
+            
+            if doc.exists:
+                product_data = doc.to_dict()
+                # Only return active products
+                if product_data.get('is_active', True):
+                    product_data['id'] = doc.id
+                    # Enrich with seller info
+                    product_data = enrich_product_with_seller(db, product_data)
+                    products.append(product_data)
+        
+        return products
+        
+    except Exception as e:
+        logger.error(f"Error batch fetching products: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": "Failed to batch fetch products", "detail": str(e)}
+        )
+
+
 @router.post("", response_model=Product, status_code=status.HTTP_201_CREATED)
 async def create_product(product: ProductCreate, user_id: str = Depends(get_current_user)):
     """Create a new product listing"""
@@ -94,27 +210,28 @@ async def create_product(product: ProductCreate, user_id: str = Depends(get_curr
         db = get_db()
         product_data = product.model_dump()
         product_data['views'] = 0
-        product_data['viewed_by'] = []  # Initialize empty list for tracking unique viewers
+        product_data['viewed_by'] = []
         product_data['posted_date'] = datetime.now()
         product_data['updated_at'] = datetime.now()
         product_data['is_active'] = True
-        
-        # Override seller_id with authenticated user
         product_data['seller_id'] = user_id
+        product_data['mark_as_sold'] = False
+        product_data['sold_to'] = None
         
         doc_ref = db.collection('products').document()
         doc_ref.set(product_data)
         
         product_data['id'] = doc_ref.id
+        # Enrich with seller info
+        product_data = enrich_product_with_seller(db, product_data)
+        
         return product_data
     except ValueError as e:
-        # Handle validation errors
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"error": "Validation Error", "detail": str(e)}
         )
     except Exception as e:
-        # Handle server errors
         logger.error(f"Error creating product: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -124,18 +241,27 @@ async def create_product(product: ProductCreate, user_id: str = Depends(get_curr
 
 @router.get("/seller/me", response_model=List[Product])
 async def get_seller_products(user_id: str = Depends(get_current_user)):
-    """Get all products for the authenticated seller"""
+    """Get all products for the authenticated seller (including inactive/sold)"""
     db = get_db()
     products_ref = db.collection('products')
     
-    # Query products where seller_id matches authenticated user
     query = products_ref.where('seller_id', '==', user_id)
     
     products = []
-    for doc in query.stream():
-        product_data = doc.to_dict()
-        product_data['id'] = doc.id
-        products.append(product_data)
+    try:
+        for doc in query.stream():
+            product_data = doc.to_dict()
+            product_data['id'] = doc.id
+            # Enrich with seller info
+            product_data = enrich_product_with_seller(db, product_data)
+            products.append(product_data)
+        
+        # Sort by posted_date descending
+        products.sort(key=lambda x: x.get('posted_date', datetime.min), reverse=True)
+        
+        logger.info(f"Fetched {len(products)} products for seller {user_id}")
+    except Exception as e:
+        logger.error(f"Error fetching seller products: {str(e)}", exc_info=True)
     
     return products
 
@@ -155,27 +281,25 @@ async def get_product(product_id: str, user_id: Optional[str] = Depends(get_opti
     
     product_data = doc.to_dict()
     
-    # Track unique views per user (only for authenticated users)
+    # Track unique views per user
     if user_id:
         viewed_by = product_data.get('viewed_by', [])
         
-        # Only increment view count if this user hasn't viewed before
         if user_id not in viewed_by:
-            # Use atomic operations to prevent race conditions
             doc_ref.update({
-                'viewed_by': ArrayUnion([user_id]),  # Atomic array add
-                'views': Increment(1)  # Atomic increment
+                'viewed_by': ArrayUnion([user_id]),
+                'views': Increment(1)
             })
             
-            # Fetch updated data
             updated_doc = doc_ref.get()
             product_data = updated_doc.to_dict()
             
-            logger.info(f"New view tracked for product {product_id} by user {user_id}. Total views: {product_data.get('views', 0)}")
-        else:
-            logger.info(f"User {user_id} already viewed product {product_id}. View not counted.")
+            logger.info(f"New view tracked for product {product_id} by user {user_id}")
     
     product_data['id'] = doc.id
+    # Enrich with seller info
+    product_data = enrich_product_with_seller(db, product_data)
+    
     return product_data
 
 
@@ -226,7 +350,6 @@ async def partial_update_product(product_id: str, product: ProductUpdate, user_i
             detail={"error": "Not Found", "detail": "Product not found"}
         )
     
-    # Verify ownership (Requirement 6.5, 10.2)
     existing_product = doc.to_dict()
     if existing_product.get('seller_id') != user_id:
         raise HTTPException(
@@ -234,24 +357,207 @@ async def partial_update_product(product_id: str, product: ProductUpdate, user_i
             detail={"error": "Forbidden", "detail": "Unauthorized to modify this product"}
         )
     
-    # Build update dict with only provided fields (Requirement 6.4)
     update_data = product.model_dump(exclude_unset=True)
     
     if update_data:
-        # Update updated_at timestamp (Requirement 6.8)
         update_data['updated_at'] = datetime.now()
         doc_ref.update(update_data)
         
-        # Fetch updated document
         updated_doc = doc_ref.get()
         product_data = updated_doc.to_dict()
         product_data['id'] = product_id
+        product_data = enrich_product_with_seller(db, product_data)
         
         return product_data
     else:
-        # No fields to update, return existing product
         existing_product['id'] = product_id
+        existing_product = enrich_product_with_seller(db, existing_product)
         return existing_product
+
+
+@router.get("/{product_id}/interested-buyers")
+async def get_interested_buyers(product_id: str, user_id: str = Depends(get_current_user)):
+    """Get all users who have messaged about this product"""
+    db = get_db()
+    
+    doc_ref = db.collection('products').document(product_id)
+    doc = doc_ref.get()
+    
+    if not doc.exists:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": "Not Found", "detail": "Product not found"}
+        )
+    
+    product_data = doc.to_dict()
+    if product_data.get('seller_id') != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": "Forbidden", "detail": "Unauthorized to view interested buyers"}
+        )
+    
+    try:
+        chat_rooms = db.collection('chat_rooms').where('product_id', '==', product_id).stream()
+        
+        interested_buyers = []
+        seen_user_ids = set()
+        
+        for chat_room in chat_rooms:
+            chat_data = chat_room.to_dict()
+            buyer_id = chat_data.get('user1_id') if chat_data.get('user2_id') == user_id else chat_data.get('user2_id')
+            
+            if buyer_id and buyer_id != user_id and buyer_id not in seen_user_ids:
+                seen_user_ids.add(buyer_id)
+                
+                user_doc = db.collection('users').document(buyer_id).get()
+                if user_doc.exists:
+                    user_data = user_doc.to_dict()
+                    
+                    # Get avatar from profile
+                    profile_query = db.collection('user_profiles').where('user_id', '==', buyer_id).limit(1)
+                    profile_docs = list(profile_query.stream())
+                    avatar = None
+                    if profile_docs:
+                        avatar = profile_docs[0].to_dict().get('avatar')
+                    
+                    interested_buyers.append({
+                        'id': buyer_id,
+                        'name': user_data.get('name'),
+                        'email': user_data.get('email'),
+                        'avatar': avatar,
+                        'last_message': chat_data.get('last_message'),
+                        'last_message_time': chat_data.get('last_message_time')
+                    })
+        
+        return interested_buyers
+    except Exception as e:
+        logger.error(f"Error fetching interested buyers: {str(e)}", exc_info=True)
+        return []
+
+
+@router.patch("/{product_id}/mark-sold")
+async def mark_product_as_sold(
+    product_id: str,
+    request_body: dict = Body({}),
+    user_id: str = Depends(get_current_user)
+):
+    """Mark a product as sold and optionally create a transaction record"""
+    buyer_id = request_body.get('buyer_id')
+    
+    logger.info(f"[mark-sold] Request received: product_id={product_id}, buyer_id={buyer_id}, user_id={user_id}")
+    
+    db = get_db()
+    doc_ref = db.collection('products').document(product_id)
+    doc = doc_ref.get()
+    
+    if not doc.exists:
+        logger.warning(f"Product {product_id} not found when marking as sold")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": "Not Found", "detail": "Product not found"}
+        )
+    
+    # Verify ownership
+    existing_product = doc.to_dict()
+    if existing_product.get('seller_id') != user_id:
+        logger.warning(f"User {user_id} unauthorized to mark product {product_id} as sold")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": "Forbidden", "detail": "Unauthorized to modify this product"}
+        )
+    
+    # Mark as sold (soft delete)
+    update_data = {
+        'is_active': False,
+        'sold_at': datetime.now(),
+        'updated_at': datetime.now()
+    }
+    
+    # Only set sold_to if buyer_id is provided
+    if buyer_id:
+        update_data['sold_to'] = buyer_id
+    
+    doc_ref.update(update_data)
+    
+    logger.info(f"[mark-sold] Product {product_id} marked as sold" + (f" to buyer {buyer_id}" if buyer_id else " (no buyer specified)"))
+    
+    # Create transaction records if buyer is specified
+    if buyer_id:
+        transaction_data = {
+            'product_id': product_id,
+            'seller_id': user_id,
+            'buyer_id': buyer_id,
+            'amount': existing_product.get('price', 0),
+            'status': 'completed',
+            'created_at': datetime.now(),
+            'completed_at': datetime.now()
+        }
+        
+        # Create seller transaction (sell)
+        seller_transaction = {
+            **transaction_data,
+            'user_id': user_id,
+            'transaction_type': 'sell',
+            'other_party_id': buyer_id
+        }
+        db.collection('transaction_history').add(seller_transaction)
+        
+        # Create buyer transaction (buy)
+        buyer_transaction = {
+            **transaction_data,
+            'user_id': buyer_id,
+            'transaction_type': 'buy',
+            'other_party_id': user_id
+        }
+        db.collection('transaction_history').add(buyer_transaction)
+        logger.info(f"Created transaction records for product {product_id} sale to buyer {buyer_id}")
+    
+    logger.info(f"[mark-sold] Returning success response")
+    return {"message": "Product marked as sold successfully", "buyer_id": buyer_id}
+
+
+@router.patch("/{product_id}/mark-active")
+async def mark_product_as_active(product_id: str, user_id: str = Depends(get_current_user)):
+    """Mark a product as active again (clear sold status)"""
+    logger.info(f"[mark-active] Request received: product_id={product_id}, user_id={user_id}")
+    
+    db = get_db()
+    doc_ref = db.collection('products').document(product_id)
+    doc = doc_ref.get()
+    
+    if not doc.exists:
+        logger.warning(f"Product {product_id} not found when marking as active")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": "Not Found", "detail": "Product not found"}
+        )
+    
+    # Verify ownership
+    existing_product = doc.to_dict()
+    if existing_product.get('seller_id') != user_id:
+        logger.warning(f"User {user_id} unauthorized to mark product {product_id} as active")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": "Forbidden", "detail": "Unauthorized to modify this product"}
+        )
+    
+    # Mark as active and clear sold information using DELETE_FIELD
+    update_data = {
+        'is_active': True,
+        'updated_at': datetime.now()
+    }
+    
+    # Use DELETE_FIELD to properly remove fields in Firestore
+    if 'sold_to' in existing_product:
+        update_data['sold_to'] = DELETE_FIELD
+    if 'sold_at' in existing_product:
+        update_data['sold_at'] = DELETE_FIELD
+    
+    doc_ref.update(update_data)
+    
+    logger.info(f"[mark-active] Product {product_id} marked as active successfully")
+    
+    return {"message": "Product marked as active successfully"}
 
 
 @router.delete("/{product_id}")

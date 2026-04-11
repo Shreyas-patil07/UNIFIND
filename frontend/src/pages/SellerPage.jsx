@@ -1,68 +1,57 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import { categories } from '../data/categories';
-import { getProducts } from '../services/api';
-import { Edit2, Trash2, CheckCircle2, Plus, Eye, Search, X, Clock, Trash2 as TrashIcon, ChevronDown, ArrowUpDown, SlidersHorizontal } from 'lucide-react';
-import { Button } from '../components/ui/Button';
+import { Edit2, Trash2, CheckCircle2, Plus, Eye, Search, X, ChevronDown, ArrowUpDown, SlidersHorizontal, User } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useSellerProducts, useDeleteProduct, useMarkProductAsSold, useMarkProductAsActive } from '../hooks/useProducts';
 
 const SellerPage = () => {
   const navigate = useNavigate();
   const { darkMode } = useTheme();
   const { currentUser } = useAuth();
   
-  // State management
-  const [myListings, setMyListings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // Load user's products with caching
-  useEffect(() => {
-    let isMounted = true;
-    
-    const loadMyListings = async () => {
-      if (!currentUser) return;
-
-      try {
-        const userProducts = await getProducts({ seller_id: currentUser.uid });
-        if (isMounted) {
-          setMyListings(Array.isArray(userProducts) ? userProducts : []);
-          console.log('Seller products loaded:', Array.isArray(userProducts) ? userProducts.length : 0);
-        }
-      } catch (error) {
-        console.error('Failed to load listings:', error);
-        console.error('Error details:', error.response?.data || error.message);
-        if (isMounted) {
-          setMyListings([]);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadMyListings();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [currentUser]);
-  const [searchHistory, setSearchHistory] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedStatus, setSelectedStatus] = useState('all');
-  const [condition, setCondition] = useState('all');
-  const [selectedSubject, setSelectedSubject] = useState('all');
-  const [selectedMathsLevel, setSelectedMathsLevel] = useState('all');
-  const [selectedMaterial, setSelectedMaterial] = useState('all');
-  const [selectedGraphicsItem, setSelectedGraphicsItem] = useState('all');
+  // React Query hooks - Backend already returns seller info embedded!
+  const { data: myListings = [], isLoading: loading } = useSellerProducts();
+  
+  // Debug: Log when myListings changes
+  React.useEffect(() => {
+    console.log('[SellerPage] myListings updated:', myListings.length, 'items');
+    console.log('[SellerPage] First 3 products:', myListings.slice(0, 3).map(p => ({
+      id: p.id,
+      title: p.title,
+      is_active: p.is_active
+    })));
+  }, [myListings]);
+  
+  const deleteProductMutation = useDeleteProduct();
+  const markAsSoldMutation = useMarkProductAsSold();
+  const markAsActiveMutation = useMarkProductAsActive();
+  
+  // Clean state management
+  const [filters, setFilters] = useState({
+    category: 'All',
+    status: 'all',
+    condition: 'all',
+  });
   const [sortBy, setSortBy] = useState('newest');
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // UI State
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  
+  // Modal State
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showMarkAsSoldModal, setShowMarkAsSoldModal] = useState(false);
   const [deleteProductId, setDeleteProductId] = useState(null);
+  const [markAsSoldProductId, setMarkAsSoldProductId] = useState(null);
+  const [markAsSoldCurrentStatus, setMarkAsSoldCurrentStatus] = useState(true);
+  const [interestedBuyers, setInterestedBuyers] = useState([]);
+  const [selectedBuyerId, setSelectedBuyerId] = useState(null);
+  const [loadingBuyers, setLoadingBuyers] = useState(false);
+  const [confirmingAction, setConfirmingAction] = useState(false);
 
   const statusOptions = ['all', 'active', 'sold'];
   const sortOptions = [
@@ -73,124 +62,11 @@ const SellerPage = () => {
     { value: 'most-viewed', label: 'Most Viewed' }
   ];
 
-  const subjects = [
-    'All Subjects',
-    'Maths',
-    'Mechanics',
-    'BEEE',
-    'Physics',
-    'Chemistry',
-    'DBMS',
-    'AOA',
-    'DSA',
-    'OS',
-    'CT',
-    'DSGT'
-  ];
-
-  const mathsLevels = [
-    'All Maths',
-    'Maths-1',
-    'Maths-2',
-    'Maths-3',
-    'Maths-4'
-  ];
-
-  const materials = [
-    'All Materials',
-    'Laptop',
-    'Lab Coat',
-    'Scientific Calculator',
-    'Graphics Kit'
-  ];
-
-  const graphicsKitItems = [
-    'All Graphics Items',
-    'Graphics Drawing Kit',
-    'Drawing Board',
-    'T-square or Mini Drafter',
-    'Set Squares',
-    'Instrument Box',
-    'Pencils and Leads',
-    'Scales',
-    'Protractors',
-    'French Curves',
-    'Stencils',
-    'Ruling Pens'
-  ];
-
-  // Load search history on mount
-  useEffect(() => {
-    try {
-      const history = JSON.parse(localStorage.getItem('unifind_seller_search_history') || '[]');
-      setSearchHistory(Array.isArray(history) ? history : []);
-    } catch (e) {
-      setSearchHistory([]);
-    }
-  }, []);
-
-  // Close sort dropdown when filter drawer opens
-  useEffect(() => {
-    if (filterDrawerOpen) {
-      setSortDropdownOpen(false);
-    }
-  }, [filterDrawerOpen]);
-
-  // Close filter drawer when sort dropdown opens
-  useEffect(() => {
-    if (sortDropdownOpen) {
-      setFilterDrawerOpen(false);
-    }
-  }, [sortDropdownOpen]);
-
-  // Handle search (memoized)
-  const handleSearch = useCallback((query) => {
-    setSearchHistory(prev => {
-      const historyArray = Array.isArray(prev) ? prev : [];
-      if (query.trim() && !historyArray.includes(query.trim())) {
-        const updated = [query.trim(), ...historyArray].slice(0, 10);
-        localStorage.setItem('unifind_seller_search_history', JSON.stringify(updated));
-        return updated;
-      }
-      return prev;
-    });
-  }, []);
-
-  // Clear search history (memoized)
-  const clearSearchHistory = useCallback(() => {
-    setSearchHistory([]);
-    localStorage.removeItem('unifind_seller_search_history');
-  }, []);
-
-  // Handle edit (memoized)
-  const handleEdit = useCallback((productId) => {
-    navigate(`/edit-listing/${productId}`);
-  }, [navigate]);
-
-  // Handle delete (memoized)
-  const handleDelete = useCallback((productId) => {
-    setDeleteProductId(productId);
-    setShowDeleteModal(true);
-  }, []);
-
-  const confirmDelete = useCallback(() => {
-    setMyListings(prev => (Array.isArray(prev) ? prev : []).filter(p => p.id !== deleteProductId));
-    setShowDeleteModal(false);
-    setDeleteProductId(null);
-  }, [deleteProductId]);
-
-  // Handle mark as sold (memoized)
-  const handleMarkAsSold = useCallback((productId) => {
-    setMyListings(prev => (Array.isArray(prev) ? prev : []).map(p => 
-      p.id === productId ? { ...p, status: p.status === 'sold' ? 'active' : 'sold' } : p
-    ));
-  }, []);
-
-  // Filter and sort listings
+  // Filter and sort listings (lightweight - data already from backend)
   const filteredAndSortedListings = useMemo(() => {
-    let filtered = (Array.isArray(myListings) ? myListings : []).filter(product => {
+    let filtered = myListings.filter(product => {
       // Search filter
-      if (searchQuery.trim() !== '') {
+      if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
         const matchesSearch = 
           product.title.toLowerCase().includes(query) ||
@@ -199,32 +75,16 @@ const SellerPage = () => {
       }
 
       // Category filter
-      if (selectedCategory !== 'All' && product.category !== selectedCategory) return false;
-
-      // Printed Notes filtering
-      if (selectedCategory === 'Printed Notes') {
-        if (selectedSubject !== 'all' && selectedSubject !== 'Maths' && product.subject !== selectedSubject) return false;
-        if (selectedSubject === 'Maths' && selectedMathsLevel !== 'all' && product.subject !== selectedMathsLevel) return false;
-        if (selectedSubject === 'Maths' && selectedMathsLevel === 'all' && !['Maths-1', 'Maths-2', 'Maths-3', 'Maths-4'].includes(product.subject)) return false;
-      }
-      
-      // Materials filtering
-      if (selectedCategory === 'Materials') {
-        if (selectedMaterial !== 'all' && selectedMaterial !== 'Graphics Kit' && product.materialType !== selectedMaterial) return false;
-        if (selectedMaterial === 'Graphics Kit' && selectedGraphicsItem !== 'all' && product.materialType !== selectedGraphicsItem) return false;
-        if (selectedMaterial === 'Graphics Kit' && selectedGraphicsItem === 'all') {
-          const graphicsItems = ['Graphics Drawing Kit', 'Drawing Board', 'T-square or Mini Drafter', 'Set Squares', 'Instrument Box', 'Pencils and Leads', 'Scales', 'Protractors', 'French Curves', 'Stencils', 'Ruling Pens'];
-          if (!graphicsItems.includes(product.materialType)) return false;
-        }
-      }
+      if (filters.category !== 'All' && product.category !== filters.category) return false;
 
       // Condition filter
-      if (condition !== 'all' && product.condition !== condition) return false;
+      if (filters.condition !== 'all' && product.condition !== filters.condition) return false;
 
       // Status filter
-      if (selectedStatus !== 'all') {
-        const productStatus = product.status || 'active';
-        if (productStatus !== selectedStatus) return false;
+      if (filters.status !== 'all') {
+        const isActive = product.is_active !== false;
+        if (filters.status === 'active' && !isActive) return false;
+        if (filters.status === 'sold' && isActive) return false;
       }
 
       return true;
@@ -234,9 +94,9 @@ const SellerPage = () => {
     return [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'newest':
-          return new Date(b.postedDate) - new Date(a.postedDate);
+          return new Date(b.posted_date || b.postedDate) - new Date(a.posted_date || a.postedDate);
         case 'oldest':
-          return new Date(a.postedDate) - new Date(b.postedDate);
+          return new Date(a.posted_date || a.postedDate) - new Date(b.posted_date || b.postedDate);
         case 'price-low':
           return a.price - b.price;
         case 'price-high':
@@ -247,32 +107,125 @@ const SellerPage = () => {
           return 0;
       }
     });
-  }, [myListings, searchQuery, selectedCategory, selectedSubject, selectedMathsLevel, selectedMaterial, selectedGraphicsItem, condition, selectedStatus, sortBy]);
+  }, [myListings, searchQuery, filters, sortBy]);
 
-  const activeCount = (Array.isArray(myListings) ? myListings : []).filter(p => (p.status || 'active') === 'active').length;
-  const soldCount = (Array.isArray(myListings) ? myListings : []).filter(p => p.status === 'sold').length;
-  const totalRevenue = (Array.isArray(myListings) ? myListings : []).filter(p => p.status === 'sold').reduce((sum, p) => sum + p.price, 0);
+  const activeCount = myListings.filter(p => p.is_active !== false).length;
+  const soldCount = myListings.filter(p => p.is_active === false).length;
+  const totalRevenue = myListings.filter(p => p.is_active === false).reduce((sum, p) => sum + p.price, 0);
 
-  const activeFiltersCount = [
-    selectedCategory !== 'All',
-    selectedSubject !== 'all',
-    selectedMathsLevel !== 'all',
-    selectedMaterial !== 'all',
-    selectedGraphicsItem !== 'all',
-    condition !== 'all',
-    selectedStatus !== 'all'
-  ].filter(Boolean).length;
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (filters.category !== 'All') count++;
+    if (filters.condition !== 'all') count++;
+    if (filters.status !== 'all') count++;
+    return count;
+  }, [filters]);
 
-  const resetFilters = () => {
-    setSelectedCategory('All');
-    setSelectedSubject('all');
-    setSelectedMathsLevel('all');
-    setSelectedMaterial('all');
-    setSelectedGraphicsItem('all');
-    setCondition('all');
-    setSelectedStatus('all');
+  const resetFilters = useCallback(() => {
+    setFilters({ category: 'All', status: 'all', condition: 'all' });
     setSortBy('newest');
-  };
+    setSearchQuery('');
+  }, []);
+
+  const handleEdit = useCallback((productId) => {
+    navigate(`/edit-listing/${productId}`);
+  }, [navigate]);
+
+  const handleDelete = useCallback((productId) => {
+    setDeleteProductId(productId);
+    setShowDeleteModal(true);
+  }, []);
+
+  const confirmDelete = useCallback(async () => {
+    if (!deleteProductId) return;
+    setConfirmingAction(true);
+    
+    try {
+      await deleteProductMutation.mutateAsync(deleteProductId);
+      setShowDeleteModal(false);
+      setDeleteProductId(null);
+    } catch (error) {
+      console.error('Failed to delete product:', error);
+    } finally {
+      setConfirmingAction(false);
+    }
+  }, [deleteProductId, deleteProductMutation]);
+
+  const handleMarkAsSold = useCallback(async (productId, currentIsActive) => {
+    setMarkAsSoldProductId(productId);
+    setMarkAsSoldCurrentStatus(currentIsActive);
+    setShowMarkAsSoldModal(true); // Show modal immediately
+    
+    // Fetch buyers in background (don't block modal)
+    if (currentIsActive) {
+      setLoadingBuyers(true);
+      setInterestedBuyers([]); // Clear previous buyers
+      
+      // Fetch asynchronously without blocking
+      import('../services/api-service')
+        .then(({ getInterestedBuyers }) => getInterestedBuyers(productId))
+        .then((buyers) => {
+          setInterestedBuyers(Array.isArray(buyers) ? buyers : []);
+        })
+        .catch((error) => {
+          console.error('Failed to fetch interested buyers:', error);
+          setInterestedBuyers([]);
+        })
+        .finally(() => {
+          setLoadingBuyers(false);
+        });
+    }
+  }, []);
+
+  const confirmMarkAsSold = useCallback(async () => {
+    if (!markAsSoldProductId) {
+      console.error('No product ID set');
+      return;
+    }
+    
+    console.log('Confirming mark as sold:', {
+      productId: markAsSoldProductId,
+      currentStatus: markAsSoldCurrentStatus,
+      buyerId: selectedBuyerId
+    });
+    
+    console.log('Decision: Will call', markAsSoldCurrentStatus ? 'MARK AS SOLD' : 'MARK AS ACTIVE');
+    
+    setConfirmingAction(true);
+    
+    try {
+      if (markAsSoldCurrentStatus) {
+        // Marking as sold
+        console.log('Calling markAsSoldMutation...');
+        const result = await markAsSoldMutation.mutateAsync({ 
+          productId: markAsSoldProductId, 
+          buyerId: selectedBuyerId || undefined // Convert null to undefined
+        });
+        console.log('Mark as sold result:', result);
+      } else {
+        // Marking as active
+        console.log('Calling markAsActiveMutation...');
+        const result = await markAsActiveMutation.mutateAsync(markAsSoldProductId);
+        console.log('Mark as active result:', result);
+      }
+      
+      console.log('Success! Closing modal...');
+      setShowMarkAsSoldModal(false);
+      setMarkAsSoldProductId(null);
+      setSelectedBuyerId(null);
+      setInterestedBuyers([]);
+    } catch (error) {
+      console.error('Failed to update product status:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      // Error toast is handled by React Query hook
+    } finally {
+      setConfirmingAction(false);
+    }
+  }, [markAsSoldProductId, markAsSoldCurrentStatus, selectedBuyerId, markAsSoldMutation, markAsActiveMutation]);
 
   const FilterChip = ({ label, active, onClick, testId }) => (
     <button
@@ -340,7 +293,7 @@ const SellerPage = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
-                  handleSearch(searchQuery);
+                  // Just update search, no history needed
                 }
               }}
               className={`w-full pl-12 pr-4 py-3.5 rounded-xl text-sm font-medium border transition-all duration-200 ${
@@ -361,38 +314,7 @@ const SellerPage = () => {
             )}
           </div>
 
-          {/* Search History */}
-          {Array.isArray(searchHistory) && searchHistory.length > 0 && !searchQuery && (
-            <div className={`mt-3 p-3 rounded-xl border ${darkMode ? 'bg-[#212121] border-neutral-700' : 'bg-slate-50 border-slate-200'}`}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Clock className={`h-4 w-4 ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`} />
-                  <span className={`text-xs font-semibold ${darkMode ? 'text-neutral-300' : 'text-slate-700'}`}>Recent Searches</span>
-                </div>
-                <button
-                  onClick={clearSearchHistory}
-                  className={`text-xs font-medium ${darkMode ? 'text-neutral-400 hover:text-red-400' : 'text-slate-500 hover:text-red-600'} transition-colors`}
-                >
-                  Clear
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {searchHistory.slice(0, 5).map((term, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSearchQuery(term)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                      darkMode 
-                        ? 'bg-slate-700 text-neutral-300 hover:bg-neutral-700'
-                        : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-                    }`}
-                  >
-                    {term}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Removed search history - not needed */}
         </div>
 
         {/* Filters */}
@@ -499,8 +421,8 @@ const SellerPage = () => {
           <div className="mt-4">
             <p className={`text-sm ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`}>
               <span className={`font-bold ${darkMode ? 'text-neutral-200' : 'text-slate-900'}`}>{filteredAndSortedListings.length}</span> listings
-              {selectedCategory !== 'All' && (
-                <span className="ml-1">in <span className="font-semibold text-indigo-600">{selectedCategory}</span></span>
+              {filters.category !== 'All' && (
+                <span className="ml-1">in <span className="font-semibold text-indigo-600">{filters.category}</span></span>
               )}
             </p>
           </div>
@@ -532,8 +454,8 @@ const SellerPage = () => {
                     <FilterChip
                       key={cat}
                       label={cat}
-                      active={selectedCategory === cat}
-                      onClick={() => setSelectedCategory(cat)}
+                      active={filters.category === cat}
+                      onClick={() => setFilters(prev => ({ ...prev, category: cat }))}
                       testId={`category-filter-${cat.toLowerCase()}`}
                     />
                   ))}
@@ -548,8 +470,8 @@ const SellerPage = () => {
                     <FilterChip
                       key={status}
                       label={status === 'all' ? 'All Status' : status.charAt(0).toUpperCase() + status.slice(1)}
-                      active={selectedStatus === status}
-                      onClick={() => setSelectedStatus(status)}
+                      active={filters.status === status}
+                      onClick={() => setFilters(prev => ({ ...prev, status }))}
                       testId={`status-filter-${status}`}
                     />
                   ))}
@@ -570,8 +492,8 @@ const SellerPage = () => {
                     <FilterChip
                       key={val}
                       label={label}
-                      active={condition === val}
-                      onClick={() => setCondition(val)}
+                      active={filters.condition === val}
+                      onClick={() => setFilters(prev => ({ ...prev, condition: val }))}
                       testId={testId}
                     />
                   ))}
@@ -607,7 +529,7 @@ const SellerPage = () => {
         {/* Listings Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {filteredAndSortedListings.map((product) => {
-            const isSold = product.status === 'sold';
+            const isSold = product.is_active === false;
             return (
               <div
                 key={product.id}
@@ -686,7 +608,7 @@ const SellerPage = () => {
                       <Trash2 className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => handleMarkAsSold(product.id)}
+                      onClick={() => handleMarkAsSold(product.id, product.is_active !== false)}
                       className={`flex items-center justify-center py-2 rounded-xl border transition-all text-xs font-medium ${
                         isSold
                           ? darkMode
@@ -728,7 +650,10 @@ const SellerPage = () => {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowDeleteModal(false)}
+                    disabled={confirmingAction}
                     className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-colors ${
+                      confirmingAction ? 'opacity-50 cursor-not-allowed' : ''
+                    } ${
                       darkMode 
                         ? 'bg-slate-700 text-neutral-300 hover:bg-neutral-700'
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -738,9 +663,199 @@ const SellerPage = () => {
                   </button>
                   <button
                     onClick={confirmDelete}
-                    className="flex-1 py-2.5 rounded-xl font-semibold text-sm bg-red-600 text-white hover:bg-red-700 transition-colors"
+                    disabled={confirmingAction}
+                    className={`flex-1 py-2.5 rounded-xl font-semibold text-sm bg-red-600 text-white hover:bg-red-700 transition-colors flex items-center justify-center gap-2 ${
+                      confirmingAction ? 'opacity-75 cursor-not-allowed' : ''
+                    }`}
                   >
-                    Delete
+                    {confirmingAction ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Deleting...
+                      </>
+                    ) : (
+                      'Delete'
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Mark as Sold/Active Confirmation Modal */}
+        {showMarkAsSoldModal && (
+          <>
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 animate-fade-in" onClick={() => {
+              setShowMarkAsSoldModal(false);
+              setSelectedBuyerId(null);
+              setInterestedBuyers([]);
+            }} />
+            <div className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg p-6 rounded-2xl shadow-2xl animate-scale-in max-h-[80vh] overflow-y-auto ${
+              darkMode ? 'bg-[#212121]' : 'bg-white'
+            }`}>
+              <div className="text-center">
+                <div className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-4 ${
+                  markAsSoldCurrentStatus ? 'bg-emerald-100' : 'bg-indigo-100'
+                }`}>
+                  <CheckCircle2 className={`h-6 w-6 ${
+                    markAsSoldCurrentStatus ? 'text-emerald-600' : 'text-indigo-600'
+                  }`} />
+                </div>
+                <h3 className={`text-lg font-bold mb-2 ${darkMode ? 'text-neutral-200' : 'text-slate-900'}`}>
+                  {markAsSoldCurrentStatus ? 'Mark as Sold' : 'Mark as Active?'}
+                </h3>
+                
+                {markAsSoldCurrentStatus ? (
+                  <>
+                    <p className={`text-sm mb-4 ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`}>
+                      {loadingBuyers 
+                        ? 'Loading interested buyers...'
+                        : interestedBuyers.length > 0 
+                          ? 'Select the buyer who purchased this product (optional):' 
+                          : 'No users have messaged about this product yet.'}
+                    </p>
+                    
+                    {loadingBuyers ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                      </div>
+                    ) : interestedBuyers.length > 0 ? (
+                      <>
+                        <div className="mb-4 max-h-60 overflow-y-auto">
+                          <div className="space-y-2">
+                            {/* Skip buyer selection option */}
+                            <button
+                              onClick={() => setSelectedBuyerId(null)}
+                              className={`w-full p-3 rounded-xl border-2 transition-all text-left ${
+                                selectedBuyerId === null
+                                  ? darkMode
+                                    ? 'border-indigo-500 bg-indigo-900/20'
+                                    : 'border-indigo-500 bg-indigo-50'
+                                  : darkMode
+                                    ? 'border-neutral-700 hover:border-neutral-600 bg-neutral-800/50'
+                                    : 'border-slate-200 hover:border-slate-300 bg-slate-50'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                  darkMode ? 'bg-neutral-700' : 'bg-slate-200'
+                                }`}>
+                                  <CheckCircle2 className="h-5 w-5" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className={`font-semibold text-sm ${darkMode ? 'text-neutral-200' : 'text-slate-900'}`}>
+                                    Skip buyer selection
+                                  </p>
+                                  <p className={`text-xs ${darkMode ? 'text-neutral-500' : 'text-slate-500'}`}>
+                                    Mark as sold without selecting a buyer
+                                  </p>
+                                </div>
+                                {selectedBuyerId === null && (
+                                  <CheckCircle2 className="h-5 w-5 text-indigo-600 flex-shrink-0" />
+                                )}
+                              </div>
+                            </button>
+                            
+                            {interestedBuyers.map((buyer) => (
+                              <button
+                                key={buyer.id}
+                                onClick={() => setSelectedBuyerId(buyer.id === selectedBuyerId ? null : buyer.id)}
+                                className={`w-full p-3 rounded-xl border-2 transition-all text-left ${
+                                  selectedBuyerId === buyer.id
+                                    ? darkMode
+                                      ? 'border-emerald-500 bg-emerald-900/20'
+                                      : 'border-emerald-500 bg-emerald-50'
+                                    : darkMode
+                                      ? 'border-neutral-700 hover:border-neutral-600 bg-neutral-800/50'
+                                      : 'border-slate-200 hover:border-slate-300 bg-slate-50'
+                                }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  {buyer.avatar ? (
+                                    <img 
+                                      src={buyer.avatar} 
+                                      alt={buyer.name}
+                                      className="w-10 h-10 rounded-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                      darkMode ? 'bg-neutral-700' : 'bg-slate-200'
+                                    }`}>
+                                      <User className="h-5 w-5" />
+                                    </div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className={`font-semibold text-sm ${darkMode ? 'text-neutral-200' : 'text-slate-900'}`}>
+                                      {buyer.name}
+                                    </p>
+                                    {buyer.last_message && (
+                                      <p className={`text-xs truncate ${darkMode ? 'text-neutral-500' : 'text-slate-500'}`}>
+                                        {buyer.last_message}
+                                      </p>
+                                    )}
+                                  </div>
+                                  {selectedBuyerId === buyer.id && (
+                                    <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0" />
+                                  )}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <p className={`text-xs mb-4 ${darkMode ? 'text-neutral-500' : 'text-slate-400'}`}>
+                          💡 Tip: Selecting a buyer will create a transaction record for both parties
+                        </p>
+                      </>
+                    ) : (
+                      <p className={`text-xs mb-4 ${darkMode ? 'text-neutral-500' : 'text-slate-400'}`}>
+                        You can mark this product as sold without selecting a buyer
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className={`text-sm mb-6 ${darkMode ? 'text-neutral-400' : 'text-slate-500'}`}>
+                    This will mark the product as active and make it available for sale again. Previous sale information will be cleared.
+                  </p>
+                )}
+                
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowMarkAsSoldModal(false);
+                      setSelectedBuyerId(null);
+                      setInterestedBuyers([]);
+                    }}
+                    disabled={confirmingAction}
+                    className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-colors ${
+                      confirmingAction ? 'opacity-50 cursor-not-allowed' : ''
+                    } ${
+                      darkMode 
+                        ? 'bg-slate-700 text-neutral-300 hover:bg-neutral-700'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmMarkAsSold}
+                    disabled={confirmingAction}
+                    className={`flex-1 py-2.5 rounded-xl font-semibold text-sm text-white transition-colors flex items-center justify-center gap-2 ${
+                      confirmingAction ? 'opacity-75 cursor-not-allowed' : ''
+                    } ${
+                      markAsSoldCurrentStatus 
+                        ? 'bg-emerald-600 hover:bg-emerald-700' 
+                        : 'bg-indigo-600 hover:bg-indigo-700'
+                    }`}
+                  >
+                    {confirmingAction ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        {markAsSoldCurrentStatus ? 'Marking as Sold...' : 'Marking as Active...'}
+                      </>
+                    ) : (
+                      markAsSoldCurrentStatus ? 'Confirm Sale' : 'Mark as Active'
+                    )}
                   </button>
                 </div>
               </div>

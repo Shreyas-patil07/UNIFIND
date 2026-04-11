@@ -10,18 +10,19 @@ import { ReactNode } from 'react'
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
+      staleTime: 1000 * 30, // 30 seconds (reduced from 5 minutes for faster updates)
+      gcTime: 1000 * 60 * 5, // 5 minutes (reduced from 10 minutes)
       retry: (failureCount, error: any) => {
         // Don't retry on 4xx errors
         if (error?.response?.status >= 400 && error?.response?.status < 500) {
           return false
         }
-        // Retry up to 2 times for other errors
-        return failureCount < 2
+        // Retry up to 1 time for other errors (reduced from 2)
+        return failureCount < 1
       },
       refetchOnWindowFocus: false,
       refetchOnReconnect: true,
+      refetchOnMount: false, // Don't refetch on mount if data is fresh
     },
     mutations: {
       retry: false, // Don't retry mutations by default

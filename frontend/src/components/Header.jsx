@@ -237,6 +237,10 @@ export default function Header({ hideSearch = false }) {
       if (showFriends) {
         fetchFriends()
       }
+      // Wait a bit before refetching to ensure DB has committed
+      setTimeout(() => {
+        fetchFriendRequests()
+      }, 1000)
     } catch (error) {
       console.error('Failed to accept request:', error)
       setErrorMessage('Failed to accept friend request. Please try again.')

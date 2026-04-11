@@ -43,24 +43,38 @@ function getRequestKey(config: AxiosRequestConfig): string {
 }
 
 /**
- * Get authentication token from localStorage
+ * Get authentication token from Firebase Auth
  */
-function getAuthToken(): string | null {
-  return localStorage.getItem('authToken')
+async function getAuthToken(): Promise<string | null> {
+  try {
+    // Dynamically import Firebase auth to avoid circular dependencies
+    const { auth } = await import('../services/firebase')
+    const user = auth.currentUser
+    if (user) {
+      return await user.getIdToken()
+    }
+    return null
+  } catch (error) {
+    console.error('Failed to get auth token:', error)
+    return null
+  }
 }
 
 /**
  * Clear authentication token and redirect to login
  */
 export function clearAuthAndRedirect(): void {
-  localStorage.removeItem('authToken')
+  // Sign out from Firebase
+  import('../services/firebase').then(({ auth }) => {
+    auth.signOut()
+  })
   window.location.href = '/login'
 }
 
 // Request interceptor - Add auth token
 apiClient.interceptors.request.use(
-  (config) => {
-    const token = getAuthToken()
+  async (config) => {
+    const token = await getAuthToken()
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -185,7 +199,9 @@ export async function patch<T = any>(
   data?: any,
   config?: AxiosRequestConfig
 ): Promise<T> {
+  console.log('[API Client] PATCH request:', { url, data, config })
   const response = await apiClient.patch<T>(url, data, config)
+  console.log('[API Client] PATCH response:', { url, status: response.status, data: response.data })
   return response.data
 }
 

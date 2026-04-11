@@ -83,14 +83,18 @@ function useAboutStyles() {
         /* Squad photo */
         .uf-squad-wrap { transition: transform 0.3s; }
         .uf-squad-wrap:hover { transform: rotate(0deg) scale(1.02) !important; }
+        @media (max-width:768px) {
+          .uf-squad-wrap { transform: rotate(0deg) !important; }
+          .uf-squad-section { display: block !important; }
+        }
         /* Stat counter */
         .uf-stat { display:flex; flex-direction:column; align-items:center; gap:4px; }
         /* Dot decorations */
         @keyframes uf-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
-        .uf-float-el { animation: uf-float 4s ease-in-out infinite; }
+        .uf-float-el { animation: none; }
         /* Scroll reveal */
         @keyframes uf-fadein { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
-        .uf-reveal { animation: uf-fadein 0.65s ease both; }
+        .uf-reveal { animation: none; opacity: 1; transform: translateY(0); }
         /* Mobile overrides */
         @media (min-width:769px) {
           .uf-mobile-btn { display:none !important; }
@@ -98,7 +102,6 @@ function useAboutStyles() {
         @media (max-width:768px) {
           .uf-desktop-nav { display:none !important; }
           .uf-hero-grid { grid-template-columns:1fr !important; }
-          .uf-hero-grid > div:last-child { display:none; }
           .uf-story-grid { grid-template-columns:1fr !important; }
           .uf-team-grid { grid-template-columns: repeat(2,1fr) !important; }
           .uf-pillars-grid { grid-template-columns: 1fr !important; }
@@ -152,8 +155,6 @@ const GitHubSVG = () => (
    NAVBAR
 ============================================================ */
 function Navbar({ currentUser, onProfile, onLogin, onSignup, navigate }) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   return (
     <nav
       className="uf-glass-header"
@@ -199,39 +200,14 @@ function Navbar({ currentUser, onProfile, onLogin, onSignup, navigate }) {
               Profile
             </button>
           ) : (
-            <>
-              <button onClick={onLogin}
-                style={{ padding: '8px 14px', borderRadius: 10, background: 'transparent', color: C.onSurfaceVariant, fontWeight: 600, fontSize: 13, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
-                onMouseEnter={e => e.currentTarget.style.background = C.surfaceContainer}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-              >Login</button>
-              <button onClick={onSignup} className="uf-primary-gradient"
-                style={{ padding: '9px 20px', borderRadius: 10, color: '#fff', fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
-              >Get Started</button>
-            </>
+            <button onClick={onLogin}
+              style={{ padding: '8px 14px', borderRadius: 10, background: 'transparent', color: C.onSurfaceVariant, fontWeight: 600, fontSize: 13, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+              onMouseEnter={e => e.currentTarget.style.background = C.surfaceContainer}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >Login</button>
           )}
-          {/* Mobile Menu Toggle Button */}
-          <button
-            className="uf-mobile-btn"
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' }}
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            <Icon name={mobileMenuOpen ? "close" : "menu"} size={28} />
-          </button>
         </div>
       </div>
-
-      {/* Mobile Nav Dropdown */}
-      {mobileMenuOpen && (
-        <div className="uf-mobile-btn" style={{ padding: '16px 24px', background: C.surfaceContainerLowest, borderBottom: `1px solid ${C.outlineVariant}22` }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <button onClick={() => { navigate('/buyer'); setMobileMenuOpen(false); }} className="uf-nav-link" style={{ textAlign: 'left', background: 'none', border: 'none', padding: 0, color: C.onSurfaceVariant, fontWeight: 700, fontSize: 16 }}>Marketplace</button>
-            <button onClick={() => { navigate('/home'); setMobileMenuOpen(false); }} className="uf-nav-link" style={{ textAlign: 'left', background: 'none', border: 'none', padding: 0, color: C.onSurfaceVariant, fontWeight: 500, fontSize: 16 }}>Notes</button>
-            <button onClick={() => { navigate('/need-board'); setMobileMenuOpen(false); }} className="uf-nav-link" style={{ textAlign: 'left', background: 'none', border: 'none', padding: 0, color: C.onSurfaceVariant, fontWeight: 500, fontSize: 16 }}>Events</button>
-            <span style={{ color: C.primary, fontWeight: 700, fontSize: 16 }}>About</span>
-          </div>
-        </div>
-      )}
     </nav>
   );
 }
@@ -298,7 +274,7 @@ function HeroSection() {
         </div>
 
         {/* Right — squad photo */}
-        <div style={{ position: 'relative' }} className="uf-reveal">
+        <div style={{ position: 'relative' }} className="uf-reveal uf-squad-section">
           <div
             className="uf-squad-wrap"
             style={{ borderRadius: 20, overflow: 'hidden', boxShadow: '0 32px 80px rgba(0,51,88,0.18)', transform: 'rotate(2deg)' }}
@@ -306,7 +282,7 @@ function HeroSection() {
             <img
               src="/NU-squad.png"
               alt="UniFind Team"
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              style={{ width: '100%', height: 'auto', objectFit: 'cover', display: 'block' }}
             />
           </div>
           {/* Float badge */}
