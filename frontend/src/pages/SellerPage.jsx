@@ -645,7 +645,7 @@ const SellerPage = () => {
             }`}>
               <div className="text-center">
                 <div className="mx-auto w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
-                  <TrashIcon className="h-6 w-6 text-red-600" />
+                  <Trash2 className="h-6 w-6 text-red-600" />
                 </div>
                 <h3 className={`text-lg font-bold mb-2 ${darkMode ? 'text-neutral-200' : 'text-slate-900'}`}>
                   Delete Listing?
