@@ -91,7 +91,7 @@
 
 - **Average Savings**: ₹3,000-5,000 per student per semester
 - **Waste Reduction**: Extends lifecycle of educational materials by 2-3x
-- **Time to Match**: <5 minutes from posting need to finding relevant listings
+- **Time to Match**: Less than 5 minutes from posting need to finding relevant listings
 - **Trust Coverage**: 95%+ of active sellers with verified college email
 - **Condition Accuracy**: 90%+ transactions match described condition
 - **Transaction Speed**: Average deal completion in <24 hours
