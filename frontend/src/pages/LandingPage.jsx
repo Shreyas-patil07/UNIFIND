@@ -657,7 +657,6 @@ function LandingFooter({ onNavigate }) {
   };
 
   const socialLinks = [
-    { icon: 'public', url: 'https://sigce.edu.in/', label: 'Website' },
     { icon: 'mail', url: 'mailto:systemrecords@gmail.com', label: 'Email' }
   ];
 
@@ -669,9 +668,7 @@ function LandingFooter({ onNavigate }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
             <img src="/UNIFIND.png" alt="UNIFIND" style={{ height: 24, width: 24, objectFit: 'contain' }} />
             <span style={{ fontSize: 16, fontWeight: 700, color: COLORS.primary }}>UNIFIND</span>
-          </div>
-          <p style={{ fontSize: 13, color: '#64748b', maxWidth: 300, marginBottom: 20 }}>© 2026 UNIFIND. The Academic Curator for Modern Campus Life.</p>
-          <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 10 }}>
             {socialLinks.map(({ icon, url, label }) => (
               <a 
                 key={icon} 
@@ -684,8 +681,10 @@ function LandingFooter({ onNavigate }) {
               >
                 <Icon name={icon} size={16} style={{ color: COLORS.primary }} />
               </a>
-            ))}
+            ))} 
           </div>
+          </div>
+          <p style={{ fontSize: 13, color: '#64748b', maxWidth: 300, marginBottom: 20 }}>© 2026 UNIFIND. The Academic Curator for Modern Campus Life.</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
           <div>
