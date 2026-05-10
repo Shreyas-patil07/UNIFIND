@@ -5,7 +5,11 @@ Accepts files server-side, uploads to Cloudinary, returns secure URLs.
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, status
 from typing import List
 from auth import get_current_user
-from services.cloudinary_service import upload_product_image
+from services.cloudinary_service import upload_product_image, upload_profile_image, extract_public_id, delete_product_image, is_cloudinary_url
+from database import get_db
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/upload")
 
@@ -49,3 +53,54 @@ async def upload_multiple_product_images(
         public_ids.append(result["public_id"])
 
     return {"urls": urls, "public_ids": public_ids}
+
+
+@router.post("/profile-image", status_code=status.HTTP_201_CREATED)
+async def upload_profile_image_endpoint(
+    file: UploadFile = File(...),
+    user_id: str = Depends(get_current_user),
+):
+    """
+    Upload a profile image and automatically delete the old one.
+    
+    This endpoint:
+    1. Fetches the user's current avatar from Firestore
+    2. Uploads the new profile image to Cloudinary
+    3. Deletes the old profile image from Cloudinary (if it exists)
+    4. Returns the new image URL
+    
+    Returns: { "url": str, "public_id": str, "old_image_deleted": bool }
+    """
+    db = get_db()
+    
+    # Get user's current avatar
+    user_doc = db.collection('users').document(user_id).get()
+    old_avatar = None
+    old_image_deleted = False
+    
+    if user_doc.exists:
+        user_data = user_doc.to_dict()
+        old_avatar = user_data.get('avatar')
+    
+    # Upload new profile image
+    logger.info(f"Uploading new profile image for user {user_id}")
+    result = await upload_profile_image(file)
+    
+    # Delete old profile image if it exists and is a Cloudinary URL
+    if old_avatar and is_cloudinary_url(old_avatar):
+        logger.info(f"Deleting old profile image for user {user_id}: {old_avatar}")
+        public_id = extract_public_id(old_avatar)
+        if public_id:
+            try:
+                delete_product_image(public_id)
+                old_image_deleted = True
+                logger.info(f"Successfully deleted old profile image: {public_id}")
+            except Exception as e:
+                logger.warning(f"Failed to delete old profile image {public_id}: {e}")
+                # Don't fail the request if deletion fails
+    
+    return {
+        "url": result["url"],
+        "public_id": result["public_id"],
+        "old_image_deleted": old_image_deleted
+    }

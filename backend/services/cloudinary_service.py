@@ -84,6 +84,58 @@ async def upload_product_image(file: UploadFile) -> dict:
     return {"url": result["secure_url"], "public_id": result["public_id"]}
 
 
+async def upload_profile_image(file: UploadFile) -> dict:
+    """
+    Upload a single profile image to Cloudinary.
+
+    Returns:
+        {"url": str, "public_id": str}
+
+    Raises:
+        HTTPException 400  — invalid file type or size
+        HTTPException 502  — Cloudinary upload failure
+    """
+    # --- Validate MIME type ---
+    if file.content_type not in ALLOWED_MIME_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid file type '{file.content_type}'. Allowed: jpeg, png, webp.",
+        )
+
+    # --- Read and size-check ---
+    data = await file.read()
+    if len(data) > MAX_FILE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File exceeds 5 MB limit ({len(data) / 1024 / 1024:.1f} MB received).",
+        )
+
+    # --- Upload ---
+    try:
+        result = cloudinary.uploader.upload(
+            data,
+            upload_preset=settings.CLOUDINARY_UPLOAD_PRESET,
+            folder="unifind/profiles",
+            resource_type="image",
+            allowed_formats=["jpg", "png", "webp"],
+            transformation=[{"quality": "auto", "fetch_format": "auto"}],
+        )
+    except cloudinary.exceptions.Error as exc:
+        logger.error("Cloudinary upload failed: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Image upload failed. Please try again.",
+        ) from exc
+    except Exception as exc:
+        logger.error("Unexpected error during Cloudinary upload: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Image upload failed due to an unexpected error.",
+        ) from exc
+
+    return {"url": result["secure_url"], "public_id": result["public_id"]}
+
+
 def delete_product_image(public_id: str) -> bool:
     """
     Delete an image from Cloudinary by public_id.

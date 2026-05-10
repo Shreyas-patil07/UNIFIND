@@ -35,7 +35,8 @@ class ImageService {
 
     // Route to correct provider
     if (type === 'profile') {
-      return this.uploadToSupabase(compressed);
+      // SECURE: Use backend endpoint for profile photos
+      return this.uploadProfileToBackend(compressed);
     } else {
       return this.uploadToCloudinary(compressed);
     }
@@ -128,116 +129,52 @@ class ImageService {
   }
 
   /**
-   * Upload to Supabase Storage (for profile photos)
+   * Upload to backend API (for profile photos)
+   * This is the SECURE way - backend handles upload and deletion
    */
-  async uploadToSupabase(file) {
+  async uploadProfileToBackend(file) {
     try {
-      console.log('🔵 Starting Supabase upload...');
-      const { createClient } = await import('@supabase/supabase-js');
+      console.log('🔵 Starting backend profile upload...');
       
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      
-      console.log('🔵 Supabase URL:', supabaseUrl);
-      console.log('🔵 Supabase Key exists:', !!supabaseKey);
-      
-      if (!supabaseUrl || !supabaseKey) {
-        console.error('❌ Supabase configuration missing!');
-        throw new Error('Supabase configuration missing');
-      }
-
-      // Create client with service role to bypass RLS
-      const supabase = createClient(supabaseUrl, supabaseKey, {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-        }
-      });
-      console.log('✅ Supabase client created');
-
-      // Get current user from Firebase (for user ID)
+      // Get Firebase auth token
       const { auth } = await import('./firebase');
       if (!auth.currentUser) {
-        console.error('❌ User not authenticated');
         throw new Error('User must be authenticated');
       }
 
-      const userId = auth.currentUser.uid;
-      const timestamp = Date.now();
-      const fileExt = file.name.split('.').pop();
-      const filename = `${userId}/${timestamp}.${fileExt}`;
+      const token = await auth.currentUser.getIdToken();
       
-      console.log('🔵 Uploading to:', filename);
-      console.log('🔵 File size:', (file.size / 1024).toFixed(2), 'KB');
+      // Create form data
+      const formData = new FormData();
+      formData.append('file', file);
 
-      // Upload to Supabase Storage (bypasses RLS with anon key + public bucket)
-      const { data, error } = await supabase.storage
-        .from('profile-photos')
-        .upload(filename, file, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: file.type,
-        });
+      // Get backend URL from environment
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      
+      console.log('🔵 Uploading to backend:', `${backendUrl}/upload/profile-image`);
 
-      if (error) {
-        console.error('❌ Supabase upload error:', error);
-        throw new Error(error.message);
+      // Upload to backend
+      const response = await fetch(`${backendUrl}/upload/profile-image`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ Backend upload error:', errorData);
+        throw new Error(errorData.detail || 'Backend upload failed');
       }
 
-      console.log('✅ Upload successful:', data);
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('profile-photos')
-        .getPublicUrl(filename);
-
-      console.log('✅ Public URL:', urlData.publicUrl);
-      return urlData.publicUrl;
+      const data = await response.json();
+      console.log('✅ Backend upload successful:', data);
+      
+      return data.url;
     } catch (error) {
-      console.error('❌ Supabase upload failed:', error);
-      throw new Error('Failed to upload to Supabase Storage: ' + error.message);
-    }
-  }
-
-  /**
-   * Delete from Supabase Storage
-   * @param {string} url - Image URL to delete
-   */
-  async deleteFromSupabase(url) {
-    try {
-      const { createClient } = await import('@supabase/supabase-js');
-      
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      
-      if (!supabaseUrl || !supabaseKey) {
-        throw new Error('Supabase configuration missing');
-      }
-
-      const supabase = createClient(supabaseUrl, supabaseKey);
-
-      // Extract filename from URL
-      const urlParts = url.split('/profile-photos/');
-      if (urlParts.length < 2) {
-        throw new Error('Invalid Supabase URL');
-      }
-      const filename = urlParts[1];
-
-      // Delete from Supabase Storage
-      const { error } = await supabase.storage
-        .from('profile-photos')
-        .remove([filename]);
-
-      if (error) {
-        console.error('Supabase delete error:', error);
-        throw new Error(error.message);
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Supabase delete failed:', error);
-      // Don't throw - deletion failure shouldn't block user
-      return false;
+      console.error('❌ Backend upload failed:', error);
+      throw new Error('Failed to upload profile image: ' + error.message);
     }
   }
 

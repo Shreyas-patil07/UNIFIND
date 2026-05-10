@@ -206,11 +206,12 @@ const EditProfilePage = () => {
       // Upload image if file is selected
       let imageUrl = editAvatar;
       if (selectedFile) {
-        console.log('📤 Uploading file to Supabase...');
+        console.log('📤 Uploading file to backend...');
         setUploadProgress(10);
         imageUrl = await imageService.upload(selectedFile, 'profile');
         setUploadProgress(100);
         console.log('✅ Upload complete! URL:', imageUrl);
+        console.log('✅ Old profile photo automatically deleted by backend');
       }
 
       console.log('🔍 Checking avatar update:');

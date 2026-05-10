@@ -121,53 +121,25 @@ For detailed architecture, see [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md#architect
 
 ## 🚀 Tech Stack
 
-### Frontend
-- **Build Tool**: Vite 5.1.0 (Lightning-fast HMR)
-- **Framework**: React 18.3.1
-- **Routing**: React Router DOM 6.22.0
-- **Styling**: Tailwind CSS 3.4.1
-- **HTTP Client**: Axios 1.6.7
-- **Icons**: Lucide React 0.507.0
-- **Maps**: Leaflet 1.9.4 + React Leaflet 4.2.1
-- **Authentication**: Firebase SDK 10.7.1
+- **Frontend**: React 18 + Vite 5 + Tailwind CSS
+- **Backend**: FastAPI + Python 3.11
+- **Database**: Firebase Firestore
+- **AI**: Google Gemini API
+- **Deployment**: Vercel + Render
 
-### Backend
-- **Framework**: FastAPI 0.110.1
-- **Server**: Uvicorn 0.25.0
-- **Database**: Firebase Firestore (via Firebase Admin SDK 6.4.0)
-- **Validation**: Pydantic 2.6.4 with email support
-- **Environment**: Python-dotenv 1.0.1
+> **Detailed specifications**: See [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md#tech-stack)
 
 ---
 
 ## 🚀 Getting Started
 
-### Quick Setup (5 minutes)
-
 ```bash
-# 1. Clone repository
+# Quick setup (5 minutes)
 git clone https://github.com/Shreyas-patil07/UNIFIND.git
 cd UNIFIND
-
-# 2. Backend setup
-cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-
-# 3. Frontend setup (new terminal)
-cd frontend
-npm install
-
-# 4. Configure environment variables (see QUICKSTART.md)
-
-# 5. Run
-python backend/main.py  # Terminal 1
-npm run dev --prefix frontend  # Terminal 2
 ```
 
-**Full setup guide**: [QUICKSTART.md](QUICKSTART.md)  
-**Deployment guide**: [DEPLOYMENT.md](DEPLOYMENT.md)
+**Complete setup guide**: [QUICKSTART.md](QUICKSTART.md)
 
 ---
 
@@ -246,44 +218,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 For support, email systemrecord07@gmail.com or open an issue on GitHub.
-
----
-
-## 🎨 Branding & Footer
-
-UNIFIND features a professional footer with "Created by Numero Uno" branding, similar to industry-standard team attribution. The footer includes:
-
-- Complete team member links
-- Contact information
-- Quick navigation
-- Animated team badge
-- Copyright © 2026
-
-See [FOOTER_USAGE.md](frontend/FOOTER_USAGE.md) for implementation details and customization options.
-
----
-
-## 📚 Documentation
-
-Complete documentation organized by use case:
-
-### For New Users
-- **[README.md](README.md)** - Project overview and features (you are here)
-- **[QUICKSTART.md](QUICKSTART.md)** - Get running in 5 minutes
-
-### For Developers
-- **[DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)** - Development workflows, APIs, architecture
-- **[DOCUMENTATION.md](DOCUMENTATION.md)** - Complete technical reference
-
-### For Deployment
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment guide (Render + Vercel)
-
-### For Compliance
-- **[LEGAL_COMPLIANCE.md](LEGAL_COMPLIANCE.md)** - Privacy policy, terms, guidelines
-
-### Project History
-- **[MEGA_LOG.md](MEGA_LOG.md)** - Detailed chronological development log
-- **[UPDATES.md](UPDATES.md)** - Clean changelog with summaries
 
 ---
 

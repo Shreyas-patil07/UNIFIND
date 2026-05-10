@@ -1,5 +1,32 @@
 """
 Optimized Gemini AI client with proper async support and caching.
+
+Available Free Tier Models (as of May 2026):
+============================================
+
+FALLBACK MODELS (automatically tried in order):
+- gemini-3.1-flash-lite: Most cost-efficient, optimized for high-volume tasks
+- gemini-3.1-flash-lite-preview: Preview version of flash-lite
+- gemini-3-flash-preview: Most intelligent model built for speed
+- gemini-2.5-flash: Hybrid reasoning with 1M token context window
+- gemini-2.5-flash-lite: Smallest and most cost-effective
+- gemini-2.5-flash-lite-preview-09-2025: Latest flash-lite preview
+- gemini-2.5-pro: State-of-the-art, excels at coding and reasoning
+- gemini-1.5-flash: Legacy fast model
+- gemini-1.5-pro: Legacy capable model
+- gemini-1.0-pro: Legacy stable fallback
+
+SPECIALIZED MODELS (use explicitly via get_specialized_model()):
+- TTS Models: gemini-3.1-flash-tts-preview, gemini-2.5-flash-preview-tts, gemini-2.5-pro-preview-tts
+- Live API: gemini-3.1-flash-live-preview, gemini-2.5-flash-native-audio-preview-12-2025
+- Image Generation: gemini-3.1-flash-image-preview, gemini-3-pro-image-preview, gemini-2.5-flash-image
+- Robotics: gemini-robotics-er-1.6-preview
+- Embeddings: gemini-embedding-2, gemini-embedding-001
+- Open Source: gemma-4
+- Computer Use: gemini-2.5-computer-use-preview-10-2025
+
+Note: All models in this file are FREE TIER with no input/output token costs.
+See GOOGLE_FREE_TIER_MODELS.md for detailed documentation.
 """
 import asyncio
 import hashlib
@@ -16,14 +43,25 @@ _response_cache: Dict[str, str] = {}
 MAX_CACHE_SIZE = 1000
 
 # Model fallback list - will try each model in order if rate limited
+# Updated with all free tier Gemini API models (as of May 2026)
 MODEL_FALLBACK_LIST: List[str] = [
-    "gemma-3-27b-it",
-    "gemma-3-12b-it",
-    "gemma-4-31b-it",
-    "gemma-4-26b-a4b-it",
-    "gemma-3-4b-it",
-    "gemma-3n-e2b-it",
-    "gemma-3-1b-it",
+    # Gemini 3.1 Series (Latest)
+    "gemini-3.1-flash-lite",                    # Most cost-efficient, high-volume tasks
+    "gemini-3.1-flash-lite-preview",            # Preview of flash-lite
+    
+    # Gemini 3 Series
+    "gemini-3-flash-preview",                   # Most intelligent, built for speed
+    
+    # Gemini 2.5 Series (Stable & Recommended)
+    "gemini-2.5-flash",                         # Hybrid reasoning, 1M context window
+    "gemini-2.5-flash-lite",                    # Smallest, most cost-effective
+    "gemini-2.5-flash-lite-preview-09-2025",    # Latest flash-lite preview
+    "gemini-2.5-pro",                           # State-of-the-art, excels at coding
+    
+    # Legacy models (for backward compatibility)
+    "gemini-1.5-flash",                         # Fast and efficient (legacy)
+    "gemini-1.5-pro",                           # More capable (legacy)
+    "gemini-1.0-pro",                           # Stable fallback (legacy)
 ]
 
 # Track current model index
@@ -213,3 +251,35 @@ def reset_model_index():
     _current_model_index = 0
     _get_configured_model.cache_clear()
     logger.info(f"Reset to primary model: {MODEL_FALLBACK_LIST[0]}")
+
+
+def get_specialized_model(model_key: str) -> str:
+    """
+    Get a specialized model by key.
+    
+    Args:
+        model_key: Key from SPECIALIZED_MODELS dict
+        
+    Returns:
+        str: Model name
+        
+    Raises:
+        ValueError: If model_key is not found
+    """
+    if model_key not in SPECIALIZED_MODELS:
+        available = ", ".join(SPECIALIZED_MODELS.keys())
+        raise ValueError(f"Unknown model key: {model_key}. Available: {available}")
+    return SPECIALIZED_MODELS[model_key]
+
+
+def list_available_models() -> Dict[str, List[str]]:
+    """
+    List all available models organized by category.
+    
+    Returns:
+        Dict with 'fallback' and 'specialized' model lists
+    """
+    return {
+        "fallback": MODEL_FALLBACK_LIST.copy(),
+        "specialized": SPECIALIZED_MODELS.copy()
+    }

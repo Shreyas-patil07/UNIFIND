@@ -106,30 +106,7 @@ npm run dev
 
 ---
 
-## Step 6: Deploy Firestore Indexes (Recommended)
-
-For optimal performance, deploy database indexes:
-
-```bash
-# Install Firebase CLI (if not installed)
-npm install -g firebase-tools
-
-# Login to Firebase
-firebase login
-
-# Deploy indexes (from project root)
-firebase deploy --only firestore:indexes
-```
-
-⏰ **Wait Time**: 5-30 minutes for indexes to build
-
-✅ **Benefit**: 10-20x faster queries, 80% faster page loads
-
-**Check Status**: Firebase Console → Firestore → Indexes (wait for "Enabled")
-
----
-
-## Step 7: Test
+## Step 6: Test
 
 1. Open http://localhost:5173
 2. Click "Sign Up"

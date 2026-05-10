@@ -389,6 +389,22 @@ async def update_product(product_id: str, product: ProductCreate, user_id: str =
             detail={"error": "Forbidden", "detail": "Unauthorized to modify this product"}
         )
     
+    # Clean up old images that are being replaced
+    old_images = set(existing_product.get('images', []))
+    new_images = set(product.images)
+    images_to_delete = old_images - new_images
+    
+    if images_to_delete:
+        logger.info(f"Cleaning up {len(images_to_delete)} replaced images for product {product_id}")
+        for url in images_to_delete:
+            public_id = extract_public_id(url)
+            if public_id:
+                try:
+                    delete_product_image(public_id)
+                    logger.info(f"Deleted replaced image: {public_id}")
+                except Exception as e:
+                    logger.warning(f"Failed to delete replaced image {public_id}: {e}")
+    
     product_data = product.model_dump()
     product_data['updated_at'] = datetime.now()
     doc_ref.update(product_data)
@@ -425,6 +441,23 @@ async def partial_update_product(product_id: str, product: ProductUpdate, user_i
     update_data = product.model_dump(exclude_unset=True)
     
     if update_data:
+        # Clean up old images if images are being updated
+        if 'images' in update_data:
+            old_images = set(existing_product.get('images', []))
+            new_images = set(update_data['images'])
+            images_to_delete = old_images - new_images
+            
+            if images_to_delete:
+                logger.info(f"Cleaning up {len(images_to_delete)} replaced images for product {product_id}")
+                for url in images_to_delete:
+                    public_id = extract_public_id(url)
+                    if public_id:
+                        try:
+                            delete_product_image(public_id)
+                            logger.info(f"Deleted replaced image: {public_id}")
+                        except Exception as e:
+                            logger.warning(f"Failed to delete replaced image {public_id}: {e}")
+        
         update_data['updated_at'] = datetime.now()
         doc_ref.update(update_data)
         
