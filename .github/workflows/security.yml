@@ -1,0 +1,91 @@
+name: Security Scan
+
+on:
+  schedule:
+    # Run weekly on Monday at 00:00 UTC
+    - cron: '0 0 * * 1'
+  workflow_dispatch:  # Allow manual trigger
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/requirements.txt'
+      - 'backend/app/**'
+
+jobs:
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Safety
+        run: pip install safety
+      
+      - name: Run Safety check
+        working-directory: ./backend
+        run: |
+          safety check --file requirements.txt --output json > safety-report.json || true
+          safety check --file requirements.txt --output text
+        continue-on-error: true
+      
+      - name: Upload Safety report
+        uses: actions/upload-artifact@v4
+        with:
+          name: safety-report
+          path: backend/safety-report.json
+        if: always()
+  
+  code-scan:
+    name: Code Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Bandit
+        run: pip install bandit
+      
+      - name: Run Bandit
+        working-directory: ./backend
+        run: |
+          bandit -r app/ -f json -o bandit-report.json || true
+          bandit -r app/ -f screen
+        continue-on-error: true
+      
+      - name: Upload Bandit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: backend/bandit-report.json
+        if: always()
+  
+  secret-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better detection
+      
+      - name: TruffleHog Secret Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified
