@@ -9,7 +9,7 @@
 **Build Time**: ~5s (Vite optimized)  
 **Dev Startup**: <1s (HMR enabled)  
 **Database Collections**: 10 (Firestore)  
-**API Routes**: 10 (auth, products, needs, need-board, chats, users, transactions, reviews, uploads)  
+**API Routes**: 9 (auth, products, needs, need-board, chats, users, transactions, reviews, uploads)  
 **Frontend Pages**: 23 (complete user flows)
 
 ---
@@ -18,9 +18,10 @@
 
 ### Codebase Metrics
 - **Total Lines of Code**: ~25,000+
-- **Frontend Components**: 24 pages + 19 components
+- **Frontend Components**: 23 pages + 17 components
 - **Backend Routes**: 9 API route modules
-- **Backend Services**: 6 service modules
+- **Backend Services**: 9 service modules
+- **Backend Repositories**: 8 repository classes
 - **Test Coverage**: Core paths covered
 - **Documentation**: 7 main files (~15,000 lines)
 
@@ -52,7 +53,7 @@
 **Architecture Documentation**:
 - Updated README.md with complete tech stack breakdown
 - Added architecture diagram showing all 5 external services
-- Documented 10 API routes and 23 frontend pages
+- Documented 9 API routes and 23 frontend pages
 - Clarified dual storage strategy (Cloudinary + Supabase)
 
 **Tech Stack Updates**:
@@ -63,7 +64,7 @@
 - Storage: Cloudinary (products) + Supabase (profiles)
 
 **Key Clarifications**:
-- **10 API Routes**: auth, products, needs, need-board, chats, users, transactions, reviews, uploads, __init__
+- **9 API Routes**: auth, products, needs, need-board, chats, users, transactions, reviews, uploads
 - **23 Frontend Pages**: Complete user flows from landing to analytics
 - **10 Collections**: users, user_profiles, products, needs, chat_rooms, messages, transactions, transaction_history, reviews, friendships
 - **5 External Services**: Firebase, Supabase, Cloudinary, Gemini AI, Gmail SMTP
@@ -146,8 +147,8 @@
 5. **Gmail SMTP** - Email verification system (custom implementation)
 
 **Complete Architecture Overview**:
-- **Backend**: 27 Python files, 9 API routes, 6 services, 2 security modules
-- **Frontend**: 62 files, 24 pages, 19 components, 8 custom hooks
+- **Backend**: 27 Python files, 9 API routes, 9 services, 8 repositories
+- **Frontend**: 62 files, 23 pages, 17 components, 8 custom hooks
 - **All files properly connected and operational**
 - **100% test coverage for critical paths**
 
@@ -3611,7 +3612,8 @@ After refresh, console should show:
   - Hooks: 8 custom hooks
 - **Backend Files**: 27 analyzed files
   - Routes: 9 API route modules
-  - Services: 6 service modules
+  - Services: 9 service modules
+  - Repositories: 8 repository classes
   - Security: 2 security modules
   - Models: 1 comprehensive Pydantic models file
   - Config: 3 configuration files
@@ -4223,8 +4225,8 @@ AI endpoints: 3 requests/12 hours per user
 - ✅ Comprehensive documentation (11,453 lines)
 
 ### Feature Achievements
-- ✅ 24 pages implemented
-- ✅ 19 reusable components
+- ✅ 23 pages implemented
+- ✅ 17 reusable components
 - ✅ 45+ API endpoints
 - ✅ 10 Firestore collections
 - ✅ 5 external services integrated
@@ -5086,7 +5088,7 @@ frontend/
 │   │   ├── api-client.ts           # Enhanced API client
 │   │   └── react-query.tsx         # React Query configuration
 │   │
-│   ├── pages/                       # Page components (24 pages)
+│   ├── pages/                       # Page components (23 pages)
 │   │   ├── LandingPage.jsx         # Public landing page
 │   │   ├── LoginPage.jsx           # User login
 │   │   ├── SignupPage.jsx          # User registration
@@ -5559,14 +5561,14 @@ VITE_CLOUDINARY_CLOUD_NAME=your-cloud-name
 
 **Backend** (27 analyzed files):
 - 9 API route modules
-- 6 service modules
-- 7 repository modules
+- 9 service modules
+- 8 repository classes (including base repository)
 - 2 security modules
 - 3 core modules
 
 **Frontend** (62 analyzed files):
-- 24 pages
-- 19 components
+- 23 pages
+- 17 components
 - 3 services
 - 2 contexts
 - 8 hooks

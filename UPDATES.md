@@ -18,7 +18,7 @@ Comprehensive documentation refresh to reflect current architecture state with a
 ### Architecture Updates
 - Documented complete tech stack (React 18.3.1, FastAPI 0.110.1, Python 3.11+)
 - Added architecture diagram showing 5 external services
-- Clarified 10 API routes and 23 frontend pages
+- Clarified 9 API routes and 23 frontend pages
 - Updated database schema (10 collections including friendships)
 
 ### Tech Stack Clarifications
@@ -383,8 +383,6 @@ All chat system documentation has been integrated into existing files:
 - Before: HIGH Risk (no headers, no rate limiting, sensitive data in logs)
 - After: MEDIUM Risk (comprehensive protections, validation framework)
 
-> **Full details**: See SECURITY_AUDIT_REPORT.md and SECURITY_IMPLEMENTATION_GUIDE.md
-
 ---
 
 ## April 7, 2026 - ChatPage Optimization (v2.1.0)
@@ -732,7 +730,7 @@ All chat system documentation has been integrated into existing files:
 ## Upcoming Updates
 
 ### Planned for v2.2.0
-- [ ] Complete remaining security fixes (see SECURITY_AUDIT_REPORT.md)
+- [ ] Complete remaining security hardening (input validation, ownership verification, file validation)
 - [ ] Implement input validation constraints on all models
 - [ ] Add ownership verification to all update/delete endpoints
 - [ ] Implement file upload validation
@@ -762,7 +760,7 @@ All chat system documentation has been integrated into existing files:
 **Made with ❤️ by Numero Uno Team**
 
 For detailed information about any update, see:
-- [SECURITY_AUDIT_REPORT.md](SECURITY_AUDIT_REPORT.md) - Security audit and fixes
-- [SECURITY_IMPLEMENTATION_GUIDE.md](SECURITY_IMPLEMENTATION_GUIDE.md) - Implementation guide
-- [MEGA_LOG.md](MEGA_LOG.md) - Complete project history
+- [MEGA_LOG.md](MEGA_LOG.md) - Complete project history and technical documentation
+- [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) - Architecture and development guide
+- [DEPLOYMENT.md](DEPLOYMENT.md) - Production deployment guide
 - [README.md](README.md) - Project overview

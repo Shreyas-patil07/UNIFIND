@@ -19,18 +19,20 @@ UNIFIND/
 │   │   │   └── security/      # cost_guard, input/output validators
 │   │   ├── api/               # API Layer
 │   │   │   ├── dependencies/  # auth.py, database.py, services.py
-│   │   │   └── routes/        # 10 API route modules
+│   │   │   └── routes/        # 9 API route modules
 │   │   ├── core/              # Core Configuration
 │   │   │   ├── config.py      # Settings management
 │   │   │   └── database.py    # Firebase initialization
 │   │   ├── repositories/      # Data Access Layer
+│   │   │   ├── base.py        # Base repository class
 │   │   │   ├── product_repository.py
 │   │   │   ├── user_repository.py
 │   │   │   ├── need_repository.py
 │   │   │   ├── chat_repository.py
 │   │   │   ├── transaction_repository.py
 │   │   │   ├── review_repository.py
-│   │   │   └── friendship_repository.py
+│   │   │   ├── friendship_repository.py
+│   │   │   └── firestore/     # Firestore-specific implementations
 │   │   ├── schemas/           # Pydantic Models
 │   │   │   ├── product.py
 │   │   │   ├── user.py
@@ -53,13 +55,23 @@ UNIFIND/
 │
 ├── frontend/                  # React + Vite Frontend
 │   ├── src/
-│   │   ├── components/       # Reusable UI components (19 files)
+│   │   ├── components/       # Reusable UI components (17 files)
 │   │   │   ├── Header.jsx
+│   │   │   ├── Footer.jsx
 │   │   │   ├── ProductCard.jsx
 │   │   │   ├── MessageBubble.jsx
 │   │   │   ├── SellerDemandBanner.jsx
 │   │   │   ├── LoadingSkeleton.jsx
+│   │   │   ├── SkeletonLoader.jsx
 │   │   │   ├── ErrorBoundary.jsx
+│   │   │   ├── ProtectedRoute.jsx
+│   │   │   ├── PublicRoute.jsx
+│   │   │   ├── ImageCropModal.jsx
+│   │   │   ├── ShareModal.jsx
+│   │   │   ├── FloatingBadge.jsx
+│   │   │   ├── NumeroUnoBadge.jsx
+│   │   │   ├── ReplyPreview.jsx
+│   │   │   ├── Toaster.jsx
 │   │   │   └── ui/           # Button, Modal, etc.
 │   │   ├── contexts/         # React contexts
 │   │   │   ├── AuthContext.jsx
@@ -121,9 +133,11 @@ UNIFIND/
 │  • NeedBoard (AI Search), PostNeed, SellerDemandFeed                   │
 │  • Chat, Analytics, Profile, Legal                                      │
 │                                                                          │
-│  19 Components:                                                          │
-│  • Header, ProductCard, MessageBubble, SellerDemandBanner              │
-│  • LoadingSkeleton, ErrorBoundary, Modals, UI Components               │
+│  17 Components:                                                          │
+│  • Header, Footer, ProductCard, MessageBubble, SellerDemandBanner      │
+│  • LoadingSkeleton, SkeletonLoader, ErrorBoundary, ProtectedRoute      │
+│  • PublicRoute, ImageCropModal, ShareModal, FloatingBadge              │
+│  • NumeroUnoBadge, ReplyPreview, Toaster, UI Components                │
 │                                                                          │
 │  State Management:                                                       │
 │  • AuthContext (Firebase Auth + User Profile)                          │
@@ -137,7 +151,7 @@ UNIFIND/
 │                            BACKEND LAYER                                 │
 │         FastAPI 0.110.1 + Python 3.11+ + Repository Pattern            │
 ├─────────────────────────────────────────────────────────────────────────┤
-│  API Routes (10):                                                        │
+│  API Routes (9):                                                         │
 │  /api/auth          - Email verification                                │
 │  /api/products      - CRUD, batch, mark sold/active                    │
 │  /api/needs         - Demand→Supply engine                             │
@@ -153,7 +167,8 @@ UNIFIND/
 │  • user_service, chat_service, transaction_service                     │
 │  • review_service, cloudinary_service, email_service                   │
 │                                                                          │
-│  Repository Layer (7 repositories):                                     │
+│  Repository Layer (8 repositories):                                     │
+│  • base_repository (base class)                                         │
 │  • product_repository, user_repository, need_repository                │
 │  • chat_repository, transaction_repository, review_repository          │
 │  • friendship_repository                                                │
@@ -224,7 +239,7 @@ User Input → Frontend → Backend API → Service Layer → Repository → Fir
 9. **reviews** - User reviews (rating, comment, transaction_id, reviewer_id)
 10. **friendships** - Friend connections (user_id, friend_id, status, created_at)
 
-### API Routes (10 Total)
+### API Routes (9 Total)
 1. **`/api/auth`** - Email verification (send, verify, resend)
 2. **`/api/products`** - Full CRUD, batch fetch, mark sold/active, interested buyers
 3. **`/api/needs`** - Demand→Supply engine (create, match, fulfill, seller feed)
@@ -234,7 +249,6 @@ User Input → Frontend → Backend API → Service Layer → Repository → Fir
 7. **`/api/transactions`** - Transaction history, stats, product tracking
 8. **`/api/reviews`** - Review creation, user ratings, stats
 9. **`/api/uploads`** - Cloudinary image uploads (product/profile) with security
-10. **`/api/__init__`** - Route aggregation
 
 ---
 

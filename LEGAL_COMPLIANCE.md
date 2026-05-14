@@ -143,15 +143,17 @@ Maximum liability is limited to ₹1,000 or amount paid (if any)."
 ## Backend API Compliance
 
 ### Data Protection in API Routes
-**Location:** `backend/routes/`
+**Location:** `backend/app/api/routes/`
 
-**Implemented Routes:**
+**Implemented Routes** (9 total):
 - `auth.py` - Authentication with secure password hashing
 - `users.py` - User profile management with privacy controls
 - `products.py` - Product listings with content moderation
 - `chats.py` - Secure messaging between users
+- `needs.py` - User needs and demand management
 - `need_board.py` - Community need board with moderation
 - `reviews.py` - Review system with abuse prevention
+- `transactions.py` - Transaction history and record management
 - `uploads.py` - Secure file upload with validation
 
 **Security Measures:**
@@ -229,7 +231,7 @@ To test the implementation:
 
 ---
 
-**Last Updated:** April 9, 2026  
+**Last Updated:** May 15, 2026  
 **Compliance Status:** ✅ Ready for Review
 
 
@@ -282,6 +284,6 @@ Users have the right to:
 
 ---
 
-**Last Updated:** April 10, 2026  
+**Last Updated:** May 15, 2026  
 **Compliance Status:** ✅ Ready for Legal Review  
-**Next Review Date:** April 10, 2027
+**Next Review Date:** May 15, 2027

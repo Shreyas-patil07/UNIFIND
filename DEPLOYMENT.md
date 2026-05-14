@@ -4,7 +4,7 @@
 
 ## Overview
 This guide covers deploying UNIFIND to production:
-- **Backend**: Render (Free tier) - 10 API routes, Python 3.11+
+- **Backend**: Render (Free tier) - 9 primary API route modules, Python 3.11
 - **Frontend**: Vercel (Free tier) - React 18 + Vite 5, 23 pages
 - **Database**: Firebase Firestore (10 collections with composite indexes)
 - **AI**: Google Gemini API (with security hardening)
@@ -35,8 +35,8 @@ This guide covers deploying UNIFIND to production:
    - **Branch**: main
    - **Root Directory**: backend
    - **Runtime**: Python 3
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --workers 4`
+   - **Build Command**: `pip install --no-cache-dir -r requirements-prod.txt`
+   - **Start Command**: `gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --workers 4 --bind 0.0.0.0:$PORT --timeout 120 --keepalive 5 --max-requests 1000 --max-requests-jitter 100 --access-logfile - --error-logfile - --log-level info --preload --graceful-timeout 30`
    - **Plan**: Free
 
 ### Step 3: Set Environment Variables
@@ -60,17 +60,28 @@ FIREBASE_CLIENT_CERT_URL=https://www.googleapis.com/robot/v1/metadata/x509/...
 # Gemini AI
 GEMINI_API_KEY=your-gemini-api-key
 
+# Cloudinary (Image Storage)
+CLOUDINARY_CLOUD_NAME=your-cloudinary-cloud-name
+CLOUDINARY_API_KEY=your-cloudinary-api-key
+CLOUDINARY_API_SECRET=your-cloudinary-api-secret
+CLOUDINARY_UPLOAD_PRESET=unifind_products
+
 # Email Configuration (Gmail SMTP)
 GMAIL_USER=your-gmail@gmail.com
 GMAIL_APP_PASSWORD=your-16-char-app-password
 
 # CORS (add your Vercel domain after frontend deployment)
 CORS_ORIGINS=https://your-app.vercel.app,http://localhost:3000
+
+# Error Tracking (Sentry - required for production)
+SENTRY_DSN=https://your-sentry-dsn-url
 ```
 
 **Important Notes:**
 - For `GMAIL_APP_PASSWORD`: Generate from [Google App Passwords](https://myaccount.google.com/apppasswords)
 - For `FIREBASE_PRIVATE_KEY`: Keep the `\n` characters for newlines
+- For `SENTRY_DSN`: Required in production. Get your DSN from [Sentry Console](https://sentry.io/)
+- For `CLOUDINARY_*`: Get credentials from [Cloudinary Dashboard](https://cloudinary.com/console)
 
 ### Step 4: Deploy
 1. Click "Create Web Service"
@@ -78,16 +89,23 @@ CORS_ORIGINS=https://your-app.vercel.app,http://localhost:3000
 3. Note your backend URL: `https://unifind-backend.onrender.com`
 
 ### Step 5: Verify Deployment
-Visit: `https://unifind-backend.onrender.com/api/health`
+Visit: `https://unifind-backend.onrender.com/health`
 
 Should return:
 ```json
 {
-  "status": "healthy",
-  "version": "2.0.0",
-  "environment": "production"
+  "status": "ok",
+  "version": "2.1.0"
 }
 ```
+
+Or use the API-specific endpoint: `https://unifind-backend.onrender.com/api/health`
+
+Additional health check endpoints:
+- `/health/live` - Kubernetes liveness probe
+- `/health/ready` - Readiness check (returns 503 if not ready)
+- `/health/detailed` - Detailed health status with dependencies
+- `/api/ready` - API readiness check
 
 ---
 
@@ -323,8 +341,12 @@ Errors: 0
 
 ### Verification
 1. Check Firestore Console for `transaction_history` collection
-2. Verify records have all required fields
-3. Test marking a product as sold/active
+2. Vsic health: `https://unifind-backend.onrender.com/health`
+- API health: `https://unifind-backend.onrender.com/api/health`
+- Liveness probe: `https://unifind-backend.onrender.com/health/live`
+- Readiness probe: `https://unifind-backend.onrender.com/health/ready`
+- Detailed health: `https://unifind-backend.onrender.com/health/detailed`
+- APIarking a product as sold/active
 4. Confirm new transaction history records are created
 
 ## Part 5: Monitoring & Maintenance
@@ -464,12 +486,10 @@ For application issues:
 
 ### Frontend URLs
 - Production: `https://your-app.vercel.app`
-- Preview: Auto-generated for each PR
-
-### Key Commands
-```bash
-# Local development
+- Preview: Auto-gen - Backend
 cd backend && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Local development - Frontend
 cd frontend && npm run dev
 
 # Build frontend
@@ -478,11 +498,22 @@ cd frontend && npm run build
 # Test production build locally
 cd frontend && npm run preview
 
+# Production backend (with gunicorn) - local testing
+cd backend && gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --workers 4 --bind 0.0.0.0:8000 --timeout 120 --keepalive 5
+
+# Test production dependencies
+cd backend && pip install -r requirements-prod.txt
+
+# Run startup validation
+cd backend && python scripts/startup_validation.py
+cd frontend && npm run preview
+
 # Production backend (with gunicorn)
 cd backend && gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --workers 4 --bind 0.0.0.0:8000
 ```
 
 ---
 
-**Last Updated**: April 6, 2026
-**Version**: 2.0.0
+**Last Updated**: May 15, 2026
+**Document Version**: 2.4.5
+**API Version**: 2.1.0
