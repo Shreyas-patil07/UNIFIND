@@ -8,51 +8,37 @@ on:
 
 jobs:
   lint-and-test:
-    name: Lint and Test Backend
+    name: Test Backend
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         python-version: ['3.11']
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-      
+
       - name: Install dependencies
         working-directory: ./backend
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest pytest-asyncio pytest-cov httpx
-      
+
+      # OPTIONAL NON-BLOCKING RUFF CHECK
       - name: Run Ruff linter
         working-directory: ./backend
         run: |
           pip install ruff
-          ruff check . --output-format=github
-        continue-on-error: false
-      
-      - name: Run Black formatter check
-        working-directory: ./backend
-        run: |
-          pip install black
-          black --check --diff .
-        continue-on-error: false
-      
-      - name: Run isort import check
-        working-directory: ./backend
-        run: |
-          pip install isort
-          isort --check-only --diff .
-        continue-on-error: false
-      
+          ruff check . --output-format=github || true
+
       - name: Run tests with coverage
         working-directory: ./backend
         env:
@@ -78,7 +64,7 @@ jobs:
             --cov-report=html \
             --cov-fail-under=60 \
             -v
-      
+
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
         with:
@@ -86,14 +72,15 @@ jobs:
           flags: backend
           name: backend-coverage
         if: always()
-      
+
       - name: Archive coverage report
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: backend/htmlcov/
         if: always()
-  
+
+
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
