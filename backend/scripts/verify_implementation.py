@@ -2,17 +2,15 @@
 """
 Verification script to check if all production components are properly implemented.
 """
-import os
 import sys
 from pathlib import Path
-from typing import List, Tuple
+from typing import Tuple
 
-
-GREEN = '\033[92m'
-RED = '\033[91m'
-YELLOW = '\033[93m'
-BLUE = '\033[94m'
-RESET = '\033[0m'
+GREEN = "\033[92m"
+RED = "\033[91m"
+YELLOW = "\033[93m"
+BLUE = "\033[94m"
+RESET = "\033[0m"
 
 
 def check_file_exists(path: Path, description: str) -> Tuple[bool, str]:
@@ -34,25 +32,33 @@ def main():
     print(f"{BLUE}{'='*70}{RESET}")
     print(f"{BLUE}UNIFIND Backend - Implementation Verification{RESET}")
     print(f"{BLUE}{'='*70}{RESET}\n")
-    
+
     backend_dir = Path(__file__).parent.parent
     root_dir = backend_dir.parent
-    
+
     checks = []
-    
+
     # Testing Infrastructure
     print(f"{BLUE}Testing Infrastructure:{RESET}")
     checks.append(check_directory_exists(backend_dir / "tests", "tests/ directory"))
     checks.append(check_file_exists(backend_dir / "tests" / "conftest.py", "conftest.py"))
     checks.append(check_directory_exists(backend_dir / "tests" / "unit", "tests/unit/"))
-    checks.append(check_directory_exists(backend_dir / "tests" / "integration", "tests/integration/"))
-    checks.append(check_file_exists(backend_dir / "tests" / "unit" / "test_auth_service.py", "Unit tests"))
-    checks.append(check_file_exists(backend_dir / "tests" / "integration" / "test_auth_routes.py", "Integration tests"))
+    checks.append(
+        check_directory_exists(backend_dir / "tests" / "integration", "tests/integration/")
+    )
+    checks.append(
+        check_file_exists(backend_dir / "tests" / "unit" / "test_auth_service.py", "Unit tests")
+    )
+    checks.append(
+        check_file_exists(
+            backend_dir / "tests" / "integration" / "test_auth_routes.py", "Integration tests"
+        )
+    )
     checks.append(check_file_exists(backend_dir / "pytest.ini", "pytest.ini"))
-    
+
     for passed, message in checks[-7:]:
         print(f"  {GREEN if passed else RED}{message}{RESET}")
-    
+
     # CI/CD
     print(f"\n{BLUE}CI/CD Pipeline:{RESET}")
     ci_checks = [
@@ -61,10 +67,10 @@ def main():
         check_file_exists(root_dir / ".github" / "workflows" / "security.yml", "security.yml"),
     ]
     checks.extend(ci_checks)
-    
+
     for passed, message in ci_checks:
         print(f"  {GREEN if passed else RED}{message}{RESET}")
-    
+
     # Docker
     print(f"\n{BLUE}Docker Configuration:{RESET}")
     docker_checks = [
@@ -73,10 +79,10 @@ def main():
         check_file_exists(backend_dir / "docker-compose.yml", "docker-compose.yml"),
     ]
     checks.extend(docker_checks)
-    
+
     for passed, message in docker_checks:
         print(f"  {GREEN if passed else RED}{message}{RESET}")
-    
+
     # Configuration
     print(f"\n{BLUE}Configuration Files:{RESET}")
     config_checks = [
@@ -87,10 +93,10 @@ def main():
         check_file_exists(root_dir / ".gitignore", ".gitignore"),
     ]
     checks.extend(config_checks)
-    
+
     for passed, message in config_checks:
         print(f"  {GREEN if passed else RED}{message}{RESET}")
-    
+
     # Scripts
     print(f"\n{BLUE}Utility Scripts:{RESET}")
     script_checks = [
@@ -100,10 +106,10 @@ def main():
         check_file_exists(backend_dir / "scripts" / "validate_env.py", "validate_env.py"),
     ]
     checks.extend(script_checks)
-    
+
     for passed, message in script_checks:
         print(f"  {GREEN if passed else RED}{message}{RESET}")
-    
+
     # Documentation
     print(f"\n{BLUE}Documentation:{RESET}")
     doc_checks = [
@@ -115,10 +121,10 @@ def main():
         check_file_exists(backend_dir / "Makefile", "Makefile"),
     ]
     checks.extend(doc_checks)
-    
+
     for passed, message in doc_checks:
         print(f"  {GREEN if passed else RED}{message}{RESET}")
-    
+
     # Enhanced Code
     print(f"\n{BLUE}Enhanced Application Code:{RESET}")
     code_checks = [
@@ -127,10 +133,10 @@ def main():
         check_file_exists(backend_dir / "app" / "main.py", "Enhanced main.py"),
     ]
     checks.extend(code_checks)
-    
+
     for passed, message in code_checks:
         print(f"  {GREEN if passed else RED}{message}{RESET}")
-    
+
     # Dependencies
     print(f"\n{BLUE}Dependencies:{RESET}")
     req_file = backend_dir / "requirements.txt"
@@ -148,7 +154,7 @@ def main():
             ("bandit", "bandit"),
             ("safety", "safety"),
         ]
-        
+
         for dep_name, dep_check in deps:
             if dep_check in content:
                 print(f"  {GREEN}✓ {dep_name}{RESET}")
@@ -159,18 +165,18 @@ def main():
     else:
         print(f"  {RED}✗ requirements.txt not found{RESET}")
         checks.append((False, "requirements.txt"))
-    
+
     # Summary
     print(f"\n{BLUE}{'='*70}{RESET}")
     print(f"{BLUE}Summary:{RESET}")
     print(f"{BLUE}{'='*70}{RESET}\n")
-    
+
     passed = sum(1 for p, _ in checks if p)
     total = len(checks)
     percentage = (passed / total * 100) if total > 0 else 0
-    
+
     print(f"Checks Passed: {passed}/{total} ({percentage:.1f}%)")
-    
+
     if passed == total:
         print(f"\n{GREEN}{'='*70}{RESET}")
         print(f"{GREEN}✅ All implementation checks passed!{RESET}")
@@ -186,12 +192,12 @@ def main():
         print(f"\n{YELLOW}{'='*70}{RESET}")
         print(f"{YELLOW}⚠ Some checks failed ({total - passed} issues){RESET}")
         print(f"{YELLOW}{'='*70}{RESET}\n")
-        
+
         print(f"Failed checks:")
         for passed, message in checks:
             if not passed:
                 print(f"  • {message}")
-        
+
         return 1
 
 

@@ -149,7 +149,8 @@ class ImageService {
       formData.append('file', file);
 
       // Get backend URL from environment
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+      const backendUrl = apiUrl.replace('/api', ''); // Remove /api suffix if present
       
       console.log('🔵 Uploading to backend:', `${backendUrl}/upload/profile-image`);
 

@@ -1,0 +1,41 @@
+# ============================================================================
+# UNIFIND Backend - Production Dependencies ONLY
+# ============================================================================
+# Minimal production dependencies for optimized Docker images.
+# Excludes testing, linting, and development tools.
+# ============================================================================
+
+# Core Framework
+fastapi==0.110.1
+uvicorn[standard]==0.25.0
+
+# Production Server
+gunicorn==21.2.0
+
+# Database & Storage
+firebase-admin==6.4.0
+
+# Data Validation & Settings
+pydantic[email]==2.6.4
+pydantic-settings==2.2.1
+python-dotenv==1.0.1
+
+# AI Integration
+google-generativeai==0.8.3
+
+# Image Storage & Upload
+cloudinary==1.42.0
+python-multipart==0.0.9
+
+# Security & Rate Limiting
+slowapi==0.1.9
+cryptography==42.0.5
+bcrypt==4.1.2
+python-magic==0.4.27
+
+# Email
+aiosmtplib==3.0.1
+email-validator==2.1.0
+
+# Monitoring & Health
+psutil==5.9.8

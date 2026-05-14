@@ -1,23 +1,25 @@
 """
-Service dependencies for dependency injection.
+Service dependencies for dependency injection with authorization.
 """
+
+from app.core.authorization import PermissionValidator
 from app.core.database import get_db
 from app.repositories import (
-    UserRepository,
-    ProductRepository,
     ChatRepository,
-    TransactionRepository,
     FriendshipRepository,
+    NeedRepository,
+    ProductRepository,
     ReviewRepository,
-    NeedRepository
+    TransactionRepository,
+    UserRepository,
 )
-from app.services.product_service import ProductService
-from app.services.user_service import UserService
-from app.services.chat_service import ChatService
-from app.services.transaction_service import TransactionService
-from app.services.review_service import ReviewService
 from app.services.auth_service import AuthService
+from app.services.chat_service import ChatService
 from app.services.need_service import NeedService
+from app.services.product_service import ProductService
+from app.services.review_service import ReviewService
+from app.services.transaction_service import TransactionService
+from app.services.user_service import UserService
 
 
 def get_product_service() -> ProductService:
@@ -53,11 +55,13 @@ def get_transaction_service() -> TransactionService:
 
 
 def get_review_service() -> ReviewService:
-    """Factory for ReviewService with dependencies."""
+    """Factory for ReviewService with dependencies and authorization."""
     db = get_db()
     review_repo = ReviewRepository(db)
     user_repo = UserRepository(db)
-    return ReviewService(review_repo, user_repo)
+    product_repo = ProductRepository(db)
+    permission_validator = PermissionValidator(db)
+    return ReviewService(review_repo, user_repo, product_repo, permission_validator)
 
 
 def get_auth_service() -> AuthService:
@@ -74,3 +78,9 @@ def get_need_service() -> NeedService:
     product_repo = ProductRepository(db)
     user_repo = UserRepository(db)
     return NeedService(need_repo, product_repo, user_repo)
+
+
+def get_permission_validator() -> PermissionValidator:
+    """Factory for PermissionValidator."""
+    db = get_db()
+    return PermissionValidator(db)

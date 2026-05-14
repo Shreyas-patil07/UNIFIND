@@ -54,13 +54,8 @@ export const createProduct = (product: ProductCreate) =>
 export const updateProduct = (productId: string, product: ProductUpdate) =>
   patch<Product>(`/products/${productId}`, product)
 
-export const deleteProduct = (productId: string) => {
-  console.log('[API] deleteProduct called:', { productId })
-  return del<{ message: string }>(`/products/${productId}`).then(response => {
-    console.log('[API] deleteProduct response:', response)
-    return response
-  })
-}
+export const deleteProduct = (productId: string) =>
+  del<{ message: string }>(`/products/${productId}`)
 
 export const getInterestedBuyers = (productId: string) =>
   get<Array<{
@@ -75,29 +70,14 @@ export const getInterestedBuyers = (productId: string) =>
 export const markProductAsSold = (productId: string, buyerId?: string) => {
   // Only include buyer_id if it's a valid string (not null or undefined)
   const body = buyerId && typeof buyerId === 'string' ? { buyer_id: buyerId } : {}
-  console.log('[API] markProductAsSold called:', { productId, buyerId, body })
   return patch<{ message: string; buyer_id?: string }>(`/products/${productId}/mark-sold`, body)
 }
 
-export const markProductAsActive = (productId: string) => {
-  console.log('[API] markProductAsActive called:', { productId })
-  return patch<{ message: string }>(`/products/${productId}/mark-active`, {})
-}
+export const markProductAsActive = (productId: string) =>
+  patch<{ message: string }>(`/products/${productId}/mark-active`, {})
 
-export const getSellerProducts = () => {
-  console.log('[API] getSellerProducts called')
-  return get<Product[]>('/products/seller/me').then(data => {
-    console.log('[API] getSellerProducts RAW response:', data)
-    console.log('[API] getSellerProducts parsed:', data.map(p => ({
-      id: p.id,
-      title: p.title,
-      is_active: p.is_active,
-      sold_to: p.sold_to,
-      sold_at: p.sold_at
-    })))
-    return data
-  })
-}
+export const getSellerProducts = () =>
+  get<Product[]>('/products/seller/me')
 
 // ============= USERS =============
 

@@ -24,6 +24,11 @@ const ProductCard = ({ product, onView }) => {
   // Seller info is now embedded in product (no API call needed!)
   const seller = product.seller || { id: product.seller_id, name: 'Unknown', avatar: null };
 
+  // Debug: Log seller avatar URL (only in development)
+  if (import.meta.env.DEV && seller?.avatar) {
+    console.log(`[ProductCard] Seller: ${seller.name}, Avatar URL:`, seller.avatar);
+  }
+
   // Load liked state from localStorage
   useEffect(() => {
     if (currentUser) {
@@ -208,10 +213,22 @@ const ProductCard = ({ product, onView }) => {
           }}
         >
           <img
-            src={seller?.avatar}
+            src={seller?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(seller?.name || 'User')}&background=6366f1&color=fff`}
             alt={seller?.name}
             className={`h-6 w-6 rounded-full object-cover ring-1 flex-shrink-0 ${darkMode ? 'ring-neutral-700' : 'ring-slate-200'}`}
             data-testid="seller-avatar"
+            onError={(e) => {
+              if (import.meta.env.DEV) {
+                console.error(`[ProductCard] Failed to load avatar for ${seller?.name}:`, e.target.src);
+              }
+              e.target.onerror = null; // Prevent infinite loop
+              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(seller?.name || 'User')}&background=6366f1&color=fff`;
+            }}
+            onLoad={(e) => {
+              if (import.meta.env.DEV && seller?.avatar) {
+                console.log(`[ProductCard] Successfully loaded avatar for ${seller?.name}:`, e.target.src);
+              }
+            }}
           />
           <div className="flex-1 min-w-0">
             <p className={`text-xs font-semibold truncate ${darkMode ? 'text-neutral-300 hover:text-indigo-400' : 'text-slate-800 hover:text-indigo-600'}`} data-testid="seller-name">

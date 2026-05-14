@@ -55,16 +55,12 @@ export function useProduct(productId: string) {
 export function useSellerProducts() {
   return useQuery({
     queryKey: productKeys.seller(),
-    queryFn: () => {
-      console.log('[Hook] useSellerProducts queryFn called - fetching data...')
-      return api.getSellerProducts().then(data => {
-        console.log('[Hook] useSellerProducts data received:', data)
-        return data
-      })
-    },
-    staleTime: 0, // Always consider data stale
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
-    refetchOnMount: true, // Always refetch on mount
+    queryFn: () => api.getSellerProducts(),
+    staleTime: 1000 * 60 * 5, // 5 minutes - data stays fresh
+    gcTime: 1000 * 60 * 10, // 10 minutes - keep in cache
+    refetchOnMount: false, // Don't refetch on every mount
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnReconnect: true, // Only refetch on reconnect
   })
 }
 
@@ -141,32 +137,24 @@ export function useDeleteProduct() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (productId: string) => {
-      console.log('[Hook] useDeleteProduct mutationFn called:', { productId })
-      return api.deleteProduct(productId)
-    },
+    mutationFn: (productId: string) => api.deleteProduct(productId),
     onSuccess: (data, productId) => {
-      console.log('[Hook] useDeleteProduct onSuccess:', data)
-      
       // Immediately update the cache by removing the product
       queryClient.setQueryData(productKeys.seller(), (old: any) => {
-        if (!Array.isArray(old)) {
-          console.log('[Hook] No old data to update')
-          return old
-        }
-        const filtered = old.filter((p: any) => p.id !== productId)
-        console.log('[Hook] Removed product from cache, new count:', filtered.length)
-        return filtered
+        if (!Array.isArray(old)) return old
+        return old.filter((p: any) => p.id !== productId)
       })
       
       toast.success('Product deleted successfully!')
+      
+      // Only invalidate lists, not seller (already updated optimistically)
+      queryClient.invalidateQueries({ 
+        queryKey: productKeys.lists()
+      })
     },
     onError: (err: any, productId) => {
-      console.error('[Hook] useDeleteProduct onError:', err)
-      
       // If product not found (404), it's already deleted - remove from cache anyway
       if (err?.detail?.error === 'Not found' || err?.error === 'Not Found') {
-        console.log('[Hook] Product already deleted (404), removing from cache')
         queryClient.setQueryData(productKeys.seller(), (old: any) => {
           if (!Array.isArray(old)) return old
           return old.filter((p: any) => p.id !== productId)
@@ -176,18 +164,6 @@ export function useDeleteProduct() {
         toast.error('Failed to delete product')
       }
     },
-    onSettled: () => {
-      console.log('[Hook] useDeleteProduct onSettled - invalidating queries')
-      // Force refetch
-      queryClient.invalidateQueries({ 
-        queryKey: productKeys.seller(),
-        refetchType: 'active'
-      })
-      queryClient.invalidateQueries({ 
-        queryKey: productKeys.lists(),
-        refetchType: 'active'
-      })
-    },
   })
 }
 
@@ -195,59 +171,39 @@ export function useMarkProductAsSold() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ productId, buyerId }: { productId: string; buyerId?: string }) => {
-      console.log('[Hook] useMarkProductAsSold mutationFn called:', { productId, buyerId })
-      return api.markProductAsSold(productId, buyerId)
-    },
+    mutationFn: ({ productId, buyerId }: { productId: string; buyerId?: string }) =>
+      api.markProductAsSold(productId, buyerId),
     onMutate: async ({ productId, buyerId }) => {
-      console.log('[Hook] useMarkProductAsSold onMutate:', { productId, buyerId })
-      
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: productKeys.seller() })
 
       // Snapshot previous value
       const previousData = queryClient.getQueryData(productKeys.seller())
-      console.log('[Hook] Previous data:', previousData)
 
       // Optimistically update
       queryClient.setQueryData(productKeys.seller(), (old: Product[] | undefined) => {
-        if (!old) {
-          console.log('[Hook] No old data to update')
-          return old
-        }
-        const updated = old.map(p =>
+        if (!old) return old
+        return old.map(p =>
           p.id === productId
             ? { ...p, is_active: false, sold_to: buyerId, sold_at: new Date().toISOString() }
             : p
         )
-        console.log('[Hook] Optimistically updated data:', updated)
-        return updated
       })
 
       return { previousData }
     },
     onError: (_err, _vars, context) => {
-      console.error('[Hook] useMarkProductAsSold onError:', _err)
       // Rollback on error
       if (context?.previousData) {
         queryClient.setQueryData(productKeys.seller(), context.previousData)
       }
       toast.error('Failed to mark as sold')
     },
-    onSuccess: (data) => {
-      console.log('[Hook] useMarkProductAsSold onSuccess:', data)
+    onSuccess: () => {
       toast.success('Marked as sold!')
-    },
-    onSettled: () => {
-      console.log('[Hook] useMarkProductAsSold onSettled - invalidating queries')
-      // Refetch to sync with server - use refetchType: 'active' to force refetch
+      // Only invalidate lists, seller cache already updated optimistically
       queryClient.invalidateQueries({ 
-        queryKey: productKeys.seller(),
-        refetchType: 'active'
-      })
-      queryClient.invalidateQueries({ 
-        queryKey: productKeys.lists(),
-        refetchType: 'active'
+        queryKey: productKeys.lists()
       })
     },
   })
@@ -257,59 +213,38 @@ export function useMarkProductAsActive() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (productId: string) => {
-      console.log('[Hook] useMarkProductAsActive mutationFn called:', { productId })
-      return api.markProductAsActive(productId)
-    },
+    mutationFn: (productId: string) => api.markProductAsActive(productId),
     onMutate: async (productId) => {
-      console.log('[Hook] useMarkProductAsActive onMutate:', { productId })
-      
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: productKeys.seller() })
 
       // Snapshot previous value
       const previousData = queryClient.getQueryData(productKeys.seller())
-      console.log('[Hook] Previous data:', previousData)
 
       // Optimistically update
       queryClient.setQueryData(productKeys.seller(), (old: Product[] | undefined) => {
-        if (!old) {
-          console.log('[Hook] No old data to update')
-          return old
-        }
-        const updated = old.map(p =>
+        if (!old) return old
+        return old.map(p =>
           p.id === productId
             ? { ...p, is_active: true, sold_to: undefined, sold_at: undefined }
             : p
         )
-        console.log('[Hook] Optimistically updated data:', updated)
-        return updated
       })
 
       return { previousData }
     },
     onError: (_err, _vars, context) => {
-      console.error('[Hook] useMarkProductAsActive onError:', _err)
       // Rollback on error
       if (context?.previousData) {
         queryClient.setQueryData(productKeys.seller(), context.previousData)
       }
       toast.error('Failed to mark as active')
     },
-    onSuccess: (data) => {
-      console.log('[Hook] useMarkProductAsActive onSuccess:', data)
+    onSuccess: () => {
       toast.success('Marked as active!')
-    },
-    onSettled: () => {
-      console.log('[Hook] useMarkProductAsActive onSettled - invalidating queries')
-      // Refetch to sync with server - use refetchType: 'active' to force refetch
+      // Only invalidate lists, seller cache already updated optimistically
       queryClient.invalidateQueries({ 
-        queryKey: productKeys.seller(),
-        refetchType: 'active'
-      })
-      queryClient.invalidateQueries({ 
-        queryKey: productKeys.lists(),
-        refetchType: 'active'
+        queryKey: productKeys.lists()
       })
     },
   })

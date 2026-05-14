@@ -199,9 +199,7 @@ export async function patch<T = any>(
   data?: any,
   config?: AxiosRequestConfig
 ): Promise<T> {
-  console.log('[API Client] PATCH request:', { url, data, config })
   const response = await apiClient.patch<T>(url, data, config)
-  console.log('[API Client] PATCH response:', { url, status: response.status, data: response.data })
   return response.data
 }
 
@@ -212,9 +210,7 @@ export async function del<T = any>(
   url: string,
   config?: AxiosRequestConfig
 ): Promise<T> {
-  console.log('[API Client] DELETE request:', { url, config })
   const response = await apiClient.delete<T>(url, config)
-  console.log('[API Client] DELETE response:', { url, status: response.status, data: response.data })
   return response.data
 }
 

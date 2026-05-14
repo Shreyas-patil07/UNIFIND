@@ -1,9 +1,11 @@
 """
 Review-related Pydantic schemas for request/response validation.
 """
-from pydantic import BaseModel, Field, field_validator
-from typing import Optional
+
 from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel, Field, field_validator
 
 
 class ReviewBase(BaseModel):
@@ -11,14 +13,14 @@ class ReviewBase(BaseModel):
     comment: str = Field(..., max_length=1000, min_length=1)
     reviewer_id: str
     reviewed_user_id: str
-    
-    @field_validator('comment')
+
+    @field_validator("comment")
     @classmethod
     def validate_comment(cls, v):
         if not v or not v.strip():
-            raise ValueError('Review comment cannot be empty')
+            raise ValueError("Review comment cannot be empty")
         if len(v) > 1000:
-            raise ValueError('Review comment must be 1000 characters or less')
+            raise ValueError("Review comment must be 1000 characters or less")
         return v.strip()
 
 

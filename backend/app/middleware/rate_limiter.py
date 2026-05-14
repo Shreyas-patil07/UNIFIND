@@ -2,10 +2,12 @@
 Rate limiting implementation using slowapi.
 OWASP A05: Security Misconfiguration - Rate Limiting
 """
+
+import logging
+
+from fastapi import Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from fastapi import Request
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +16,7 @@ limiter = Limiter(
     key_func=get_remote_address,
     default_limits=["200/minute"],
     storage_uri="memory://",
-    strategy="fixed-window"
+    strategy="fixed-window",
 )
 
 # Rate limit decorators for different endpoint types
@@ -33,6 +35,6 @@ def get_user_identifier(request: Request) -> str:
     user_id = getattr(request.state, "user_id", None)
     if user_id:
         return f"user:{user_id}"
-    
+
     # Fallback to IP address
     return f"ip:{get_remote_address(request)}"

@@ -2,19 +2,21 @@
 Email service for sending verification emails using Gmail SMTP.
 Supports both direct SMTP and fallback methods for restricted environments.
 """
+
 import secrets
-from datetime import datetime, timedelta
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-import aiosmtplib
 import smtplib
+from datetime import datetime, timedelta
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+import aiosmtplib
 
 from app.core.config import settings
 
 
 class EmailService:
     """Service for sending emails via Gmail SMTP with fallback options"""
-    
+
     def __init__(self):
         self.smtp_host = "smtp.gmail.com"
         self.smtp_port_tls = 587  # TLS
@@ -22,37 +24,37 @@ class EmailService:
         self.sender_email = settings.GMAIL_USER
         self.sender_password = settings.GMAIL_APP_PASSWORD
         self.verification_tokens = {}  # In production, use Redis or database
-    
+
     def generate_verification_token(self, email: str) -> str:
         """Generate a unique verification token for an email"""
         token = secrets.token_urlsafe(32)
         self.verification_tokens[token] = {
-            'email': email,
-            'expires_at': datetime.now() + timedelta(hours=24)
+            "email": email,
+            "expires_at": datetime.now() + timedelta(hours=24),
         }
         return token
-    
+
     def verify_token(self, token: str) -> str | None:
         """Verify a token and return the associated email if valid"""
         token_data = self.verification_tokens.get(token)
         if not token_data:
             return None
-        
-        if datetime.now() > token_data['expires_at']:
+
+        if datetime.now() > token_data["expires_at"]:
             del self.verification_tokens[token]
             return None
-        
-        return token_data['email']
-    
+
+        return token_data["email"]
+
     def invalidate_token(self, token: str):
         """Remove a token after successful verification"""
         if token in self.verification_tokens:
             del self.verification_tokens[token]
-    
+
     async def send_verification_email(self, to_email: str, verification_url: str):
         """Send email verification link with multiple fallback methods"""
         subject = "Verify Your UniFind Account"
-        
+
         html_content = f"""
         <!DOCTYPE html>
         <html>
@@ -89,14 +91,14 @@ class EmailService:
         </body>
         </html>
         """
-        
+
         # Try multiple methods in order
         methods = [
             ("SSL (Port 465)", self._send_email_ssl),
             ("TLS (Port 587)", self._send_email_tls),
             ("Synchronous SSL", self._send_email_sync_ssl),
         ]
-        
+
         last_error = None
         for method_name, method in methods:
             try:
@@ -107,14 +109,14 @@ class EmailService:
                 last_error = e
                 print(f"✗ {method_name} failed: {str(e)}")
                 continue
-        
+
         # All methods failed
         raise Exception(f"All email methods failed. Last error: {str(last_error)}")
-    
+
     async def _send_email_ssl(self, to_email: str, subject: str, html_content: str):
         """Send email using SSL on port 465 (async)"""
         message = self._create_message(to_email, subject, html_content)
-        
+
         await aiosmtplib.send(
             message,
             hostname=self.smtp_host,
@@ -124,11 +126,11 @@ class EmailService:
             password=self.sender_password,
             timeout=30,
         )
-    
+
     async def _send_email_tls(self, to_email: str, subject: str, html_content: str):
         """Send email using STARTTLS on port 587 (async)"""
         message = self._create_message(to_email, subject, html_content)
-        
+
         await aiosmtplib.send(
             message,
             hostname=self.smtp_host,
@@ -138,33 +140,33 @@ class EmailService:
             password=self.sender_password,
             timeout=30,
         )
-    
+
     async def _send_email_sync_ssl(self, to_email: str, subject: str, html_content: str):
         """Send email using synchronous smtplib with SSL (fallback)"""
         import asyncio
-        
+
         def send_sync():
             message = self._create_message(to_email, subject, html_content)
-            
+
             # Use SSL connection
             with smtplib.SMTP_SSL(self.smtp_host, self.smtp_port_ssl, timeout=30) as server:
                 server.login(self.sender_email, self.sender_password)
                 server.send_message(message)
-        
+
         # Run synchronous code in thread pool
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, send_sync)
-    
+
     def _create_message(self, to_email: str, subject: str, html_content: str) -> MIMEMultipart:
         """Create email message"""
         message = MIMEMultipart("alternative")
         message["Subject"] = subject
         message["From"] = self.sender_email
         message["To"] = to_email
-        
+
         html_part = MIMEText(html_content, "html")
         message.attach(html_part)
-        
+
         return message
 
 

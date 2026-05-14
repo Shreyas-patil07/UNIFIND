@@ -129,6 +129,8 @@ coverage.xml
 *.crt
 secrets/
 credentials/
+firebase-service-account.json
+*-service-account.json
 
 # Docker
 .dockerignore

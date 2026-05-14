@@ -2,13 +2,15 @@
 Abstract base class for AI provider clients.
 This enables easy switching between AI providers (Gemini, OpenAI, Claude, etc.)
 """
+
 from abc import ABC, abstractmethod
-from typing import Optional, List, Dict, Any
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class AIProvider(Enum):
     """Supported AI providers."""
+
     GEMINI = "gemini"
     OPENAI = "openai"
     CLAUDE = "claude"
@@ -17,21 +19,25 @@ class AIProvider(Enum):
 
 class AIClientError(Exception):
     """Base exception for AI client errors."""
+
     pass
 
 
 class AITimeoutError(AIClientError):
     """Raised when AI API times out."""
+
     pass
 
 
 class AIRateLimitError(AIClientError):
     """Raised when AI API rate limit is exceeded."""
+
     pass
 
 
 class AIInvalidRequestError(AIClientError):
     """Raised when request is invalid."""
+
     pass
 
 
@@ -40,13 +46,13 @@ class BaseAIClient(ABC):
     Abstract base class for AI provider clients.
     All AI providers must implement this interface.
     """
-    
+
     @property
     @abstractmethod
     def provider(self) -> AIProvider:
         """Return the provider type."""
         pass
-    
+
     @abstractmethod
     async def generate_content(
         self,
@@ -55,11 +61,11 @@ class BaseAIClient(ABC):
         timeout: int = 30,
         temperature: float = 0.3,
         max_tokens: int = 500,
-        use_cache: bool = True
+        use_cache: bool = True,
     ) -> str:
         """
         Generate content from prompts.
-        
+
         Args:
             system_prompt: System instructions for the AI
             user_prompt: User query/request
@@ -67,10 +73,10 @@ class BaseAIClient(ABC):
             temperature: Sampling temperature (0.0-1.0)
             max_tokens: Maximum tokens in response
             use_cache: Whether to use cached responses
-            
+
         Returns:
             str: AI-generated response text
-            
+
         Raises:
             AITimeoutError: If API doesn't respond within timeout
             AIRateLimitError: If rate limit is exceeded
@@ -78,27 +84,23 @@ class BaseAIClient(ABC):
             AIClientError: On any other API-level error
         """
         pass
-    
+
     @abstractmethod
     async def generate_json(
-        self,
-        system_prompt: str,
-        user_prompt: str,
-        timeout: int = 30,
-        use_cache: bool = True
+        self, system_prompt: str, user_prompt: str, timeout: int = 30, use_cache: bool = True
     ) -> Dict[str, Any]:
         """
         Generate structured JSON response.
-        
+
         Args:
             system_prompt: System instructions for the AI
             user_prompt: User query/request
             timeout: Maximum seconds to wait for response
             use_cache: Whether to use cached responses
-            
+
         Returns:
             dict: Parsed JSON response
-            
+
         Raises:
             AITimeoutError: If API doesn't respond within timeout
             AIRateLimitError: If rate limit is exceeded
@@ -106,43 +108,41 @@ class BaseAIClient(ABC):
             AIClientError: On any other API-level error
         """
         pass
-    
+
     @abstractmethod
     async def generate_embeddings(
-        self,
-        texts: List[str],
-        model: Optional[str] = None
+        self, texts: List[str], model: Optional[str] = None
     ) -> List[List[float]]:
         """
         Generate embeddings for texts.
-        
+
         Args:
             texts: List of texts to embed
             model: Optional specific embedding model to use
-            
+
         Returns:
             List of embedding vectors
-            
+
         Raises:
             AIClientError: On any API-level error
         """
         pass
-    
+
     @abstractmethod
     def clear_cache(self):
         """Clear the response cache."""
         pass
-    
+
     @abstractmethod
     def get_current_model(self) -> str:
         """Get the currently active model name."""
         pass
-    
+
     @abstractmethod
     async def health_check(self) -> bool:
         """
         Check if the AI service is available.
-        
+
         Returns:
             bool: True if service is healthy, False otherwise
         """
@@ -151,7 +151,7 @@ class BaseAIClient(ABC):
 
 class AIClientConfig:
     """Configuration for AI clients."""
-    
+
     def __init__(
         self,
         api_key: str,
@@ -160,7 +160,7 @@ class AIClientConfig:
         default_max_tokens: int = 500,
         default_timeout: int = 30,
         enable_caching: bool = True,
-        max_retries: int = 3
+        max_retries: int = 3,
     ):
         self.api_key = api_key
         self.default_model = default_model

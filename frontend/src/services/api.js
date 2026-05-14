@@ -45,10 +45,17 @@ export const getUser = async (userId) => {
 }
 
 // Get public user profile via backend API
-export const getPublicProfile = async (userId, includePrivate = false) => {
-  const response = await api.get(`/users/${userId}/profile`, {
+export const getPublicProfile = async (userId, includePrivate = false, idToken = null) => {
+  const config = {
     params: { include_private: includePrivate }
-  })
+  }
+  
+  // Add Authorization header if token is provided
+  if (idToken) {
+    config.headers = { 'Authorization': `Bearer ${idToken}` }
+  }
+  
+  const response = await api.get(`/users/${userId}/profile`, config)
   return response.data
 }
 

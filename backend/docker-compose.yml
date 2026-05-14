@@ -1,43 +1,166 @@
 version: '3.8'
 
+# ============================================================================
+# UNIFIND Backend - Docker Compose Configuration
+# ============================================================================
+# Supports both development and production deployments
+# ============================================================================
+
 services:
+  # Backend API Service
   backend:
     build:
       context: .
       dockerfile: Dockerfile
+      target: ${BUILD_TARGET:-production}
+      args:
+        ENVIRONMENT: ${ENVIRONMENT:-production}
+        BUILD_DATE: ${BUILD_DATE}
+        VCS_REF: ${VCS_REF}
+    
+    image: unifind-backend:${IMAGE_TAG:-latest}
     container_name: unifind-backend
+    
+    # Port mapping
     ports:
-      - "8000:8000"
+      - "${HOST_PORT:-8000}:8000"
+    
+    # Environment variables (production values from .env file)
     environment:
-      - ENVIRONMENT=${ENVIRONMENT:-development}
+      # Application
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - PORT=8000
+      - WORKERS=${WORKERS:-4}
+      
+      # Firebase
+      - FIREBASE_TYPE=${FIREBASE_TYPE}
       - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
       - FIREBASE_PRIVATE_KEY_ID=${FIREBASE_PRIVATE_KEY_ID}
       - FIREBASE_PRIVATE_KEY=${FIREBASE_PRIVATE_KEY}
       - FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL}
       - FIREBASE_CLIENT_ID=${FIREBASE_CLIENT_ID}
+      - FIREBASE_AUTH_URI=${FIREBASE_AUTH_URI}
+      - FIREBASE_TOKEN_URI=${FIREBASE_TOKEN_URI}
+      - FIREBASE_AUTH_PROVIDER_CERT_URL=${FIREBASE_AUTH_PROVIDER_CERT_URL}
       - FIREBASE_CLIENT_CERT_URL=${FIREBASE_CLIENT_CERT_URL}
+      
+      # AI
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      
+      # Storage
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - CLOUDINARY_UPLOAD_PRESET=${CLOUDINARY_UPLOAD_PRESET:-unifind_products}
+      
+      # Email
       - GMAIL_USER=${GMAIL_USER}
       - GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
+      
+      # CORS
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
+    
+    # Load additional env vars from file
     env_file:
       - .env
+    
+    # Volume mounts (conditional based on environment)
     volumes:
-      # Mount code for development (comment out for production)
-      - ./app:/app/app:ro
+      # Development: Mount code for hot reload
+      # Production: Comment out or remove
+      - ${CODE_MOUNT:-./app}:/app/app:${MOUNT_MODE:-ro}
+      
+      # Logs (optional, for persistent logging)
+      - ./logs:/app/logs
+    
+    # Resource limits (production safety)
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    
+    # Restart policy
     restart: unless-stopped
+    
+    # Health check
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service,environment"
+    
+    # Labels for monitoring and management
+    labels:
+      - "com.unifind.service=backend"
+      - "com.unifind.environment=${ENVIRONMENT:-production}"
+      - "com.unifind.version=2.1.0"
+    
+    # Network
     networks:
       - unifind-network
+    
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    
+    # Read-only root filesystem (optional, for maximum security)
+    # Uncomment if app doesn't need to write to filesystem
+    # read_only: true
+    
+    # Temporary filesystem for /tmp
+    tmpfs:
+      - /tmp
+      - /app/tmp
 
+# Networks
 networks:
   unifind-network:
     driver: bridge
+    labels:
+      - "com.unifind.network=main"
+
+# ============================================================================
+# Usage Instructions:
+# ============================================================================
+#
+# Development:
+#   export BUILD_TARGET=development
+#   export ENVIRONMENT=development
+#   export CODE_MOUNT=./app
+#   export MOUNT_MODE=rw
+#   docker-compose up
+#
+# Production:
+#   export BUILD_TARGET=production
+#   export ENVIRONMENT=production
+#   export CODE_MOUNT=/dev/null  # Disable code mount
+#   docker-compose up -d
+#
+# Build only:
+#   docker-compose build
+#
+# View logs:
+#   docker-compose logs -f backend
+#
+# Stop:
+#   docker-compose down
+#
+# Clean rebuild:
+#   docker-compose down -v
+#   docker-compose build --no-cache
+#   docker-compose up -d
+#
+# ============================================================================

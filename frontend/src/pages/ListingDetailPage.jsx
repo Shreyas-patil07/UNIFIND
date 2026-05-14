@@ -13,7 +13,7 @@ import ShareModal from '../components/ShareModal';
 const ListingDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
+  const { currentUser, getIdToken } = useAuth();
   const { darkMode } = useTheme();
   const [product, setProduct] = useState(null);
   const [seller, setSeller] = useState(null);
@@ -65,7 +65,8 @@ const ListingDetailPage = () => {
 
         // Load seller info
         if (productData.seller_id) {
-          const sellerData = await getPublicProfile(productData.seller_id);
+          const token = await getIdToken();
+          const sellerData = await getPublicProfile(productData.seller_id, false, token);
           setSeller(sellerData);
         }
       } catch (error) {
@@ -223,9 +224,13 @@ const ListingDetailPage = () => {
                   }}
                 >
                   <img 
-                    src={seller?.avatar} 
+                    src={seller?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(seller?.name || 'User')}&background=6366f1&color=fff`}
                     alt={seller?.name} 
-                    className="h-12 w-12 rounded-full object-cover ring-2 ring-slate-200 dark:ring-neutral-700" 
+                    className="h-12 w-12 rounded-full object-cover ring-2 ring-slate-200 dark:ring-neutral-700"
+                    onError={(e) => {
+                      e.target.onerror = null; // Prevent infinite loop
+                      e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(seller?.name || 'User')}&background=6366f1&color=fff`;
+                    }}
                   />
                   <div className="flex-1">
                     <p className="font-semibold text-slate-900 dark:text-neutral-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">

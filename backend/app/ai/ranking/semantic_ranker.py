@@ -1,11 +1,33 @@
 """
 Optimized semantic ranking service for matching products to user intent.
+
+SECURITY HARDENED:
+- Input sanitization and validation
+- Output schema validation
+- Cost control and token budgeting
+- Error handling with retries
+- Fallback mechanisms
 """
+
 import json
-import re
 import logging
-from typing import List, Dict
-from app.ai.clients.gemini_client import generate_content, GeminiAPIError
+import re
+from typing import Dict, List
+
+from app.ai.clients.gemini_client import GeminiAPIError, generate_content
+from app.ai.security.cost_guard import (
+    check_token_budget,
+    estimate_tokens_accurate,
+    record_token_usage,
+)
+from app.ai.security.error_handler import (
+    AIValidationError,
+    create_fallback_response,
+    handle_ai_error,
+    retry_with_backoff,
+)
+from app.ai.security.input_validator import sanitize_user_input
+from app.ai.security.output_validator import validate_ranking_output
 
 logger = logging.getLogger(__name__)
 
@@ -19,28 +41,42 @@ RULES:
 4. Higher score = better match"""
 
 
-async def rank_listings(query: str, intent: Dict, listings: List[Dict]) -> List[Dict]:
+async def rank_listings(
+    query: str, intent: Dict, listings: List[Dict], user_id: str = "anonymous"
+) -> List[Dict]:
     """
     Rank product listings against user query and intent.
-    
+
+    SECURITY HARDENED:
+    - Input validation and sanitization
+    - Token budget checking
+    - Output schema validation
+    - Retry with exponential backoff
+    - Fallback on failure
+
     Args:
         query: Original user query
         intent: Extracted intent dictionary
         listings: List of product listings to rank
-        
+        user_id: User ID for cost tracking
+
     Returns:
         List[Dict]: Ranked results with id, match_score, reason
         Sorted by match_score descending
-        
+
     Raises:
         ValueError: If ranking fails
         GeminiAPIError: If AI API fails
     """
     if not listings:
         return []
-    
+
     try:
-        # Optimize: Send only essential fields to reduce tokens
+        # Step 1: Validate and sanitize input
+        sanitized_query = sanitize_user_input(query, max_length=150, strict=False)
+        logger.debug(f"Sanitized query for ranking: {sanitized_query[:50]}...")
+
+        # Step 2: Optimize listings (reduce token usage)
         simplified_listings = [
             {
                 "id": listing["id"],
@@ -48,47 +84,78 @@ async def rank_listings(query: str, intent: Dict, listings: List[Dict]) -> List[
                 "category": listing.get("category", ""),
                 "price": listing.get("price", 0),
                 "condition": listing.get("condition", ""),
-                "description": listing.get("description", "")[:80]  # Limit to 80 chars
+                "description": listing.get("description", "")[:80],  # Limit to 80 chars
             }
             for listing in listings[:20]  # Limit to top 20 to save tokens
         ]
-        
-        # Optimize: Simplify intent
+
+        # Optimize intent
         simplified_intent = {
             "category": intent.get("category", ""),
             "subject": intent.get("subject", ""),
             "max_price": intent.get("max_price"),
-            "condition": intent.get("condition", "")
+            "condition": intent.get("condition", ""),
         }
-        
-        user_prompt = _build_ranking_prompt(query, simplified_intent, simplified_listings)
-        raw_response = await generate_content(SYSTEM_PROMPT, user_prompt, timeout=25)
-        
+
+        # Step 3: Check token budget
+        user_prompt = _build_ranking_prompt(sanitized_query, simplified_intent, simplified_listings)
+        combined_prompt = f"{SYSTEM_PROMPT}\n\n{user_prompt}"
+        estimated_tokens = estimate_tokens_accurate(combined_prompt)
+
+        logger.debug(f"Estimated tokens for ranking: {estimated_tokens}")
+        check_token_budget(user_id, estimated_tokens, raise_on_exceed=True)
+
+        # Step 4: Call AI with retry
+        async def _call_ai():
+            return await generate_content(SYSTEM_PROMPT, user_prompt, timeout=25)
+
+        raw_response = await retry_with_backoff(_call_ai, max_retries=3)
+
+        # Step 5: Parse and validate output
         results = _parse_json_array(raw_response)
-        results = _apply_defaults(results)
-        
-        # Sort by match_score descending
-        results.sort(key=lambda x: x.get("match_score", 0), reverse=True)
-        
-        logger.info(f"Ranked {len(results)} listings")
-        return results
-        
-    except GeminiAPIError:
-        logger.error("Gemini API error during ranking")
+        validated_results = validate_ranking_output(results)
+
+        # Step 6: Record token usage
+        response_tokens = estimate_tokens_accurate(raw_response)
+        total_tokens = estimated_tokens + response_tokens
+        record_token_usage(user_id, total_tokens)
+
+        logger.info(f"Ranked {len(validated_results)} listings (tokens: {total_tokens})")
+        return validated_results
+
+    except ValueError as e:
+        # Input validation error - don't retry
+        logger.error(f"Input validation failed: {e}")
         raise
+
+    except GeminiAPIError as e:
+        # AI API error - return empty results
+        logger.error(f"Gemini API error during ranking: {e}")
+        error_response = handle_ai_error(e, {"query": query[:50], "user_id": user_id})
+        logger.warning("Returning empty ranking results due to AI error")
+        return []
+
+    except AIValidationError as e:
+        # Output validation error - return empty results
+        logger.error(f"Output validation failed: {e}")
+        logger.warning("Returning empty ranking results due to validation error")
+        return []
+
     except Exception as e:
-        logger.error(f"Ranking failed: {e}")
-        raise ValueError(f"Failed to rank listings: {str(e)}")
+        # Unexpected error - return empty results
+        logger.error(f"Unexpected error in ranking: {e}", exc_info=True)
+        logger.warning("Returning empty ranking results due to unexpected error")
+        return []
 
 
 def _build_ranking_prompt(query: str, intent: Dict, listings: List[Dict]) -> str:
     """Build optimized ranking prompt."""
     # Truncate query to save tokens
     query = query[:150] if len(query) > 150 else query
-    
+
     intent_json = json.dumps(intent, ensure_ascii=False)
     listings_json = json.dumps(listings, ensure_ascii=False)
-    
+
     return (
         f"QUERY: {query}\n"
         f"INTENT: {intent_json}\n"
@@ -108,13 +175,13 @@ def _build_ranking_prompt(query: str, intent: Dict, listings: List[Dict]) -> str
 def _parse_json_array(text: str) -> List[Dict]:
     """
     Parse JSON array from AI response.
-    
+
     Args:
         text: Raw AI response
-        
+
     Returns:
         list: Parsed JSON array
-        
+
     Raises:
         ValueError: If array cannot be extracted
     """
@@ -149,5 +216,5 @@ def _apply_defaults(results: List[Dict]) -> List[Dict]:
             item["reason"] = "No reason provided"
         # Ensure match_score is int
         item["match_score"] = int(item["match_score"])
-    
+
     return results

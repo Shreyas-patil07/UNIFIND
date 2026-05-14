@@ -16,16 +16,6 @@ const SellerPage = () => {
   // React Query hooks - Backend already returns seller info embedded!
   const { data: myListings = [], isLoading: loading } = useSellerProducts();
   
-  // Debug: Log when myListings changes
-  React.useEffect(() => {
-    console.log('[SellerPage] myListings updated:', myListings.length, 'items');
-    console.log('[SellerPage] First 3 products:', myListings.slice(0, 3).map(p => ({
-      id: p.id,
-      title: p.title,
-      is_active: p.is_active
-    })));
-  }, [myListings]);
-  
   const deleteProductMutation = useDeleteProduct();
   const markAsSoldMutation = useMarkProductAsSold();
   const markAsActiveMutation = useMarkProductAsActive();
@@ -133,8 +123,6 @@ const SellerPage = () => {
   }, [navigate]);
 
   const handleDelete = useCallback((productId) => {
-    console.log('[SellerPage] handleDelete called with productId:', productId);
-    console.log('[SellerPage] productId type:', typeof productId);
     setDeleteProductId(productId);
     setShowDeleteModal(true);
   }, []);
@@ -144,18 +132,10 @@ const SellerPage = () => {
     setConfirmingAction(true);
     
     try {
-      console.log('[SellerPage] Deleting product:', deleteProductId);
       await deleteProductMutation.mutateAsync(deleteProductId);
-      console.log('[SellerPage] Delete successful');
       setShowDeleteModal(false);
       setDeleteProductId(null);
     } catch (error) {
-      console.error('[SellerPage] Failed to delete product:', error);
-      console.error('[SellerPage] Error details:', {
-        message: error?.message,
-        detail: error?.detail,
-        error: error?.error
-      });
       // The toast is already shown by the hook's onError
     } finally {
       setConfirmingAction(false);
@@ -178,8 +158,7 @@ const SellerPage = () => {
         .then((buyers) => {
           setInterestedBuyers(Array.isArray(buyers) ? buyers : []);
         })
-        .catch((error) => {
-          console.error('Failed to fetch interested buyers:', error);
+        .catch(() => {
           setInterestedBuyers([]);
         })
         .finally(() => {
@@ -189,49 +168,27 @@ const SellerPage = () => {
   }, []);
 
   const confirmMarkAsSold = useCallback(async () => {
-    if (!markAsSoldProductId) {
-      console.error('No product ID set');
-      return;
-    }
-    
-    console.log('Confirming mark as sold:', {
-      productId: markAsSoldProductId,
-      currentStatus: markAsSoldCurrentStatus,
-      buyerId: selectedBuyerId
-    });
-    
-    console.log('Decision: Will call', markAsSoldCurrentStatus ? 'MARK AS SOLD' : 'MARK AS ACTIVE');
+    if (!markAsSoldProductId) return;
     
     setConfirmingAction(true);
     
     try {
       if (markAsSoldCurrentStatus) {
         // Marking as sold
-        console.log('Calling markAsSoldMutation...');
-        const result = await markAsSoldMutation.mutateAsync({ 
+        await markAsSoldMutation.mutateAsync({ 
           productId: markAsSoldProductId, 
           buyerId: selectedBuyerId || undefined // Convert null to undefined
         });
-        console.log('Mark as sold result:', result);
       } else {
         // Marking as active
-        console.log('Calling markAsActiveMutation...');
-        const result = await markAsActiveMutation.mutateAsync(markAsSoldProductId);
-        console.log('Mark as active result:', result);
+        await markAsActiveMutation.mutateAsync(markAsSoldProductId);
       }
       
-      console.log('Success! Closing modal...');
       setShowMarkAsSoldModal(false);
       setMarkAsSoldProductId(null);
       setSelectedBuyerId(null);
       setInterestedBuyers([]);
     } catch (error) {
-      console.error('Failed to update product status:', error);
-      console.error('Error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      });
       // Error toast is handled by React Query hook
     } finally {
       setConfirmingAction(false);

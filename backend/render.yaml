@@ -1,3 +1,9 @@
+# ============================================================================
+# UNIFIND Backend - Render.com Deployment Configuration
+# ============================================================================
+# Standardized deployment using gunicorn for production reliability
+# ============================================================================
+
 services:
   - type: web
     name: unifind-backend
@@ -5,34 +11,138 @@ services:
     region: oregon
     plan: free
     branch: main
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    
+    # Runtime configuration
+    runtime: python
+    
+    # Build command: Install production dependencies only
+    buildCommand: pip install --no-cache-dir -r requirements-prod.txt
+    
+    # Start command: Standardized gunicorn entrypoint
+    # CRITICAL: Must match Dockerfile and Procfile for consistency
+    startCommand: >
+      gunicorn app.main:app
+      --worker-class uvicorn.workers.UvicornWorker
+      --workers ${WORKERS:-4}
+      --bind 0.0.0.0:$PORT
+      --timeout 120
+      --keepalive 5
+      --max-requests 1000
+      --max-requests-jitter 100
+      --access-logfile -
+      --error-logfile -
+      --log-level info
+      --access-logformat '%({X-Forwarded-For}i)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s" %(D)s'
+      --preload
+      --graceful-timeout 30
+    
+    # Health check endpoint
+    healthCheckPath: /health
+    
+    # Environment variables
     envVars:
+      # Python configuration
       - key: PYTHON_VERSION
         value: 3.11.0
+      
+      # Application environment
       - key: ENVIRONMENT
         value: production
+      
+      # Worker configuration
+      - key: WORKERS
+        value: 4
+      
+      # Firebase Service Account (sync from Render dashboard)
       - key: FIREBASE_TYPE
-        sync: false
+        value: service_account
+      
       - key: FIREBASE_PROJECT_ID
         sync: false
+      
       - key: FIREBASE_PRIVATE_KEY_ID
         sync: false
+      
       - key: FIREBASE_PRIVATE_KEY
         sync: false
+      
       - key: FIREBASE_CLIENT_EMAIL
         sync: false
+      
       - key: FIREBASE_CLIENT_ID
         sync: false
+      
       - key: FIREBASE_AUTH_URI
         value: https://accounts.google.com/o/oauth2/auth
+      
       - key: FIREBASE_TOKEN_URI
         value: https://oauth2.googleapis.com/token
+      
       - key: FIREBASE_AUTH_PROVIDER_CERT_URL
         value: https://www.googleapis.com/oauth2/v1/certs
+      
       - key: FIREBASE_CLIENT_CERT_URL
         sync: false
+      
+      # AI Configuration
       - key: GEMINI_API_KEY
         sync: false
+      
+      # Storage Configuration
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      
+      - key: CLOUDINARY_UPLOAD_PRESET
+        value: unifind_products
+      
+      # Email Configuration
+      - key: GMAIL_USER
+        sync: false
+      
+      - key: GMAIL_APP_PASSWORD
+        sync: false
+      
+      # CORS Configuration
+      # IMPORTANT: Set to your actual frontend domain in production
+      # Example: https://app.unifind.com,https://www.unifind.com
       - key: CORS_ORIGINS
         sync: false
+    
+    # Auto-deploy configuration
+    autoDeploy: true
+    
+    # Scaling configuration (for paid plans)
+    # scaling:
+    #   minInstances: 1
+    #   maxInstances: 3
+    #   targetMemoryPercent: 80
+    #   targetCPUPercent: 80
+
+# ============================================================================
+# Deployment Notes:
+# ============================================================================
+# 1. All secret values (API keys, credentials) must be set in Render dashboard
+# 2. CORS_ORIGINS must be set to actual frontend domain (no wildcards!)
+# 3. Health check endpoint /health must return 200 OK when service is ready
+# 4. Gunicorn workers are set to 4 for optimal performance on Render free tier
+# 5. Graceful shutdown (30s) ensures in-flight requests complete during deploy
+# ============================================================================
+
+# ============================================================================
+# Production Checklist:
+# ============================================================================
+# [ ] Set all environment variables in Render dashboard
+# [ ] Configure CORS_ORIGINS with actual frontend domain (HTTPS only)
+# [ ] Verify Firebase credentials are correct
+# [ ] Test health check endpoint responds correctly
+# [ ] Enable auto-deploy from main branch
+# [ ] Set up monitoring and alerts
+# [ ] Configure custom domain (if applicable)
+# [ ] Review logs after first deployment
+# ============================================================================

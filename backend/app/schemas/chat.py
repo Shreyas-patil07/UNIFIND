@@ -1,22 +1,24 @@
 """
 Chat-related Pydantic schemas for request/response validation.
 """
-from pydantic import BaseModel, Field, field_validator
-from typing import Optional
+
 from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel, Field, field_validator
 
 
 class MessageBase(BaseModel):
     text: str = Field(..., max_length=5000, min_length=1)
     sender_id: str
-    
-    @field_validator('text')
+
+    @field_validator("text")
     @classmethod
     def validate_text(cls, v):
         if not v or not v.strip():
-            raise ValueError('Message text cannot be empty')
+            raise ValueError("Message text cannot be empty")
         if len(v) > 5000:
-            raise ValueError('Message must be 5000 characters or less')
+            raise ValueError("Message must be 5000 characters or less")
         return v.strip()
 
 

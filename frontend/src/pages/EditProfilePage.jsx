@@ -11,7 +11,6 @@ import imageService from '../services/imageService';
 // Rate limiting configuration
 const RATE_LIMITS = {
   BRANCH_CHANGES_PER_MONTH: 2,
-  PHOTO_CHANGES_PER_MONTH: 3,
 };
 
 const EditProfilePage = () => {
@@ -37,9 +36,7 @@ const EditProfilePage = () => {
   const [success, setSuccess] = useState(false);
   const [rateLimitInfo, setRateLimitInfo] = useState({
     branchChangesRemaining: RATE_LIMITS.BRANCH_CHANGES_PER_MONTH,
-    photoChangesRemaining: RATE_LIMITS.PHOTO_CHANGES_PER_MONTH,
     branchNextReset: null,
-    photoNextReset: null,
   });
 
   const branches = [
@@ -134,21 +131,12 @@ const EditProfilePage = () => {
           return changeDate.getMonth() === currentMonth && changeDate.getFullYear() === currentYear;
         }).length;
         
-        // Check photo changes
-        const photoHistory = userData?.photo_change_history || [];
-        const photoChangesThisMonth = photoHistory.filter(change => {
-          const changeDate = new Date(change.timestamp);
-          return changeDate.getMonth() === currentMonth && changeDate.getFullYear() === currentYear;
-        }).length;
-        
         // Calculate next reset date (first day of next month)
         const nextReset = new Date(currentYear, currentMonth + 1, 1);
         
         setRateLimitInfo({
           branchChangesRemaining: Math.max(0, RATE_LIMITS.BRANCH_CHANGES_PER_MONTH - branchChangesThisMonth),
-          photoChangesRemaining: Math.max(0, RATE_LIMITS.PHOTO_CHANGES_PER_MONTH - photoChangesThisMonth),
           branchNextReset: nextReset,
-          photoNextReset: nextReset,
         });
       } catch (error) {
         console.error('Failed to check rate limits:', error);
@@ -170,7 +158,6 @@ const EditProfilePage = () => {
 
     // Check if branch is being changed
     const isBranchChanging = editBranch !== displayBranch;
-    const isPhotoChanging = selectedFile !== null || (editAvatar !== avatar);
 
     // Validate rate limits
     if (isBranchChanging && rateLimitInfo.branchChangesRemaining <= 0) {
@@ -180,16 +167,6 @@ const EditProfilePage = () => {
         year: 'numeric' 
       });
       setError(`Branch change limit reached. You can change your branch ${RATE_LIMITS.BRANCH_CHANGES_PER_MONTH} times per month. Next reset: ${resetDate}`);
-      return;
-    }
-
-    if (isPhotoChanging && rateLimitInfo.photoChangesRemaining <= 0) {
-      const resetDate = rateLimitInfo.photoNextReset?.toLocaleDateString('en-US', { 
-        month: 'long', 
-        day: 'numeric', 
-        year: 'numeric' 
-      });
-      setError(`Photo change limit reached. You can change your photo ${RATE_LIMITS.PHOTO_CHANGES_PER_MONTH} times per month. Next reset: ${resetDate}`);
       return;
     }
 
@@ -324,9 +301,6 @@ const EditProfilePage = () => {
                   <p>
                     • Branch changes: <span className="font-bold">{rateLimitInfo.branchChangesRemaining}</span> of {RATE_LIMITS.BRANCH_CHANGES_PER_MONTH} remaining
                   </p>
-                  <p>
-                    • Photo changes: <span className="font-bold">{rateLimitInfo.photoChangesRemaining}</span> of {RATE_LIMITS.PHOTO_CHANGES_PER_MONTH} remaining
-                  </p>
                   {rateLimitInfo.branchNextReset && (
                     <p className={`text-xs ${isDarkMode ? 'text-blue-300' : 'text-blue-600'} mt-2`}>
                       Resets on: {rateLimitInfo.branchNextReset.toLocaleDateString('en-US', { 
@@ -419,29 +393,14 @@ const EditProfilePage = () => {
             <div className={`${isDarkMode ? 'bg-[#212121] border-neutral-700' : 'bg-white border-slate-200'} rounded-2xl border p-6`}>
               <div className="flex items-center justify-between mb-4">
                 <h2 className={`text-lg font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Profile Image</h2>
-                {rateLimitInfo.photoChangesRemaining === 0 && (
-                  <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-lg">
-                    Limit Reached
-                  </span>
-                )}
               </div>
-              
-              {rateLimitInfo.photoChangesRemaining === 0 && (
-                <div className="mb-4 px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-xs text-red-600">
-                  You've reached the monthly limit for photo changes. Try again next month.
-                </div>
-              )}
               
               {/* File Upload */}
               <div className="mb-4">
                 <label className={`block text-sm font-medium ${isDarkMode ? 'text-neutral-300' : 'text-slate-700'} mb-3`}>Upload Image</label>
                 
                 {!selectedFile && !previewUrl ? (
-                  <label className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed ${isDarkMode ? 'border-slate-600' : 'border-slate-300'} rounded-xl transition-all ${
-                    rateLimitInfo.photoChangesRemaining > 0 
-                      ? `cursor-pointer ${isDarkMode ? 'hover:border-blue-400 hover:bg-neutral-800' : 'hover:border-blue-500 hover:bg-blue-50'}` 
-                      : `cursor-not-allowed opacity-50 ${isDarkMode ? 'bg-[#212121]' : 'bg-slate-50'}`
-                  }`}>
+                  <label className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed ${isDarkMode ? 'border-slate-600' : 'border-slate-300'} rounded-xl transition-all cursor-pointer ${isDarkMode ? 'hover:border-blue-400 hover:bg-neutral-800' : 'hover:border-blue-500 hover:bg-blue-50'}`}>
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                       <Upload className={`h-10 w-10 ${isDarkMode ? 'text-slate-500' : 'text-neutral-400'} mb-3`} />
                       <p className={`mb-2 text-sm ${isDarkMode ? 'text-neutral-400' : 'text-slate-600'}`}>
@@ -454,7 +413,6 @@ const EditProfilePage = () => {
                       className="hidden"
                       accept="image/*"
                       onChange={handleFileSelect}
-                      disabled={rateLimitInfo.photoChangesRemaining === 0}
                     />
                   </label>
                 ) : (

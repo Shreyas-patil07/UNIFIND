@@ -71,7 +71,7 @@ const ChatPage = () => {
         }
         
         // Load other user's profile
-        const profile = await getPublicProfile(targetUserId);
+        const profile = await getPublicProfile(targetUserId, false, token);
         if (isActive) {
           setOtherUser(profile);
         }
@@ -436,8 +436,9 @@ const ChatPage = () => {
     // Load initial data
     const loadInitialData = async () => {
       try {
+        const token = await getIdToken();
         // Load other user's profile
-        const profile = await getPublicProfile(otherId);
+        const profile = await getPublicProfile(otherId, false, token);
         if (isActive) {
           setOtherUser(profile);
         }
@@ -863,6 +864,7 @@ const ChatPage = () => {
                   searchQuery={searchQuery}
                   darkMode={darkMode}
                   onUserProfileLoaded={handleUserProfileLoaded}
+                  getIdToken={getIdToken}
                 />
               ))
             )}
@@ -1349,7 +1351,7 @@ const ChatPage = () => {
 };
 
 // Chat List Item Component - Memoized to prevent unnecessary re-renders
-const ChatListItem = React.memo(({ chat, currentUserId, isSelected, onClick, formatTime, searchQuery, darkMode, onUserProfileLoaded }) => {
+const ChatListItem = React.memo(({ chat, currentUserId, isSelected, onClick, formatTime, searchQuery, darkMode, onUserProfileLoaded, getIdToken }) => {
   const [user, setUser] = useState(null);
   const [product, setProduct] = useState(null);
   const isFriend = chat.is_friend || false;
@@ -1360,7 +1362,8 @@ const ChatListItem = React.memo(({ chat, currentUserId, isSelected, onClick, for
     const loadData = async () => {
       try {
         const otherId = chat.user1_id === currentUserId ? chat.user2_id : chat.user1_id;
-        const userProfile = await getPublicProfile(otherId);
+        const token = await getIdToken();
+        const userProfile = await getPublicProfile(otherId, false, token);
         
         if (isActive) {
           setUser(userProfile);

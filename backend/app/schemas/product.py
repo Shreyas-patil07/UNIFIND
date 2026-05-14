@@ -1,9 +1,11 @@
 """
 Product-related Pydantic schemas for request/response validation.
 """
-from pydantic import BaseModel, Field, field_validator
-from typing import Optional, List, Dict
+
 from datetime import datetime
+from typing import Dict, List, Optional
+
+from pydantic import BaseModel, Field, field_validator
 
 
 class ProductBase(BaseModel):
@@ -17,43 +19,45 @@ class ProductBase(BaseModel):
     images: List[str] = Field(..., min_length=1, max_length=5)
     specifications: Optional[Dict] = {}
 
-    @field_validator('images')
+    @field_validator("images")
     @classmethod
     def validate_image_urls(cls, v):
         if not v:
-            raise ValueError('At least one image is required')
+            raise ValueError("At least one image is required")
         if len(v) > 5:
-            raise ValueError('Maximum 5 images allowed')
+            raise ValueError("Maximum 5 images allowed")
         for url in v:
-            if not isinstance(url, str) or not url.startswith('https://res.cloudinary.com/'):
-                raise ValueError('Each image must be a valid Cloudinary URL (https://res.cloudinary.com/...)')
+            if not isinstance(url, str) or not url.startswith("https://res.cloudinary.com/"):
+                raise ValueError(
+                    "Each image must be a valid Cloudinary URL (https://res.cloudinary.com/...)"
+                )
         return v
-    
-    @field_validator('title')
+
+    @field_validator("title")
     @classmethod
     def validate_title(cls, v):
         if not v or not v.strip():
-            raise ValueError('Title cannot be empty')
+            raise ValueError("Title cannot be empty")
         if len(v) > 200:
-            raise ValueError('Title must be 200 characters or less')
+            raise ValueError("Title must be 200 characters or less")
         return v.strip()
-    
-    @field_validator('description')
+
+    @field_validator("description")
     @classmethod
     def validate_description(cls, v):
         if not v or not v.strip():
-            raise ValueError('Description cannot be empty')
+            raise ValueError("Description cannot be empty")
         if len(v) > 2000:
-            raise ValueError('Description must be 2000 characters or less')
+            raise ValueError("Description must be 2000 characters or less")
         return v.strip()
-    
-    @field_validator('location')
+
+    @field_validator("location")
     @classmethod
     def validate_location(cls, v):
         if not v or not v.strip():
-            raise ValueError('Location cannot be empty')
+            raise ValueError("Location cannot be empty")
         if len(v) > 200:
-            raise ValueError('Location must be 200 characters or less')
+            raise ValueError("Location must be 200 characters or less")
         return v.strip()
 
 
@@ -63,6 +67,7 @@ class ProductCreate(ProductBase):
 
 class ProductUpdate(BaseModel):
     """Model for partial product updates (PATCH)"""
+
     title: Optional[str] = Field(None, max_length=200, min_length=1)
     description: Optional[str] = Field(None, max_length=2000, min_length=1)
     price: Optional[float] = Field(None, gt=0, le=10000000)
@@ -75,49 +80,51 @@ class ProductUpdate(BaseModel):
     mark_as_sold: Optional[bool] = None
     sold_to: Optional[str] = None  # Firebase UID of the buyer
 
-    @field_validator('images')
+    @field_validator("images")
     @classmethod
     def validate_image_urls(cls, v):
         if v is not None:
             if len(v) < 1:
-                raise ValueError('At least one image is required')
+                raise ValueError("At least one image is required")
             if len(v) > 5:
-                raise ValueError('Maximum 5 images allowed')
+                raise ValueError("Maximum 5 images allowed")
             for url in v:
-                if not isinstance(url, str) or not url.startswith('https://res.cloudinary.com/'):
-                    raise ValueError('Each image must be a valid Cloudinary URL (https://res.cloudinary.com/...)')
+                if not isinstance(url, str) or not url.startswith("https://res.cloudinary.com/"):
+                    raise ValueError(
+                        "Each image must be a valid Cloudinary URL (https://res.cloudinary.com/...)"
+                    )
         return v
-    
-    @field_validator('title')
+
+    @field_validator("title")
     @classmethod
     def validate_title(cls, v):
         if v is not None:
             if not v.strip():
-                raise ValueError('Title cannot be empty')
+                raise ValueError("Title cannot be empty")
             if len(v) > 200:
-                raise ValueError('Title must be 200 characters or less')
+                raise ValueError("Title must be 200 characters or less")
             return v.strip()
         return v
-    
-    @field_validator('description')
+
+    @field_validator("description")
     @classmethod
     def validate_description(cls, v):
         if v is not None:
             if not v.strip():
-                raise ValueError('Description cannot be empty')
+                raise ValueError("Description cannot be empty")
             if len(v) > 2000:
-                raise ValueError('Description must be 2000 characters or less')
+                raise ValueError("Description must be 2000 characters or less")
             return v.strip()
         return v
-    
-    @field_validator('location')
+
+    @field_validator("location")
     @classmethod
     def validate_location(cls, v):
         if v is not None:
             if not v.strip():
-                raise ValueError('Location cannot be empty')
+                raise ValueError("Location cannot be empty")
             if len(v) > 200:
-                raise ValueError('Location must be 200 characters or less')
+                raise ValueError("Location must be 200 characters or less")
             return v.strip()
         return v
 

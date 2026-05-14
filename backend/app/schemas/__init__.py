@@ -1,48 +1,79 @@
 """Pydantic schemas for request/response validation."""
 
-from app.schemas.user import (
-    UserBase, UserCreate, User,
-    UserProfileBase, UserProfileCreate, UserProfile
-)
-from app.schemas.product import (
-    ProductBase, ProductCreate, ProductUpdate, Product
-)
-from app.schemas.chat import (
-    MessageBase, MessageCreate, Message, ChatRoom
-)
-from app.schemas.transaction import (
-    TransactionBase, TransactionCreate, Transaction,
-    ProductTransactionHistoryBase, ProductTransactionHistoryCreate, ProductTransactionHistory
-)
-from app.schemas.review import (
-    ReviewBase, ReviewCreate, Review
-)
+from app.schemas.auth import SendVerificationRequest, VerifyEmailRequest
+from app.schemas.chat import ChatRoom, Message, MessageBase, MessageCreate
 from app.schemas.need import (
-    NeedBoardRequest, ExtractedIntent, RankedResult, NeedBoardResponse,
-    NeedCreate, Need, NeedResponse,
-    SellerDemandBanner, SellerNeedFeed, NeedFulfillRequest
+    ExtractedIntent,
+    Need,
+    NeedBoardRequest,
+    NeedBoardResponse,
+    NeedCreate,
+    NeedFulfillRequest,
+    NeedResponse,
+    RankedResult,
+    SellerDemandBanner,
+    SellerNeedFeed,
 )
-from app.schemas.auth import (
-    SendVerificationRequest, VerifyEmailRequest
+from app.schemas.product import Product, ProductBase, ProductCreate, ProductUpdate
+from app.schemas.review import Review, ReviewBase, ReviewCreate
+from app.schemas.transaction import (
+    ProductTransactionHistory,
+    ProductTransactionHistoryBase,
+    ProductTransactionHistoryCreate,
+    Transaction,
+    TransactionBase,
+    TransactionCreate,
+)
+from app.schemas.user import (
+    User,
+    UserBase,
+    UserCreate,
+    UserProfile,
+    UserProfileBase,
+    UserProfileCreate,
 )
 
 __all__ = [
     # User schemas
-    "UserBase", "UserCreate", "User",
-    "UserProfileBase", "UserProfileCreate", "UserProfile",
+    "UserBase",
+    "UserCreate",
+    "User",
+    "UserProfileBase",
+    "UserProfileCreate",
+    "UserProfile",
     # Product schemas
-    "ProductBase", "ProductCreate", "ProductUpdate", "Product",
+    "ProductBase",
+    "ProductCreate",
+    "ProductUpdate",
+    "Product",
     # Chat schemas
-    "MessageBase", "MessageCreate", "Message", "ChatRoom",
+    "MessageBase",
+    "MessageCreate",
+    "Message",
+    "ChatRoom",
     # Transaction schemas
-    "TransactionBase", "TransactionCreate", "Transaction",
-    "ProductTransactionHistoryBase", "ProductTransactionHistoryCreate", "ProductTransactionHistory",
+    "TransactionBase",
+    "TransactionCreate",
+    "Transaction",
+    "ProductTransactionHistoryBase",
+    "ProductTransactionHistoryCreate",
+    "ProductTransactionHistory",
     # Review schemas
-    "ReviewBase", "ReviewCreate", "Review",
+    "ReviewBase",
+    "ReviewCreate",
+    "Review",
     # Need schemas
-    "NeedBoardRequest", "ExtractedIntent", "RankedResult", "NeedBoardResponse",
-    "NeedCreate", "Need", "NeedResponse",
-    "SellerDemandBanner", "SellerNeedFeed", "NeedFulfillRequest",
+    "NeedBoardRequest",
+    "ExtractedIntent",
+    "RankedResult",
+    "NeedBoardResponse",
+    "NeedCreate",
+    "Need",
+    "NeedResponse",
+    "SellerDemandBanner",
+    "SellerNeedFeed",
+    "NeedFulfillRequest",
     # Auth schemas
-    "SendVerificationRequest", "VerifyEmailRequest",
+    "SendVerificationRequest",
+    "VerifyEmailRequest",
 ]

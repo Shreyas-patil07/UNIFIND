@@ -1,8 +1,10 @@
 """
 Transaction routes - transaction history and statistics.
 """
-from fastapi import APIRouter, HTTPException, Depends, status, Query
-from typing import Optional, Dict, Any, List
+
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies.auth import get_current_user
 from app.api.dependencies.services import get_transaction_service
@@ -17,7 +19,7 @@ async def get_transaction_history(
     transaction_type_sold: Optional[bool] = Query(None, description="Filter by sold status"),
     limit: int = Query(50, ge=1, le=200, description="Number of records to return"),
     transaction_service: TransactionService = Depends(get_transaction_service),
-    current_user: str = Depends(get_current_user)
+    current_user: str = Depends(get_current_user),
 ):
     """
     Get transaction history for the authenticated user.
@@ -28,13 +30,13 @@ async def get_transaction_history(
             current_user,
             product_id=product_id,
             transaction_type_sold=transaction_type_sold,
-            limit=limit
+            limit=limit,
         )
         return result
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"error": "Failed to fetch transaction history", "detail": str(e)}
+            detail={"error": "Failed to fetch transaction history", "detail": str(e)},
         )
 
 
@@ -42,7 +44,7 @@ async def get_transaction_history(
 async def get_transaction_stats(
     days: int = Query(30, ge=1, le=365, description="Number of days to analyze"),
     transaction_service: TransactionService = Depends(get_transaction_service),
-    current_user: str = Depends(get_current_user)
+    current_user: str = Depends(get_current_user),
 ):
     """
     Get transaction statistics for the authenticated user.
@@ -54,7 +56,7 @@ async def get_transaction_stats(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"error": "Failed to fetch transaction stats", "detail": str(e)}
+            detail={"error": "Failed to fetch transaction stats", "detail": str(e)},
         )
 
 
@@ -62,7 +64,7 @@ async def get_transaction_stats(
 async def get_product_transaction_history(
     product_id: str,
     transaction_service: TransactionService = Depends(get_transaction_service),
-    current_user: str = Depends(get_current_user)
+    current_user: str = Depends(get_current_user),
 ):
     """
     Get transaction history for a specific product.
@@ -70,17 +72,13 @@ async def get_product_transaction_history(
     """
     try:
         transactions = await transaction_service.get_product_transaction_history(
-            product_id,
-            current_user
+            product_id, current_user
         )
         return transactions
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"error": "Failed to fetch product transaction history", "detail": str(e)}
+            detail={"error": "Failed to fetch product transaction history", "detail": str(e)},
         )

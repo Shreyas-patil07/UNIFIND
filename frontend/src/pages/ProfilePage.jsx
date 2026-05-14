@@ -11,7 +11,7 @@ import { addFriend, removeFriend, checkFriendship, acceptFriendRequest } from '.
 const ProfilePage = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
-  const { logout, currentUser: authUser, userProfile, syncEmailVerificationStatus } = useAuth();
+  const { logout, currentUser: authUser, userProfile, syncEmailVerificationStatus, getIdToken } = useAuth();
   const { darkMode, toggleDarkMode } = useTheme();
   
   // Determine if viewing own profile or another user's profile
@@ -39,16 +39,21 @@ const ProfilePage = () => {
     if (!isOwnProfile && userId) {
       setLoadingProfile(true);
       setProfileError(null);
-      getPublicProfile(userId, false)
-        .then(data => {
+      
+      const loadProfile = async () => {
+        try {
+          const token = await getIdToken();
+          const data = await getPublicProfile(userId, false, token);
           setViewedProfile(data);
           setLoadingProfile(false);
-        })
-        .catch(err => {
+        } catch (err) {
           console.error('Failed to load profile:', err);
           setProfileError('Failed to load profile');
           setLoadingProfile(false);
-        });
+        }
+      };
+      
+      loadProfile();
       
       // Check friendship status
       if (authUser?.uid) {
