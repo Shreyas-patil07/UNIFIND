@@ -1,10 +1,14 @@
 # UNIFIND - Production Deployment Guide
 
+**Version**: 2.4.5 (May 15, 2026)
+
 ## Overview
 This guide covers deploying UNIFIND to production:
-- Backend: Render (Free tier)
-- Frontend: Vercel (Free tier)
-- Database: Firebase Firestore (Already cloud-hosted)
+- **Backend**: Render (Free tier) - 10 API routes, Python 3.11+
+- **Frontend**: Vercel (Free tier) - React 18 + Vite 5, 23 pages
+- **Database**: Firebase Firestore (10 collections with composite indexes)
+- **AI**: Google Gemini API (with security hardening)
+- **Storage**: Cloudinary (product images) + Supabase (profile photos)
 
 ## Prerequisites
 - GitHub account
@@ -32,7 +36,7 @@ This guide covers deploying UNIFIND to production:
    - **Root Directory**: backend
    - **Runtime**: Python 3
    - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+   - **Start Command**: `gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --workers 4`
    - **Plan**: Free
 
 ### Step 3: Set Environment Variables
@@ -465,7 +469,7 @@ For application issues:
 ### Key Commands
 ```bash
 # Local development
-cd backend && python main.py
+cd backend && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 cd frontend && npm run dev
 
 # Build frontend
@@ -473,6 +477,9 @@ cd frontend && npm run build
 
 # Test production build locally
 cd frontend && npm run preview
+
+# Production backend (with gunicorn)
+cd backend && gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --workers 4 --bind 0.0.0.0:8000
 ```
 
 ---

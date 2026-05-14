@@ -1,5 +1,7 @@
 # 🚀 UNIFIND - Quick Start Guide
 
+**Version**: 2.4.5 (May 15, 2026)
+
 Get UNIFIND running in 5 minutes.
 
 ---
@@ -92,7 +94,11 @@ npm install
 ### Terminal 1 - Backend
 ```bash
 cd backend
-python main.py
+# Development mode (single worker, auto-reload)
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# OR Production mode (multiple workers)
+gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --workers 4 --bind 0.0.0.0:8000
 ```
 ✅ Backend: http://localhost:8000  
 ✅ API Docs: http://localhost:8000/docs

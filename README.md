@@ -42,7 +42,7 @@
 
 > ✨ **Our Solution**: A campus-focused marketplace with AI-powered Need Board, Cashify-style condition grading, and comprehensive Trust Scores—all built on cutting-edge, scalable technology with optimized performance (80% faster page loads, 60% faster AI searches).
 
-**Current Version**: 2.4.3 (April 11, 2026)
+**Current Version**: 2.4.5 (May 15, 2026)
 
 ---
 
@@ -106,13 +106,22 @@
 ┌─────────────────┐         ┌─────────────────┐         ┌─────────────────┐
 │  React Frontend │ ◄─────► │  FastAPI Backend│ ◄─────► │    Firebase     │
 │  (Vite + React) │  HTTP   │  (Python 3.11)  │  SDK    │   Firestore     │
+│   23 Pages      │         │  10 API Routes  │         │ 10 Collections  │
+└─────────────────┘         └─────────────────┘         └─────────────────┘
+        │                            │                            │
+        │                            │                            │
+        ▼                            ▼                            ▼
+┌─────────────────┐         ┌─────────────────┐         ┌─────────────────┐
+│   Cloudinary    │         │   Gemini AI     │         │   Email SMTP    │
+│  Image Storage  │         │  Semantic Match │         │  Verification   │
 └─────────────────┘         └─────────────────┘         └─────────────────┘
 ```
 
-**Frontend**: React 18 + Vite 5 + Tailwind CSS  
-**Backend**: FastAPI + Uvicorn  
-**Database**: Firebase Firestore (9 collections)  
-**AI**: Google Gemini API  
+**Frontend**: React 18 + Vite 5 + Tailwind CSS + React Query  
+**Backend**: FastAPI + Uvicorn + Repository Pattern + Service Layer  
+**Database**: Firebase Firestore (10 collections)  
+**AI**: Google Gemini API (with security hardening)  
+**Storage**: Cloudinary (product images) + Supabase (profile photos)  
 **Deployment**: Vercel (frontend) + Render (backend)
 
 For detailed architecture, see [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md#architecture)
@@ -121,11 +130,28 @@ For detailed architecture, see [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md#architect
 
 ## 🚀 Tech Stack
 
-- **Frontend**: React 18 + Vite 5 + Tailwind CSS
-- **Backend**: FastAPI + Python 3.11
-- **Database**: Firebase Firestore
-- **AI**: Google Gemini API
-- **Deployment**: Vercel + Render
+### Frontend
+- **Framework**: React 18.3.1 with Vite 5 (Lightning-fast HMR)
+- **Styling**: Tailwind CSS 3.4.1
+- **State Management**: React Context API + React Query
+- **Routing**: React Router DOM 6.22.0
+- **HTTP Client**: Axios 1.6.7
+- **Icons**: Lucide React 0.507.0
+- **Maps**: Leaflet 1.9.4 + React Leaflet 4.2.1
+
+### Backend
+- **Framework**: FastAPI 0.110.1 (Python 3.11+)
+- **Server**: Uvicorn 0.25.0 (ASGI)
+- **Database**: Firebase Firestore (via Admin SDK 6.4.0)
+- **AI**: Google Gemini API (with security hardening)
+- **Validation**: Pydantic 2.6.4
+- **Image Storage**: Cloudinary + Supabase
+
+### Architecture Patterns
+- **Backend**: Repository Pattern + Service Layer + Dependency Injection
+- **Frontend**: Component Composition + Context API + Protected Routes
+- **Database**: 10 Firestore collections with composite indexes
+- **API**: 10 RESTful endpoints with batch operations
 
 > **Detailed specifications**: See [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md#tech-stack)
 

@@ -1,7 +1,9 @@
 # Legal Compliance Documentation
 
+**Version**: 2.4.5 (May 15, 2026)
+
 ## Overview
-UNIFIND now includes comprehensive legal documentation to ensure compliance with Indian laws and protect both the platform and users.
+UNIFIND includes comprehensive legal documentation to ensure compliance with Indian laws (IT Act 2000, DPDP Act 2023) and protect both the platform and users.
 
 ## Implemented Features
 

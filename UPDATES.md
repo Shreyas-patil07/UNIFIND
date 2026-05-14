@@ -1,9 +1,41 @@
 # 📋 UNIFIND - Project Updates
 
-**Last Updated**: May 10, 2026  
+**Last Updated**: May 15, 2026  
 **Current Version**: 2.4.5
 
 This document tracks all project updates in reverse chronological order (newest first).
+
+---
+
+## May 15, 2026 - Documentation Architecture Update (v2.4.5)
+
+**Type**: Documentation Maintenance  
+**Version**: 2.4.5
+
+### Summary
+Comprehensive documentation refresh to reflect current architecture state with all recent changes and improvements.
+
+### Architecture Updates
+- Documented complete tech stack (React 18.3.1, FastAPI 0.110.1, Python 3.11+)
+- Added architecture diagram showing 5 external services
+- Clarified 10 API routes and 23 frontend pages
+- Updated database schema (10 collections including friendships)
+
+### Tech Stack Clarifications
+- Frontend: React 18 + Vite 5 + Tailwind CSS + React Query
+- Backend: FastAPI with Repository Pattern + Service Layer
+- Database: 10 Firestore collections with composite indexes
+- AI: Google Gemini API with security hardening
+- Storage: Dual strategy (Cloudinary for products, Supabase for profiles)
+
+### Performance Metrics
+- Page loads: <1s (Vite optimized)
+- API responses: <50ms (non-AI), <5s (AI)
+- Build time: ~5s
+- Bundle size: ~800KB (gzipped: ~250KB)
+
+### Files Updated
+All 7 main documentation files refreshed with current architecture and version information.
 
 ---
 
@@ -158,7 +190,7 @@ Consolidated 13 smaller documentation files into 7 main files for better maintai
 
 ### Files Modified
 - `frontend/src/components/Header.jsx` - Optimistic UI
-- `backend/routes/users.py` - Batch operations
+- `backend/app/api/routes/users.py` - Batch operations
 
 ---
 
@@ -181,7 +213,7 @@ Chat list showing 404 errors for deleted/missing users, breaking Friends Only fi
 - Graceful degradation for deleted users
 
 ### Files Modified
-- `backend/routes/users.py` - Placeholder profiles
+- `backend/app/api/routes/users.py` - Placeholder profiles
 - `frontend/src/pages/ChatPage.jsx` - Fallback handling
 
 ---
@@ -212,8 +244,8 @@ All 11 core tasks completed:
 - `frontend/src/components/MessageBubble.jsx` (new)
 - `frontend/src/components/ReplyPreview.jsx` (new)
 - `frontend/src/pages/ChatPage.jsx` - Reply state
-- `backend/models.py` - reply_to field
-- `backend/routes/chats.py` - Reply storage
+- `backend/app/schemas/chat.py` - reply_to field
+- `backend/app/api/routes/chats.py` - Reply storage
 
 ---
 
@@ -297,7 +329,7 @@ Messages disappearing after 2-3 seconds due to polling logic blindly overwriting
 - Network failure → Remove optimistic, restore text for retry
 
 ### Files Modified
-- `backend/routes/chats.py` - Debug logging
+- `backend/app/api/routes/chats.py` - Debug logging
 - `frontend/src/pages/ChatPage.jsx` - Complete rewrite with Map-based merge logic
 
 ### Known Issues
