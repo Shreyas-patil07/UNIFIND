@@ -23,6 +23,26 @@ const api = axios.create({
   },
 })
 
+// Add auth interceptor to include Firebase token
+api.interceptors.request.use(
+  async (config) => {
+    try {
+      const { auth } = await import('./firebase')
+      const user = auth.currentUser
+      if (user) {
+        const token = await user.getIdToken()
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`
+        }
+      }
+    } catch (error) {
+      console.error('Failed to get auth token:', error)
+    }
+    return config
+  },
+  (error) => Promise.reject(error)
+)
+
 // Backend API calls
 export const createStatusCheck = async (clientName) => {
   const response = await api.post('/status', { client_name: clientName })
