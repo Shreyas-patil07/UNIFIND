@@ -154,7 +154,7 @@ class EmailService:
                 server.send_message(message)
 
         # Run synchronous code in thread pool
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, send_sync)
 
     def _create_message(self, to_email: str, subject: str, html_content: str) -> MIMEMultipart:

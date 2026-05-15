@@ -182,7 +182,7 @@ def create_error_response(
     error_data = {"code": code, "message": message}
 
     if details:
-        error_data["details"] = [d.dict() for d in details]
+        error_data["details"] = [d.model_dump() for d in details]
 
     return {
         "error": error_data,

@@ -3,9 +3,11 @@ Upload routes - image upload to Cloudinary with enhanced security.
 """
 
 import logging
+from io import BytesIO
 from typing import List
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
+from starlette.datastructures import Headers
 
 from app.api.dependencies.auth import get_current_user
 from app.core.database import get_db
@@ -59,9 +61,6 @@ async def upload_single_product_image(
     )
 
     # Create a new UploadFile with validated content
-    from io import BytesIO
-    from starlette.datastructures import Headers
-
     validated_file = UploadFile(
         filename=sanitized_filename,
         file=BytesIO(content),
@@ -113,9 +112,6 @@ async def upload_multiple_product_images(
             )
 
             # Create validated UploadFile
-            from io import BytesIO
-            from starlette.datastructures import Headers
-
             validated_file = UploadFile(
                 filename=sanitized_filename,
                 file=BytesIO(content),
@@ -185,9 +181,6 @@ async def upload_profile_image_endpoint(
         old_avatar = user_data.get("avatar")
 
     # Create validated UploadFile
-    from io import BytesIO
-    from starlette.datastructures import Headers
-
     validated_file = UploadFile(
         filename=sanitized_filename,
         file=BytesIO(content),
