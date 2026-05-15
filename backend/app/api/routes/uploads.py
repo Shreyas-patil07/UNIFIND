@@ -60,9 +60,12 @@ async def upload_single_product_image(
 
     # Create a new UploadFile with validated content
     from io import BytesIO
+    from starlette.datastructures import Headers
 
     validated_file = UploadFile(
-        filename=sanitized_filename, file=BytesIO(content), content_type=file.content_type
+        filename=sanitized_filename,
+        file=BytesIO(content),
+        headers=Headers({"content-type": file.content_type or "image/jpeg"}),
     )
 
     # Upload to Cloudinary
@@ -111,9 +114,12 @@ async def upload_multiple_product_images(
 
             # Create validated UploadFile
             from io import BytesIO
+            from starlette.datastructures import Headers
 
             validated_file = UploadFile(
-                filename=sanitized_filename, file=BytesIO(content), content_type=file.content_type
+                filename=sanitized_filename,
+                file=BytesIO(content),
+                headers=Headers({"content-type": file.content_type or "image/jpeg"}),
             )
 
             # Upload to Cloudinary
@@ -180,9 +186,12 @@ async def upload_profile_image_endpoint(
 
     # Create validated UploadFile
     from io import BytesIO
+    from starlette.datastructures import Headers
 
     validated_file = UploadFile(
-        filename=sanitized_filename, file=BytesIO(content), content_type=file.content_type
+        filename=sanitized_filename,
+        file=BytesIO(content),
+        headers=Headers({"content-type": file.content_type or "image/jpeg"}),
     )
 
     # Upload new profile image
