@@ -370,7 +370,7 @@ function HeroSection({ onSignup, onBrowse, onAbout, userCount }) {
              <img
               src="/Campus.png"
               alt="College students sharing notes"
-              style={{ width: '100%', height: 'auto', objectFit: 'cover', display: 'block' }}
+              style={{ width: 'auto', height: '100%', objectFit: 'cover', display: 'block' }}
             />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,51,88,0.40) 0%, transparent 60%)' }} />
           </div>
