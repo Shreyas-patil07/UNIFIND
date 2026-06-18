@@ -368,7 +368,7 @@ function HeroSection({ onSignup, onBrowse, onAbout, userCount }) {
         <div style={{ position: 'relative' }}>
           <div style={{ position: 'relative', height: 480, borderRadius: 16, overflow: 'hidden', boxShadow: ghostShadow, transform: 'rotate(2deg)' }}>
             <img
-              src="https://gonzaga.azureedge.net/-/media/Website/Images/Body-Content/About/Our-Campus-and-Location/body-college-hall.ashx?h=428px&w=750px&rev=a09c7976b5bb4fad80a88ae77daaa227&hash=AB682326061999B3FF357764EE74082B"
+              src"/Campus.png"
               alt="College students sharing notes"
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
