@@ -367,10 +367,10 @@ function HeroSection({ onSignup, onBrowse, onAbout, userCount }) {
         {/* Right: Hero Image */}
         <div style={{ position: 'relative' }}>
           <div style={{ position: 'relative', height: 480, borderRadius: 16, overflow: 'hidden', boxShadow: ghostShadow, transform: 'rotate(2deg)' }}>
-            <img
-              src"/Campus.png"
+             <img
+              src="/Campus.png"
               alt="College students sharing notes"
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              style={{ width: '100%', height: 'auto', objectFit: 'cover', display: 'block' }}
             />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,51,88,0.40) 0%, transparent 60%)' }} />
           </div>
