@@ -40,6 +40,14 @@ function ProfileRedirect() {
   return <Navigate to="/login" replace />;
 }
 
+function InitialRoute() {
+  const { currentUser } = useAuth();
+
+  return currentUser
+    ? <Navigate to="/dashboard" replace />
+    : <Navigate to="/home" replace />;
+}
+
 function App() {
   return (
     <QueryProvider>
@@ -48,7 +56,7 @@ function App() {
           <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <Routes>
               <Route path="/home" element={<LandingPage />} />
-              <Route path="/" element={<Navigate to="/home" replace />} />
+              <Route path="/" element={<InitialRoute />} />
               <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
               <Route path="/signup" element={<PublicRoute><SignupPage /></PublicRoute>} />
               <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
